@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up`
-2. `packages/core/src/__tests__/services/public-websocket.functional.test.ts public websocket runtime collaborator guardrail follow-up`
-3. `packages/core/src/__tests__/services/public-websocket.error-handling.test.ts public websocket runtime error guardrail follow-up`
+1. `packages/core/src/services/position-monitor.service.ts position monitor runtime collaborator boundary follow-up`
+2. `packages/core/src/__tests__/services/position-monitor.functional.test.ts position monitor runtime collaborator guardrail follow-up`
+3. `packages/core/src/__tests__/services/position-monitor.error-handling.test.ts position monitor runtime error guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-05-31: completed `packages/core/src/services/websocket-manager.service.ts websocket manager runtime collaborator boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime collaborator guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up`.
-- `websocket-manager.service.ts` now funnels auth/subscription sends through one open-socket boundary helper and stops the unsafe fallback subscription path after exhausted auth retries.
-- `websocket-manager.functional.test.ts` now pins auth-ack subscription behavior to open-socket transport state.
-- `websocket-manager.error-handling.test.ts` now verifies graceful auth degradation without subscribing after repeated auth payload failures.
+- 2026-05-31: completed `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/public-websocket.functional.test.ts public websocket runtime collaborator guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/public-websocket.error-handling.test.ts public websocket runtime error guardrail follow-up`.
+- `public-websocket.service.ts` now routes subscription and ping writes through one open-socket transport helper and clears stale socket state even when disconnect cleanup throws.
+- `public-websocket.functional.test.ts` now proves a failed subscription send does not leave stale tracked topics behind.
+- `public-websocket.error-handling.test.ts` now covers graceful degradation for subscription and ping transport send failures.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.functional.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.functional.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/public-websocket-state.utils.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

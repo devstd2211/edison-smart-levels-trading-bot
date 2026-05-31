@@ -110,5 +110,76 @@ describe('PublicWebSocketService error handling', () => {
         context: 'PublicWebSocketService.disconnect',
       }),
     );
+    expect(service.isConnected()).toBe(false);
+  });
+
+  it('uses GRACEFUL_DEGRADE when subscription transport send throws', () => {
+    const send = jest.fn(() => {
+      throw new Error('subscribe failed');
+    });
+    setPublicWebSocketSocket(service, {
+      readyState: 1,
+      send,
+      close: jest.fn(),
+    });
+
+    expect(() =>
+      (service as unknown as { subscribe: () => void }).subscribe(),
+    ).not.toThrow();
+
+    expect(errorHandler.handle).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'PublicWebSocketService.subscribe',
+      }),
+    );
+  });
+
+  it('emits fallback error when subscription send throws without an error handler', () => {
+    const legacyService = createLegacyService({ symbol: 'XRPUSDT' });
+    const errorSpy = jest.fn();
+    legacyService.on('error', errorSpy);
+    setPublicWebSocketSocket(legacyService, {
+      readyState: 1,
+      send: () => {
+        throw new Error('subscribe failed');
+      },
+      close: jest.fn(),
+    });
+
+    expect(() =>
+      (legacyService as unknown as { subscribe: () => void }).subscribe(),
+    ).not.toThrow();
+
+    expect(errorSpy).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  it('uses GRACEFUL_DEGRADE when ping transport send throws', () => {
+    jest.useFakeTimers();
+    const send = jest.fn(() => {
+      throw new Error('ping failed');
+    });
+    setPublicWebSocketSocket(service, {
+      readyState: 1,
+      send,
+      close: jest.fn(),
+    });
+
+    expect(() =>
+      (service as unknown as { startPing: () => void }).startPing(),
+    ).not.toThrow();
+    expect(() => {
+      jest.advanceTimersByTime(20_000);
+    }).not.toThrow();
+
+    expect(errorHandler.handle).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'PublicWebSocketService.startPing',
+      }),
+    );
+    jest.useRealTimers();
   });
 });

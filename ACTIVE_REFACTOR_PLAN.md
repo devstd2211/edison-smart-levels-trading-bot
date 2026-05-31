@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/services/websocket-manager.service.ts websocket manager runtime collaborator boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime collaborator guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up`.
-- `websocket-manager.service.ts` now routes auth and subscription payloads through a single open-socket boundary helper and no longer attempts private-topic subscription after authentication retries are exhausted.
-- `websocket-manager.functional.test.ts` now locks the auth-ack subscription path to open-socket state instead of assuming every auth acknowledgement can write to the transport.
-- `websocket-manager.error-handling.test.ts` now covers the auth failure lifecycle directly, proving graceful degradation happens without an unsafe fallback subscribe.
+- 2026-05-31: completed `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/public-websocket.functional.test.ts public websocket runtime collaborator guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/public-websocket.error-handling.test.ts public websocket runtime error guardrail follow-up`.
+- `public-websocket.service.ts` now funnels subscription and ping payloads through a single open-socket transport helper and clears the socket eagerly during disconnect cleanup.
+- `public-websocket.functional.test.ts` now proves failed subscription sends do not retain stale subscribed topics on the service state.
+- `public-websocket.error-handling.test.ts` now covers graceful degradation for subscription/ping send failures and verifies disconnect cleanup still leaves the service disconnected after a close error.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.functional.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts` (3 suites, 37 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.functional.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/public-websocket-state.utils.test.ts` (3 suites, 19 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (6 suites, 57 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up`.
-- Keep the next batch on the public-websocket stream before returning to position-monitor, websocket handler, and entrypoint guardrails.
+- Start with `packages/core/src/services/position-monitor.service.ts position monitor runtime collaborator boundary follow-up`.
+- Keep the next batch on the position-monitor stream before returning to websocket handler, initializer, and websocket-authentication follow-ups.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

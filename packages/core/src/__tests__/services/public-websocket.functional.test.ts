@@ -26,7 +26,12 @@ describe('PublicWebSocketService functional behavior', () => {
       close: jest.fn(),
     });
 
-    (context.service as unknown as { subscribe: () => void }).subscribe();
+    const serviceState = context.service as unknown as {
+      subscribe: () => void;
+      subscribedTopics: Set<string>;
+    };
+
+    serviceState.subscribe();
 
     expect(send).toHaveBeenCalledWith(
       JSON.stringify({
@@ -40,6 +45,31 @@ describe('PublicWebSocketService functional behavior', () => {
         ],
       }),
     );
+    expect(Array.from(serviceState.subscribedTopics)).toEqual([
+      'kline.1.XRPUSDT',
+      'kline.5.XRPUSDT',
+      'kline.15.XRPUSDT',
+      'orderbook.50.XRPUSDT',
+      'publicTrade.XRPUSDT',
+    ]);
+  });
+
+  it('does not retain subscribed topics when subscription transport send fails', () => {
+    const send = jest.fn(() => {
+      throw new Error('send failed');
+    });
+    setPublicWebSocketSocket(context.service, {
+      readyState: WebSocket.OPEN,
+      send,
+      close: jest.fn(),
+    });
+    const serviceState = context.service as unknown as {
+      subscribe: () => void;
+      subscribedTopics: Set<string>;
+    };
+
+    expect(() => serviceState.subscribe()).not.toThrow();
+    expect(serviceState.subscribedTopics.size).toBe(0);
   });
 
   it('emits candleClosed for confirmed main-symbol candles', () => {

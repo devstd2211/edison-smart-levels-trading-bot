@@ -115,11 +115,12 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
   disconnect(): void {
     this.shouldReconnect = false;
     this.stopPing();
+    const socket = this.ws;
+    this.ws = null;
 
     try {
-      if (this.ws !== null) {
-        this.ws.close();
-        this.ws = null;
+      if (socket !== null) {
+        socket.close();
       }
 
       this.logger.info('Public WebSocket disconnected');
@@ -152,7 +153,7 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
   }
 
   private subscribe(): void {
-    if (this.ws === null || this.ws.readyState !== WebSocket.OPEN) {
+    if (!this.hasOpenSocket()) {
       return;
     }
 
@@ -161,7 +162,6 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
       timeframes: this.timeframeProvider.getAllTimeframes(),
       btcConfirmation: this.btcConfirmation,
     });
-    this.subscribedTopics = new Set(topics);
 
     if (this.btcConfirmation?.enabled) {
       const btcSymbol = this.btcConfirmation.symbol || 'BTCUSDT';
@@ -172,12 +172,21 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
         btcTopic,
         btcSymbol,
         interval: this.btcConfirmation.timeframe || '1',
-      });
+        });
     }
 
-    this.ws.send(
-      JSON.stringify(buildPublicWebSocketSubscriptionMessage(topics)),
+    const sent = this.sendSocketPayload(
+      buildPublicWebSocketSubscriptionMessage(topics),
+      'PublicWebSocketService.subscribe',
+      RecoveryStrategy.GRACEFUL_DEGRADE,
     );
+
+    if (!sent) {
+      this.subscribedTopics.clear();
+      return;
+    }
+
+    this.subscribedTopics = new Set(topics);
     this.logger.info(
       'Subscribed to timeframes, orderbook, public trades' +
         (this.btcConfirmation?.enabled ? ', and BTC' : ''),
@@ -377,9 +386,11 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
     this.stopPing();
 
     this.pingInterval = setInterval(() => {
-      if (this.ws !== null && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ op: 'ping' }));
-      }
+      this.sendSocketPayload(
+        { op: 'ping' },
+        'PublicWebSocketService.startPing',
+        RecoveryStrategy.GRACEFUL_DEGRADE,
+      );
     }, PING_INTERVAL_MS);
   }
 
@@ -459,5 +470,44 @@ export class PublicWebSocketService extends EventEmitter implements ILifecycle {
       close: candle.close,
       totalCandles,
     });
+  }
+
+  private hasOpenSocket(): boolean {
+    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  private sendSocketPayload(
+    payload: unknown,
+    context: string,
+    strategy: RecoveryStrategy,
+  ): boolean {
+    const socket = this.ws;
+
+    if (socket === null || socket.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+
+    try {
+      socket.send(JSON.stringify(payload));
+      return true;
+    } catch (error) {
+      const sendError = error instanceof Error ? error : new Error(String(error));
+      this.logger.error('Public WebSocket transport send failed', {
+        context,
+        error: sendError.message,
+      });
+
+      if (this.errorHandler) {
+        this.errorHandler.handle(sendError, {
+          strategy,
+          context,
+          logger: this.logger,
+        });
+      } else {
+        this.emit('error', sendError);
+      }
+
+      return false;
+    }
   }
 }

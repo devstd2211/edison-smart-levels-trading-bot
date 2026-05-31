@@ -19,9 +19,6 @@ Legend:
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/public-websocket.functional.test.ts public websocket runtime collaborator guardrail follow-up`
-- [ ] `packages/core/src/__tests__/services/public-websocket.error-handling.test.ts public websocket runtime error guardrail follow-up`
 - [ ] `packages/core/src/services/position-monitor.service.ts position monitor runtime collaborator boundary follow-up`
 - [ ] `packages/core/src/__tests__/services/position-monitor.functional.test.ts position monitor runtime collaborator guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/position-monitor.error-handling.test.ts position monitor runtime error guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/services/handlers/websocket-event-decoding.utils.ts websocket event decoding runtime boundary follow-up`
 - [ ] `packages/core/src/__tests__/services/event-handlers.error-handling.test.ts orchestrator event handlers runtime error guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts initializer runtime error guardrail follow-up`
+- [ ] `packages/core/src/services/websocket-authentication.service.ts websocket authentication runtime collaborator boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/websocket-authentication.service.test.ts websocket authentication runtime collaborator guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts websocket authentication runtime error guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/public-websocket.functional.test.ts public websocket runtime collaborator guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/public-websocket.error-handling.test.ts public websocket runtime error guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/websocket-manager.service.ts websocket manager runtime collaborator boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime collaborator guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up` | prod: yes | tests: yes | func: yes
