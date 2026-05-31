@@ -598,11 +598,12 @@ describe('package script boundary', () => {
     );
     expect(vectorDbEntrypointSource).toContain('export async function runVectorDbMain');
     expect(vectorDbEntrypointSource).toContain('await cliRunner(args);');
-    expect(vectorDbCliSource).toContain('export function createVectorDbRuntimePaths');
+    expect(vectorDbCliSource).toContain("from './vector-db-runtime-paths';");
     expect(vectorDbCliSource).toContain('export function createVectorDbCliRuntime');
     expect(vectorDbCliSource).toContain('export function createVectorDbCommandRuntime');
     expect(vectorDbCliSource).toContain('export async function executeVectorDbCommand');
     expect(vectorDbCliSource).toContain('export async function handleVectorDbCommand');
+    expect(vectorDbCliSource).not.toContain('export function createVectorDbRuntimePaths');
     expect(vectorDbCliSource).toContain('export function parseVectorDbCommand');
     expect(vectorDbCliSource).not.toContain('process.argv.slice(2);');
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(

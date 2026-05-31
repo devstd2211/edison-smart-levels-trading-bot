@@ -6,15 +6,12 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
 import { ICONS } from '../cli/cli-runtime';
+import {
+  resolveVectorDbRuntimePaths,
+  type VectorDbRuntimePaths,
+} from './vector-db-runtime-paths';
 import { VectorDatabaseService } from './vector-db.service';
-
-export type VectorDbRuntimePaths = {
-  projectPath: string;
-  dbPath: string;
-  indexPath: string;
-};
 
 type VectorDbConsole = Pick<Console, 'error' | 'log'>;
 
@@ -150,16 +147,6 @@ function readRequiredParam(params: string[], errorMessage: string): string {
   return value;
 }
 
-export function createVectorDbRuntimePaths(
-  projectPath: string = process.cwd(),
-): VectorDbRuntimePaths {
-  return {
-    projectPath,
-    dbPath: path.join(projectPath, 'vector-db.sqlite'),
-    indexPath: path.join(projectPath, '.vector-db/index.json'),
-  };
-}
-
 export function createVectorDbService(
   paths: VectorDbRuntimePaths,
   serviceFactory: (paths: VectorDbRuntimePaths) => VectorDbService = (runtimePaths) =>
@@ -241,7 +228,7 @@ export function createVectorDbCliRuntime(
   dependencies: RunVectorDbCliDependencies = {},
 ): VectorDbCliRuntime {
   const { output, processRef } = resolveVectorDbRuntimeDependencies(dependencies);
-  const runtimePaths = createVectorDbRuntimePaths(dependencies.projectPath);
+  const runtimePaths = resolveVectorDbRuntimePaths(dependencies.projectPath);
   const service =
     dependencies.service ??
     createVectorDbService(runtimePaths, dependencies.serviceFactory);

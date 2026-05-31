@@ -1,21 +1,21 @@
 import * as path from 'path';
 import {
   createVectorDbCommandRuntime,
-  createVectorDbRuntimePaths,
   createVectorDbCliRuntime,
   executeVectorDbCommand,
   handleVectorDbCommand,
   parseVectorDbCommand,
   runVectorDbCli,
 } from '../../vector-db/cli';
+import { resolveVectorDbRuntimePaths } from '../../vector-db/vector-db-runtime-paths';
 import { runVectorDbMain } from '../../vector-db';
 
 describe('vector-db entrypoint helpers', () => {
-  test('createVectorDbRuntimePaths resolves the db and index files from the project root', () => {
-    expect(createVectorDbRuntimePaths('D:/repo')).toEqual({
-      projectPath: 'D:/repo',
-      dbPath: path.join('D:/repo', 'vector-db.sqlite'),
-      indexPath: path.join('D:/repo', '.vector-db/index.json'),
+  test('vector-db CLI runtime reuses the shared runtime path resolver contract', () => {
+    expect(resolveVectorDbRuntimePaths('D:/repo')).toEqual({
+      projectPath: path.resolve('D:/repo'),
+      dbPath: path.join(path.resolve('D:/repo'), 'vector-db.sqlite'),
+      indexPath: path.join(path.resolve('D:/repo'), '.vector-db/index.json'),
     });
   });
 
@@ -110,7 +110,7 @@ describe('vector-db entrypoint helpers', () => {
     );
   });
 
-  test('createVectorDbCliRuntime creates the service from the resolved runtime paths', () => {
+  test('createVectorDbCliRuntime creates the service from the shared resolved runtime paths', () => {
     const output = {
       log: jest.fn(),
       error: jest.fn(),
@@ -136,9 +136,9 @@ describe('vector-db entrypoint helpers', () => {
     });
 
     expect(serviceFactory).toHaveBeenCalledWith({
-      projectPath: 'D:/repo',
-      dbPath: path.join('D:/repo', 'vector-db.sqlite'),
-      indexPath: path.join('D:/repo', '.vector-db/index.json'),
+      projectPath: path.resolve('D:/repo'),
+      dbPath: path.join(path.resolve('D:/repo'), 'vector-db.sqlite'),
+      indexPath: path.join(path.resolve('D:/repo'), '.vector-db/index.json'),
     });
     expect(runtime.output).toBe(output);
     expect(runtime.service).toBe(service);

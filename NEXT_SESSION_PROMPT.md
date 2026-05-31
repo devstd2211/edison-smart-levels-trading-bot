@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/vector-db/cli.ts standalone vector-db runtime helper boundary follow-up`
-2. `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up`
-3. `packages/core/src/vector-db/vector-db-runtime-paths.ts standalone vector-db runtime paths boundary follow-up`
+1. `packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts standalone vector-db runtime paths guardrail follow-up`
+2. `packages/core/src/vector-db/vector-db-index-storage.ts standalone vector-db index storage boundary follow-up`
+3. `packages/core/src/vector-db/vector-db-service-index.ts standalone vector-db persisted index runtime boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,133 +53,13 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-05-31: completed `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/collect-data-entrypoint-runtime.ts standalone collect-data runtime helper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/test-balance-entrypoint-runtime.ts standalone test-balance runtime helper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone test-balance wrapper guardrail follow-up`.
-- `collect-data.entrypoint.ts` and `test-balance.entrypoint.ts` now stay as thin compatibility barrels over dedicated runtime helper modules, so standalone helper imports no longer carry concrete workflow orchestration ownership.
-- `collect-data-entrypoint-runtime.ts` and `test-balance-entrypoint-runtime.ts` now own config/env loading, service wiring, and workflow execution while preserving the previous helper API through re-exports.
-- The collect-data, test-balance, and package boundary guardrails now prove the thin barrels keep their stable helper surface and the runtime files keep the orchestration imports.
-- 2026-05-31: completed `packages/core/src/collect-data.ts standalone collect-data compatibility wrapper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/test-balance.ts standalone test-balance compatibility wrapper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/vector-db.ts standalone vector-db compatibility wrapper boundary follow-up`.
-- `standalone-entrypoint-runtime.ts` now owns the shared module-aware wrapper runner through `createStandaloneEntrypointWrapperRunners(...)`, so the compatibility wrappers no longer branch locally between module-bound and generic direct-execution helpers.
-- The collect-data, test-balance, and vector-db compatibility wrappers now keep their public `main`, `run...Entrypoint`, and `run...EntrypointIfMain` surfaces while routing the default `require.main` ownership through the shared wrapper runner contract.
-- The standalone runtime, wrapper, and package boundary guardrails now prove imports stay side-effect free, explicit override entrypoints still work, and the compatibility wrappers no longer duplicate `currentModule === module` handoff logic.
-- 2026-05-30: completed `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up`.
-- 2026-05-30: completed `packages/core/src/standalone-script-console.ts standalone script console boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone script console guardrail follow-up`.
-- `standalone-script-console.ts` now owns the bounded standalone message-block presentation through `printStandaloneScriptMessageBlock(...)`, so highlighted console sections reuse the shared divider format instead of rebuilding banner-style output inline.
-- The shared standalone console contract now narrows to log-only output ownership, while footer formatting stays behind the shared line printer instead of exported line-builder helpers.
-- The package-script and standalone console guardrails now prove the standalone wrappers keep the zero-argument module-bound `if-main` handoff and that `test-balance.entrypoint.ts` routes highlighted balance output through the shared standalone presentation helper.
-- 2026-05-30: completed `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone script wrapper guardrail follow-up`.
-- `standalone-entrypoint-runtime.ts` now owns the bound `currentModule` direct-execution seam through `createStandaloneEntrypointModuleRunners(...)`, so collect-data, test-balance, and vector-db wrappers no longer reassemble `module` plus the shared `require.main` resolver inline.
-- The standalone wrappers keep their public helper signatures, but their default `if-main` path now routes through the shared module-bound helper instead of rebuilding direct-execution ownership locally.
-- The standalone runtime and wrapper guardrails now prove the shared helper captures `currentModule` once, preserves override entrypoints, and keeps wrapper imports from auto-running through duplicated orchestration.
-- 2026-05-30: completed `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup helper ownership boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts cli startup runtime handoff guardrail follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts cli runtime handoff guardrail follow-up`.
-- `cli-entrypoint-runtime.ts` now owns the concrete CLI startup composition, dependency defaults, and direct-execution helpers, so the dedicated runtime helper boundary keeps the actual bot/web/runtime handoff logic in one place.
-- `cli/index.ts` is now a thin compatibility barrel over that runtime helper surface and only preserves the package entrypoint auto-run check.
-- The CLI and package-script guardrails now prove the thin barrel no longer re-materializes runtime bindings while the runtime helper still exposes the explicit startup phases and standalone if-main handoff.
-- 2026-05-30: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`.
-- `web-entrypoint-runtime.ts` now keeps the concrete `WebServerBotInstanceAdapter` internal to the runtime helper and publishes the narrower `WebServerBotPort` contract instead, so the explicit `{ botAdapter, webApiAdapter }` handoff no longer exposes adapter implementation ownership.
-- `web/index.ts` stays a thin compatibility barrel while re-exporting the new `WebServerBotPort` type from the dedicated runtime helper instead of widening back to the concrete adapter class.
-- The web entrypoint guardrails now prove the lower-level runtime source publishes the narrow bot port contract and keeps the concrete adapter class non-exported.
-- 2026-05-30: completed `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`.
-- 2026-05-30: completed `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`.
-- `core-entrypoint-runtime.ts` now owns the concrete core helper implementations end-to-end, including raw bot/runtime creation, the shared `loadBotRuntimeConfig(loader?)` seam, and configured helper orchestration, so `packages/core/src/core/index.ts` can stay a thin public barrel instead of mixing boundary exports with runtime assembly.
-- `legacy-entrypoint-runtime.ts` now owns the shared CLI `main` handoff together with the legacy export-name/runtime runner contract, which keeps the compatibility wrapper on `packages/core/src/index.ts` from importing the dedicated CLI entrypoint directly.
-- The core and legacy entrypoint guardrails now prove both barrels re-export their runtime helpers directly, preserving the explicit `{ bot, webApiAdapter }` handoff while narrowing ownership of CLI/config orchestration to the dedicated runtime files.
-- 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`.
-- 2026-05-29: completed `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up`.
-- 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime source consumer handoff follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured runtime handoff guardrail follow-up`.
-- `create-runtime-bundle.ts` now owns the public read-only web API handoff through `createBotRuntimeReadApi(...)`, so grouped `readAdapters.webApiAdapter` is the single adapter source across bundle/runtime projections.
-- `createTradingBotRuntimeFromFactoryRuntime(...)` now materializes the public `{ bot, webApiAdapter }` pair from grouped read adapters rather than the duplicated bundle field, and `BotFactory` routes runtime/bundle materialization through the same factory-runtime owner helpers.
-- The core and legacy entrypoint guardrails now prove those compatibility surfaces preserve the explicit runtime handoff without rediscovering the adapter through bot internals or widening back to `runtimeSource`.
-- 2026-05-29: completed `packages/core/src/services/runtime-service-adapters.ts runtime dependency adapter boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/trading-bot.lifecycle.test.ts trading bot lifecycle guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts websocket handler error guardrail follow-up`.
-- `runtime-service-adapters.ts` now materializes the final grouped `readAdapters` shell directly inside runtime dependency parts, so the internal `webApiReadServices` staging container no longer crosses the parts-to-dependencies seam.
-- `TradingBot` now keeps critical-error hooks, dashboard listeners, and runtime hook readiness under one lifecycle-state owner, and the lifecycle guardrail now proves failed startup leaves no dangling event listeners behind.
-- `WebSocketEventHandlerManager` now routes invalid candle, orderbook, and trade payload recovery through one shared SKIP helper, and the websocket error guardrails now assert those invalid public events are rejected before runtime consumers see them.
-- 2026-05-29: completed `packages/core/src/__tests__/bot-factory.test.ts runtime bundle handoff guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/core/index.ts programmatic runtime handoff boundary follow-up`.
-- 2026-05-29: completed `README.md and ARCHITECTURE_QUICK_START.md runtime boundary docs follow-up`.
-- `BotFactory` now routes both `createRuntime(...)` and `createBotRuntimeBundle(...)` through one shared factory-runtime seam, so bundle assembly and public bot/runtime materialization start from the same ownership boundary.
-- `@edison/core/core` now projects programmatic runtime creation onto the explicit `{ bot, webApiAdapter }` handoff, which keeps the broader `runtimeSource` contract local to the factory seam instead of the public programmatic entrypoint.
-- README and architecture docs now document that narrowed handoff explicitly, and the entrypoint guardrails prove the legacy wrapper still re-exports the runtime helpers without re-exposing the factory runtime source.
-- 2026-05-29: completed `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts runtime harness factory boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`.
-- `packages/core/src/interfaces/IRuntimeContracts.ts` now defines the canonical `IBotRuntimeBundle`, `ITradingBotFactoryRuntime`, and `ITradingBotRuntime` shells, and `interfaces/index.ts` re-exports them for downstream consumers.
-- `createTradingBotRuntime(...)` now materializes the public bot/runtime pair through `createTradingBotRuntimeFromFactoryRuntime(...)`, so factory handoff and bot handoff reuse one runtime seam.
-- `service-lifecycle-test.utils.ts` now keeps factory-runtime and bot-runtime harness ownership separate, and the direct trading-bot/web-entrypoint guardrails consume the explicit bot/runtime pair instead of the factory bundle harness.
-- 2026-05-29: completed `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up`.
-- `bot-service-state.ts` now owns the explicit projection from mutable builder state into the public `IBotFactoryRuntimeSource`, so bot-factory callers no longer receive bootstrap-only fields such as `telegram`, `timeService`, or repository internals on the runtime shell.
-- `BotFactory.createWithValidation(...)` now reuses that same projection in both the normal and override-fallback paths, keeping runtime source ownership consistent even when DI overrides fail.
-- The websocket functional guardrail now proves the lifecycle event-handler shell stays narrowed to websocket collaborators and does not leak initializer-only exchange, journal, or web API ownership.
-- 2026-05-29: completed `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime adapter functional guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/services/bot-initializer.functional.test.ts initializer runtime functional guardrail follow-up`.
-- `ITradingBotRuntimeDependencies` now groups collaborator ownership into `lifecycleDependencies` and `readAdapters`, so `TradingBot` consumes explicit lifecycle/read shells instead of a flat runtime dependency bag.
-- `runtime-service-adapters.ts` and `create-runtime-bundle.ts` now preserve that grouped contract from runtime dependency parts through bundle handoff, while keeping the shared web API adapter cached once.
-- `BotInitializer` functional coverage now proves the grouped runtime dependency shell still swaps monitoring reads onto a factory-created exchange.
-- 2026-05-29: completed `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`.
-- `BotInitializer` now skips optional monitoring/resilience stage startup when the narrowed runtime shell only carries empty service placeholders, which keeps optional lifecycle ownership local to actual lifecycle-backed collaborators.
-- `WebSocketEventHandlerManager.registerAllHandlers()` no longer requires a `TradingBot` collaborator, and `TradingBot` now routes runtime handler registration through a zero-argument lifecycle seam.
-- 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`.
-- The runtime factory boundary now reuses a shared `createTradingBotFactoryRuntime(...)` handoff so `runtimeSource` and `runtimeBundle` stay assembled in one place before `TradingBot` construction.
-- `create-runtime-bundle.ts` now materializes the final bundle from preassembled runtime dependencies, and `BotFactory.createBotRuntimeBundle(...)` now reuses that same shared handoff instead of rebuilding the bundle shell manually.
-- 2026-05-28: completed `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`.
-- 2026-05-28: completed `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`.
-- 2026-05-28: completed `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`.
-- 2026-05-28: completed `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up`.
-- The websocket runtime contract now reuses `coreServices.logger` instead of flattening logger ownership, keeping the grouped runtime boundary consistent across TradingBot, BotInitializer, and WebSocketEventHandlerManager.
-- Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
+- 2026-05-31: completed `packages/core/src/vector-db/cli.ts standalone vector-db runtime helper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/vector-db/vector-db-runtime-paths.ts standalone vector-db runtime paths boundary follow-up`.
+- `vector-db/cli.ts` no longer owns a duplicate runtime-path contract or inline path assembly; it now consumes `VectorDbRuntimePaths` and `resolveVectorDbRuntimePaths(...)` from the dedicated runtime-path module.
+- The vector-db wrapper and package-boundary guardrails now prove runtime path ownership stays behind `vector-db-runtime-paths.ts` instead of drifting back into the CLI compatibility surface.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/core/collect-data.entrypoint.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/core/vector-db.entrypoint.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`
-- `npm test -- --runInBand packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/collect-data.entrypoint.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
-- `npm test -- --runInBand packages/core/src/__tests__/core/standalone-script-console.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
-- `npm test -- --runInBand packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
-- `npm test -- --runInBand packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
-- `npm test -- --runInBand packages/core/src/__tests__/web/web-entrypoint.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
-- `npm test -- --runInBand packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
-- `npm test -- --runInBand packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
-- `npm test -- --runInBand packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.functional.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
-- `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts`
-- `npm test -- --runInBand packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
-- `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/helpers/service-lifecycle-test.utils.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/web/web-entrypoint.functional.test.ts`
-- `npm test -- --runInBand packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
-- `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
