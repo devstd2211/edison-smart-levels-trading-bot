@@ -1,11 +1,15 @@
-import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
 
+type OrchestratorBtcLinkState = Pick<
+  BotServiceState,
+  'logger' | 'tradingOrchestrator' | 'publicWebSocket' | 'btcCandles1m'
+>;
+
 export const linkBtcStores = (
-  state: BotServiceState,
-  config: Config,
+  state: OrchestratorBtcLinkState,
+  btcConfirmationEnabled: boolean,
 ): void => {
-  if (!config.btcConfirmation?.enabled) {
+  if (!btcConfirmationEnabled) {
     return;
   }
 

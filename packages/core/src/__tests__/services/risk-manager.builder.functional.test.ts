@@ -1,10 +1,13 @@
 import type { BotServiceState } from '../../services/bot-services.builder';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { createRiskManagerConfig } from '../../services/factories/builders/risk-manager-config.builder';
-import { initializeRiskManager } from '../../services/factories/builders/risk-manager-service.builder';
 import {
+  createRiskManagerDependencies,
+  initializeRiskManager,
+} from '../../services/factories/builders/risk-manager-service.builder';
+import {
+  createTrackedBotFactoryBuilderState,
   createRiskManagerBuilderRuntimeDefaultConfig,
-  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesState,
@@ -59,8 +62,26 @@ describe('Risk manager builder boundaries', () => {
     });
   });
 
+  test('creates risk manager dependencies outside the composition root body', () => {
+    const logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+    const state = {
+      logger,
+      errorHandler: new ErrorHandler(logger as never),
+    } as unknown as BotServiceState;
+
+    expect(createRiskManagerDependencies(state)).toEqual({
+      logger,
+      errorHandler: state.errorHandler,
+    });
+  });
+
   test('factory path reuses the extracted risk manager across orchestrator and grouped risk services', () => {
-    const services = createTrackedBotFactoryRuntimeSource(
+    const services = createTrackedBotFactoryBuilderState(
       trackedServices,
       createRiskManagerBuilderRuntimeDefaultConfig(),
     ) as BotServiceState;

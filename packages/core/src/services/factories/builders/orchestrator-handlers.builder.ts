@@ -7,19 +7,54 @@ import { createTradingOrchestratorConfig } from './orchestrator-config.builder';
 import { initializeOrchestratorEventHandlers } from './orchestrator-event-handlers.builder';
 import { linkBtcStores } from './orchestrator-btc.builder';
 
+type OrchestratorHandlersBuilderState = Pick<
+  BotServiceState,
+  | 'logger'
+  | 'candleProvider'
+  | 'timeframeProvider'
+  | 'bybitService'
+  | 'positionManager'
+  | 'telegram'
+  | 'riskManager'
+  | 'positionExitingService'
+  | 'indicatorPreCalc'
+  | 'publicWebSocket'
+  | 'webSocketManager'
+  | 'journal'
+  | 'btcCandles1m'
+  | 'tradingOrchestrator'
+  | 'positionEventHandler'
+  | 'webSocketEventHandler'
+  | 'strategyOrchestrator'
+>;
+
+export type OrchestratorHandlersConfig = {
+  orchestratorConfig: ReturnType<typeof createTradingOrchestratorConfig>;
+  btcConfirmationEnabled: boolean;
+  multiStrategyEnabled: boolean;
+};
+
+export const createOrchestratorHandlersConfig = (
+  config: Config,
+): OrchestratorHandlersConfig => ({
+  orchestratorConfig: createTradingOrchestratorConfig(config),
+  btcConfirmationEnabled: config.btcConfirmation?.enabled === true,
+  multiStrategyEnabled: config.multiStrategy?.enabled === true,
+});
+
 export const initializeOrchestratorAndHandlers = (
-  state: BotServiceState,
+  state: OrchestratorHandlersBuilderState,
   config: Config,
 ): void => {
-  const orchestratorConfig = createTradingOrchestratorConfig(config);
+  const orchestratorHandlersConfig = createOrchestratorHandlersConfig(config);
 
   state.logger.info('[Orchestrator] Config prepared', {
-    hasBtcConfirmation: !!orchestratorConfig.btcConfirmation,
-    btcEnabled: orchestratorConfig.btcConfirmation?.enabled,
+    hasBtcConfirmation: !!orchestratorHandlersConfig.orchestratorConfig.btcConfirmation,
+    btcEnabled: orchestratorHandlersConfig.orchestratorConfig.btcConfirmation?.enabled,
   });
 
   state.tradingOrchestrator = new TradingOrchestrator(
-    orchestratorConfig,
+    orchestratorHandlersConfig.orchestratorConfig,
     state.candleProvider,
     state.timeframeProvider,
     state.bybitService,
@@ -33,13 +68,7 @@ export const initializeOrchestratorAndHandlers = (
   state.tradingOrchestrator.setIndicatorPreCalculationService(state.indicatorPreCalc);
   state.logger.info('[Orchestrator] Pre-calculation service linked to TradingOrchestrator');
 
-  if (config.btcConfirmation?.enabled) {
-    state.tradingOrchestrator.setBtcCandlesStore(state);
-    state.logger.info('[Orchestrator] BTC candles store linked to TradingOrchestrator');
-  }
-
-  const multiStrategyMode = config.multiStrategy?.enabled || false;
-  if (multiStrategyMode) {
+  if (orchestratorHandlersConfig.multiStrategyEnabled) {
     try {
       const strategyRegistry = new StrategyRegistryService();
       state.logger.warn('[StrategyOrchestrator] Not initialized: missing factory/state manager');
@@ -53,5 +82,5 @@ export const initializeOrchestratorAndHandlers = (
   }
 
   initializeOrchestratorEventHandlers(state);
-  linkBtcStores(state, config);
+  linkBtcStores(state, orchestratorHandlersConfig.btcConfirmationEnabled);
 };

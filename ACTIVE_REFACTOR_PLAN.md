@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/websocket-monitoring.builder.ts websocket monitoring runtime builder boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/position-management.builder.ts position-management runtime builder boundary follow-up`.
-- `public-market-data.builder.ts` now builds websocket/orderbook services from an explicit exchange-plus-btc-confirmation slice, and the new functional suite asserts that narrowed seam directly.
-- `websocket-monitoring.builder.ts` now composes websocket manager, public market-data, and position monitor wiring from a dedicated runtime config slice instead of threading the full config object across the whole boundary.
-- `position-management.builder.ts` now centralizes its runtime config ownership before constructing lifecycle, exit, and risk-monitor services, so the builder no longer mixes live-trading override reads inline with service construction.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/orchestrator-handlers.builder.ts orchestrator handlers runtime builder boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/risk-manager-service.builder.ts risk-manager runtime builder boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/core-infrastructure.builder.ts core infrastructure runtime builder dependency boundary follow-up`.
+- `orchestrator-handlers.builder.ts` now builds around an explicit handler config slice and a narrowed event/BTC-link seam, removing the duplicate orchestrator BTC store wiring while keeping handler construction behavior intact.
+- `risk-manager-service.builder.ts` now owns an explicit dependency slice for logger plus error-handler handoff, so the builder no longer reaches through the full mutable bot state to construct `RiskManager`.
+- `core-infrastructure.builder.ts` now normalizes dashboard, logging, analyzer, strategy-meta, and indicator inputs through a dedicated infrastructure config slice, and the new functional suite covers both direct initialization and factory-path wiring.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/public-market-data.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/position-management.builder.functional.test.ts` (3 suites, 11 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts packages/core/src/__tests__/services/core-infrastructure.builder.functional.test.ts` (3 suites, 8 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/factories/builders/orchestrator-handlers.builder.ts orchestrator handlers runtime builder boundary follow-up`.
-- Keep the next batch on the runtime builder stream so orchestrator, risk-manager, and core-infrastructure seams converge before circling back to the remaining entrypoint guardrails.
+- Start with `packages/core/src/services/factories/builders/exchange-services.builder.ts exchange runtime builder dependency boundary follow-up`.
+- Keep the next batch on the runtime builder and websocket-support stream so exchange, journal-market-data, and websocket-manager seams converge before circling back to the remaining entrypoint guardrails.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

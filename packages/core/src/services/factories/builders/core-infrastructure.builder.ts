@@ -16,28 +16,64 @@ import type {
 } from './bot-services.types';
 import { ICONS } from '../../../cli/cli-runtime';
 
+type CoreInfrastructureState = Pick<
+  BotServiceState,
+  | 'dashboard'
+  | 'logger'
+  | 'errorHandler'
+  | 'eventBus'
+  | 'metrics'
+  | 'positionRepository'
+  | 'journalRepository'
+  | 'marketDataRepository'
+>;
+
+export type CoreInfrastructureConfig = {
+  logging: Config['logging'];
+  dashboard: Required<Pick<DashboardConfig, 'enabled' | 'updateInterval' | 'theme'>>;
+  strategyMeta?: StrategyMeta;
+  analyzers: AnalyzerConfig[];
+  indicators?: Config['indicators'];
+};
+
+export const createCoreInfrastructureConfig = (
+  config: Config,
+): CoreInfrastructureConfig => {
+  const dashboardConfig = (config as Partial<{ dashboard: DashboardConfig }>).dashboard || {};
+
+  return {
+    logging: config.logging,
+    dashboard: {
+      enabled: dashboardConfig.enabled === true,
+      updateInterval: dashboardConfig.updateInterval || 1000,
+      theme: dashboardConfig.theme === 'light' ? 'light' : 'dark',
+    },
+    strategyMeta: (config as Partial<{ meta: StrategyMeta }>).meta,
+    analyzers: Array.isArray(config.analyzers)
+      ? (config.analyzers as AnalyzerConfig[])
+      : [],
+    indicators: config.indicators,
+  };
+};
+
 export const initializeCoreInfrastructure = (
-  state: BotServiceState,
+  state: CoreInfrastructureState,
   config: Config,
 ): void => {
-  // 0. Initialize dashboard FIRST to capture early logs
-  const dashboardConfig = (config as Partial<{ dashboard: DashboardConfig }>).dashboard || {};
-  const dashboardEnabled = dashboardConfig.enabled === true;
+  const infrastructureConfig = createCoreInfrastructureConfig(config);
 
-  const dashboardTheme: 'dark' | 'light' = dashboardConfig.theme === 'light' ? 'light' : 'dark';
   state.dashboard = new ConsoleDashboardService({
-    enabled: dashboardEnabled,
-    updateInterval: dashboardConfig.updateInterval || 1000,
-    theme: dashboardTheme,
+    enabled: infrastructureConfig.dashboard.enabled,
+    updateInterval: infrastructureConfig.dashboard.updateInterval,
+    theme: infrastructureConfig.dashboard.theme,
   });
-  if (dashboardEnabled) {
+  if (infrastructureConfig.dashboard.enabled) {
     console.log(`${ICONS.chart} Console Dashboard ENABLED`);
   }
 
-  // 1. Initialize logger
   state.logger = new LoggerService(
-    config.logging.level,
-    config.logging.logDir,
+    infrastructureConfig.logging.level,
+    infrastructureConfig.logging.logDir,
     true,
   );
 
@@ -46,8 +82,7 @@ export const initializeCoreInfrastructure = (
     state.logger.info(`${ICONS.note} Log file`, { path: logFilePath });
   }
 
-  // Log loaded strategy file
-  const meta = (config as Partial<{ meta: StrategyMeta }>).meta;
+  const meta = infrastructureConfig.strategyMeta;
   if (meta?.strategy) {
     const strategyFile = meta.strategyFile || `strategies/json/${meta.strategy}.strategy.json`;
     state.logger.info(`${ICONS.note} Strategy loaded`, {
@@ -57,16 +92,12 @@ export const initializeCoreInfrastructure = (
     });
   }
 
-  // CRITICAL: Disable console output when dashboard is enabled
-  if (dashboardEnabled) {
+  if (infrastructureConfig.dashboard.enabled) {
     state.logger.setConsoleOutputEnabled(false);
     state.logger.info(`${ICONS.chart} Console output disabled - logs to file only (dashboard mode active)`);
   }
 
-  // Log strategy analyzer information
-  const analyzerList = Array.isArray(config.analyzers)
-    ? (config.analyzers as AnalyzerConfig[])
-    : [];
+  const analyzerList = infrastructureConfig.analyzers;
   if (analyzerList.length > 0) {
     const enabledAnalyzers = analyzerList.filter((a) => a.enabled);
     state.logger.info(`${ICONS.chart} Strategy Analyzers loaded: ${enabledAnalyzers.length}/${analyzerList.length} enabled`, {
@@ -106,14 +137,13 @@ export const initializeCoreInfrastructure = (
     }
   }
 
-  // Log indicator configuration
-  if (config.indicators) {
-    const indicatorNames = Object.keys(config.indicators);
+  if (infrastructureConfig.indicators) {
+    const indicatorNames = Object.keys(infrastructureConfig.indicators);
     state.logger.info(`${ICONS.chart} Indicators configured: ${indicatorNames.length}`, {
       indicators: indicatorNames.join(', '),
     });
 
-    Object.entries(config.indicators).forEach(([name, cfg]) => {
+    Object.entries(infrastructureConfig.indicators).forEach(([name, cfg]) => {
       const details: string[] = [];
       const indCfg = cfg as IndicatorConfigParams;
       if (indCfg.period) details.push(`period=${indCfg.period}`);

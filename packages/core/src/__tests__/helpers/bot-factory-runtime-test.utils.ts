@@ -95,6 +95,33 @@ export function createRiskManagerBuilderRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
+export function createCoreInfrastructureBuilderDashboardEnabledConfig(): Config {
+  return {
+    ...createRuntimeDefaultLifecycleConfig(),
+    dashboard: {
+      enabled: true,
+      updateInterval: 2500,
+      theme: 'light',
+    },
+    meta: {
+      strategy: 'breakout',
+      strategyFile: 'strategies/json/breakout.strategy.json',
+      notes: 'builder boundary fixture',
+    },
+    analyzers: [
+      { name: 'trend', enabled: true, weight: 0.65, priority: 10 },
+      { name: 'volume', enabled: false, weight: 0.35, priority: 5 },
+    ],
+    indicators: {
+      rsiPeriod: 14,
+      slowEmaPeriod: 50,
+      fastEmaPeriod: 9,
+      zigzagDepth: 12,
+      atrPeriod: 14,
+    },
+  } as unknown as Config;
+}
+
 export function createGroupedServicesBuilderRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }

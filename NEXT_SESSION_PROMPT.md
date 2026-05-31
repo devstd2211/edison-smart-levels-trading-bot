@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/services/factories/builders/orchestrator-handlers.builder.ts orchestrator handlers runtime builder boundary follow-up`
-2. `packages/core/src/services/factories/builders/risk-manager-service.builder.ts risk-manager runtime builder boundary follow-up`
-3. `packages/core/src/services/factories/builders/core-infrastructure.builder.ts core infrastructure runtime builder dependency boundary follow-up`
+1. `packages/core/src/services/factories/builders/exchange-services.builder.ts exchange runtime builder dependency boundary follow-up`
+2. `packages/core/src/services/factories/builders/journal-market-data.builder.ts journal market-data runtime builder dependency boundary follow-up`
+3. `packages/core/src/services/factories/builders/websocket-manager-service.builder.ts websocket manager runtime builder dependency boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-05-31: completed `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/websocket-monitoring.builder.ts websocket monitoring runtime builder boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/position-management.builder.ts position-management runtime builder boundary follow-up`.
-- `public-market-data.builder.ts` now reads from an explicit exchange-plus-btc-confirmation slice and has dedicated functional coverage for its narrowed builder seam.
-- `websocket-monitoring.builder.ts` now composes websocket/public-market-data/position-monitor wiring through a dedicated runtime config slice instead of threading the full config object across the whole boundary.
-- `position-management.builder.ts` now centralizes runtime config ownership before constructing lifecycle, exit, and risk-monitor services so live-trading override reads no longer sit inline with service construction.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/orchestrator-handlers.builder.ts orchestrator handlers runtime builder boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/risk-manager-service.builder.ts risk-manager runtime builder boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/core-infrastructure.builder.ts core infrastructure runtime builder dependency boundary follow-up`.
+- `orchestrator-handlers.builder.ts` now flows through an explicit handler config slice and a narrowed BTC-link seam, removing duplicate orchestrator BTC store wiring while preserving handler setup behavior.
+- `risk-manager-service.builder.ts` now resolves logger plus error-handler ownership through an explicit dependency slice before constructing `RiskManager`.
+- `core-infrastructure.builder.ts` now reads dashboard, logging, analyzer, strategy-meta, and indicator inputs through a dedicated infrastructure config slice and has dedicated functional coverage for both direct initialization and builder-path wiring.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/services/public-market-data.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/position-management.builder.functional.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts packages/core/src/__tests__/services/core-infrastructure.builder.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`
