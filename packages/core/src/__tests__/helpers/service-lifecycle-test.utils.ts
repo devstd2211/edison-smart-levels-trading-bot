@@ -7,6 +7,7 @@ import {
 import { createBotRuntimeBundle, type BotRuntimeBundle } from '../../factories/create-runtime-bundle';
 import {
   createTradingBotFactoryRuntime,
+  createTradingBotRuntimeFromRuntimeSource,
   createTradingBotRuntimeFromFactoryRuntime,
   type TradingBotFactoryRuntime,
   type TradingBotRuntime,
@@ -28,6 +29,7 @@ export interface TrackedServiceState {
 
 export type TrackedLifecycleHarnessOverrides = {
   config?: Config;
+  runtimeSource?: IBotFactoryRuntimeSource;
   exchange?: IExchange;
   telegram?: NonNullable<BotFactoryOptions['telegram']>;
   options?: BotFactoryOptions;
@@ -422,6 +424,24 @@ export function createTrackedTradingBotHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedTradingBotHarness {
+  if (overrides.runtimeSource) {
+    const config = normalizeTrackedLifecycleConfig(overrides.config ?? createRuntimeDefaultLifecycleConfig());
+    const services = overrides.runtimeSource;
+    const runtimeBundle = createBotRuntimeBundle(services);
+    const runtime = createTradingBotRuntimeFromRuntimeSource(services, config);
+
+    return {
+      config,
+      exchange: services.bybitService,
+      telegram: services.coreServices.telegram,
+      services,
+      runtime,
+      bot: runtime.bot,
+      runtimeBundle,
+      runtimeDependencies: runtimeBundle.runtimeDependencies,
+    };
+  }
+
   const harness = createTrackedRuntimeFactoryHarness(trackedServices, overrides);
   const runtime = createTradingBotRuntimeFromFactoryRuntime(harness.runtimeFactory, harness.config);
 

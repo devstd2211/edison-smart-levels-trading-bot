@@ -21,20 +21,88 @@ import {
 import { validateBotConfig } from './factories/bot-services.validate';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
+export type SafeBotFactoryRuntimeSourceResult =
+  { success: true; services: IBotFactoryRuntimeSource }
+  | { success: false; error: Error };
+
+const logBotFactoryError = (
+  logger: LoggerService | undefined,
+  message: string,
+  error: unknown,
+): void => {
+  if (!logger) {
+    return;
+  }
+
+  logger.error(message, {
+    error: getErrorMessage(error),
+    stack: error instanceof Error ? error.stack : undefined,
+  });
+};
+
+const validateBotFactoryConfig = (config: Config): void => {
+  validateBotConfig(config);
+};
+
+export function createValidatedBotFactoryRuntimeSource(
+  config: Config,
+  options: BotFactoryOptions = {},
+  logger?: LoggerService,
+): IBotFactoryRuntimeSource {
+  try {
+    validateBotFactoryConfig(config);
+  } catch (err) {
+    logBotFactoryError(logger, 'Config validation failed', err);
+    throw err;
+  }
+
+  const services = (() => {
+    try {
+      return buildBotFactoryServiceStateInternal(config);
+    } catch (err) {
+      const errorMsg = getErrorMessage(err);
+      logBotFactoryError(logger, 'Bot factory runtime-source initialization failed', err);
+
+      throw new BotFactoryInitializationError(
+        `Failed to initialize bot factory runtime source: ${errorMsg}`,
+        { originalError: errorMsg },
+      );
+    }
+  })();
+
+  try {
+    return finalizeBotFactoryServiceStateInternal(services, options);
+  } catch (err) {
+    if (logger) {
+      logger.warn('Could not apply all DI overrides', {
+        error: getErrorMessage(err),
+      });
+    }
+    return createBotFactoryRuntimeSourceFromStateInternal(services);
+  }
+}
+
+export function createSafeBotFactoryRuntimeSource(
+  config: Config,
+  options: BotFactoryOptions = {},
+  logger?: LoggerService,
+): SafeBotFactoryRuntimeSourceResult {
+  try {
+    const services = createValidatedBotFactoryRuntimeSource(config, options, logger);
+    return { success: true, services };
+  } catch (err) {
+    const error = normalizeError(err);
+    return { success: false, error };
+  }
+}
+
 export class BotFactory {
   private static logError(logger: LoggerService | undefined, message: string, error: unknown): void {
-    if (!logger) {
-      return;
-    }
-
-    logger.error(message, {
-      error: getErrorMessage(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    logBotFactoryError(logger, message, error);
   }
 
   private static validateConfig(config: Config): void {
-    validateBotConfig(config);
+    validateBotFactoryConfig(config);
   }
 
   static create(
@@ -49,37 +117,7 @@ export class BotFactory {
     options: BotFactoryOptions = {},
     logger?: LoggerService,
   ): IBotFactoryRuntimeSource {
-    try {
-      this.validateConfig(config);
-    } catch (err) {
-      this.logError(logger, 'Config validation failed', err);
-      throw err;
-    }
-
-    const services = (() => {
-      try {
-        return buildBotFactoryServiceStateInternal(config);
-      } catch (err) {
-        const errorMsg = getErrorMessage(err);
-        this.logError(logger, 'Bot factory runtime-source initialization failed', err);
-
-        throw new BotFactoryInitializationError(
-          `Failed to initialize bot factory runtime source: ${errorMsg}`,
-          { originalError: errorMsg },
-        );
-      }
-    })();
-
-    try {
-      return finalizeBotFactoryServiceStateInternal(services, options);
-    } catch (err) {
-      if (logger) {
-        logger.warn('Could not apply all DI overrides', {
-          error: getErrorMessage(err),
-        });
-      }
-      return createBotFactoryRuntimeSourceFromStateInternal(services);
-    }
+    return createValidatedBotFactoryRuntimeSource(config, options, logger);
   }
 
   static createTestRuntimeSource(
@@ -93,14 +131,8 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): { success: true; services: IBotFactoryRuntimeSource } | { success: false; error: Error } {
-    try {
-      const services = this.createWithValidation(config, options, logger);
-      return { success: true, services };
-    } catch (err) {
-      const error = normalizeError(err);
-      return { success: false, error };
-    }
+  ): SafeBotFactoryRuntimeSourceResult {
+    return createSafeBotFactoryRuntimeSource(config, options, logger);
   }
 }
 

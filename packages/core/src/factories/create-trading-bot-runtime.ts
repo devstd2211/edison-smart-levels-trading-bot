@@ -1,5 +1,6 @@
 import type { Config } from '../types/legacy';
 import type {
+  IBotRuntimeSource,
   ITradingBotFactoryRuntime,
   ITradingBotRuntime,
 } from '../interfaces';
@@ -27,6 +28,19 @@ export const createTradingBotFactoryRuntime = (
     runtimeSource,
     runtimeBundle: createBotRuntimeBundle(runtimeSource),
   };
+};
+
+export const createTradingBotRuntimeFromRuntimeSource = (
+  runtimeSource: IBotRuntimeSource,
+  config: Config,
+): TradingBotRuntime => {
+  return createTradingBotRuntimeFromFactoryRuntime(
+    {
+      runtimeSource,
+      runtimeBundle: createBotRuntimeBundle(runtimeSource),
+    },
+    config,
+  );
 };
 
 export const createTradingBotRuntimeFromFactoryRuntime = (

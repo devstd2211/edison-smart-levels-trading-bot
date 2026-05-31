@@ -12,8 +12,11 @@ import {
   createPositionManagementBuilderRiskMonitoringEnabledConfig,
   createRiskManagerBuilderRuntimeDefaultConfig,
   createRootBotFactoryBoundaryRuntimeDefaultConfig,
+  createTrackedBotFactoryRuntimeSource,
+  createTrackedSafeBotFactoryRuntimeSource,
   createWebSocketMonitoringBuilderCandleEnabledConfig,
 } from './bot-factory-runtime-test.utils';
+import { createManagedTrackedServicesState } from './service-lifecycle-test.utils';
 
 describe('bot factory runtime test utils', () => {
   test('createMonitoringResilienceBuilderRuntimeDefaultConfig enables only the monitoring and resilience runtime families that boundary suite needs', () => {
@@ -187,6 +190,22 @@ describe('bot factory runtime test utils', () => {
       enabled: true,
       calculateIndicators: false,
     });
+  });
+
+  test('tracked runtime-source helpers keep bot-factory fixtures on the explicit validated and safe runtime-source handoffs', async () => {
+    const { trackedServices, cleanup } = createManagedTrackedServicesState();
+    const config = createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig();
+
+    try {
+      const validatedRuntimeSource = createTrackedBotFactoryRuntimeSource(trackedServices, config);
+      const safeRuntimeSource = createTrackedSafeBotFactoryRuntimeSource(trackedServices, config);
+
+      expect(validatedRuntimeSource.coreServices.eventBus).toBeDefined();
+      expect(safeRuntimeSource.marketDataServices.webSocketManager).toBeDefined();
+      expect(trackedServices).toHaveLength(2);
+    } finally {
+      await cleanup();
+    }
   });
 });
 

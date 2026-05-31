@@ -14,7 +14,11 @@
  * - Backward compatibility (works without ErrorHandler)
  */
 
-import { BotFactory } from '../../services/bot-factory.service';
+import {
+  BotFactory,
+  createSafeBotFactoryRuntimeSource,
+  createValidatedBotFactoryRuntimeSource,
+} from '../../services/bot-factory.service';
 import { Config } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 import {
@@ -381,6 +385,17 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       expect(services.coreServices.eventBus).toBeDefined();
       expect(services.marketDataServices.webSocketManager).toBeDefined();
     });
+
+    test('T32b: createSafeBotFactoryRuntimeSource exposes the same explicit runtime-source handoff without class indirection', () => {
+      const config = createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig();
+      const result = createSafeBotFactoryRuntimeSource(config);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.services.coreServices.eventBus).toBeDefined();
+        expect(result.services.marketDataServices.webSocketManager).toBeDefined();
+      }
+    });
   });
 
   describe('Error Context Tracking', () => {
@@ -454,6 +469,15 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
       expect(() => {
         BotFactory.createTestRuntimeSource(config);
+      }).toThrow(BotFactoryConfigValidationError);
+    });
+
+    test('T38b: createValidatedBotFactoryRuntimeSource keeps validation behavior on the explicit runtime-source path', () => {
+      const config = createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig();
+      deleteBotFactoryConfigPath(config, 'timeframes');
+
+      expect(() => {
+        createValidatedBotFactoryRuntimeSource(config);
       }).toThrow(BotFactoryConfigValidationError);
     });
   });

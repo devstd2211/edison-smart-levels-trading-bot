@@ -1,6 +1,9 @@
 import type { Config } from '../../types/legacy';
-import { BotFactory } from '../../services/bot-factory.service';
 import { ContextFilteringMode } from '../../types/legacy';
+import {
+  createSafeBotFactoryRuntimeSource,
+  createValidatedBotFactoryRuntimeSource,
+} from '../../services/bot-factory.service';
 import type { TrackedServiceState } from './service-lifecycle-test.utils';
 import { createAdvancedOrderFlowConfig } from './advanced-order-flow-test.utils';
 import { createCompoundInterestConfig } from './compound-interest-calculator-test.utils';
@@ -236,7 +239,11 @@ export function createTrackedBotFactoryRuntimeSource(
   config: Config,
 ) {
   const trackedConfig = normalizeTrackedLifecycleConfig(config);
-  return trackCreatedServices(trackedServices, trackedConfig, BotFactory.createTestRuntimeSource(trackedConfig));
+  return trackCreatedServices(
+    trackedServices,
+    trackedConfig,
+    createValidatedBotFactoryRuntimeSource(trackedConfig),
+  );
 }
 
 export function createTrackedSafeBotFactoryRuntimeSource(
@@ -244,7 +251,7 @@ export function createTrackedSafeBotFactoryRuntimeSource(
   config: Config,
 ) {
   const trackedConfig = normalizeTrackedLifecycleConfig(config);
-  const result = BotFactory.createSafe(trackedConfig);
+  const result = createSafeBotFactoryRuntimeSource(trackedConfig);
   if (!result.success) {
     throw result.error;
   }

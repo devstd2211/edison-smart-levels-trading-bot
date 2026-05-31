@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up`
-- [ ] `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/services/factories/builders/optional-services.builder.ts optional runtime builder boundary follow-up`
 - [ ] `packages/core/src/services/factories/builders/monitoring-resilience.builder.ts monitoring resilience runtime builder boundary follow-up`
 - [ ] `packages/core/src/services/factories/bot-factory-options.ts runtime option contract boundary follow-up`
+- [ ] `packages/core/src/services/factories/builders/grouped-service-inputs.builder.ts grouped runtime builder input boundary follow-up`
+- [ ] `packages/core/src/services/factories/builders/runtime-core.builder.ts runtime core builder dependency boundary follow-up`
+- [ ] `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up` | prod: yes | tests: yes | func: yes

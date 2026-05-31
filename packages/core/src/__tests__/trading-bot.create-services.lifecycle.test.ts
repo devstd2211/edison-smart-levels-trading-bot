@@ -1,5 +1,9 @@
+import * as runtimeFactoryModule from '../factories/create-trading-bot-runtime';
 import {
   createManagedTrackedServicesBotRuntime,
+  createManagedTrackedServicesState,
+  createRuntimeDefaultLifecycleConfig,
+  createTrackedServices,
   spyOnTrackedServiceLifecycle,
   type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
@@ -55,5 +59,25 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
     expect(lifecycle.monitorStopSpy).toHaveBeenCalledTimes(1);
     expect(lifecycle.sessionEndSpy).toHaveBeenCalledTimes(1);
     expect(harness.telegram.notifyBotStopped).toHaveBeenCalledTimes(1);
+  });
+
+  test('reuses an existing runtime source when materializing the bot lifecycle handoff', async () => {
+    const runtimeFactorySpy = jest.spyOn(runtimeFactoryModule, 'createTradingBotFactoryRuntime');
+    const managedState = createManagedTrackedServicesState();
+    const config = createRuntimeDefaultLifecycleConfig();
+    const runtimeSource = createTrackedServices(managedState.trackedServices, config);
+
+    try {
+      const harness = createTradingBotHarness({
+        config,
+        runtimeSource,
+      });
+
+      expect(runtimeFactorySpy).not.toHaveBeenCalled();
+      expect(harness.services).toBe(runtimeSource);
+      expect(harness.runtime.runtimeSource).toBe(runtimeSource);
+    } finally {
+      await managedState.cleanup();
+    }
   });
 });

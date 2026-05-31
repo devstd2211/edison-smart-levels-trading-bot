@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up`
-2. `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up`
-3. `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`
+1. `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts runtime fixture helper guardrail follow-up`
+2. `packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts grouped runtime builder guardrail follow-up`
+3. `packages/core/src/services/factories/builders/grouped-services.builder.ts grouped runtime builder boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,13 +53,13 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-05-31: completed `packages/core/src/vector-db/vector-db.service.ts standalone vector-db service runtime ownership follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/vector-db/vector-db.service.functional.test.ts standalone vector-db service runtime guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/vector-db/index.ts standalone vector-db package barrel boundary follow-up`.
-- `getVectorDB(...)` now resolves and owns a single `VectorDbRuntimePaths` contract before constructing the singleton, so runtime factories no longer rebuild the project/db/index path split from three separate string arguments.
-- `vector-db/index.ts` now owns runtime-path exports for package consumers, while `vector-db.service.ts` no longer doubles as a leaf-module package barrel for `SQLiteVectorStore`, `SemanticSearchService`, and `ProjectIndexer`.
+- 2026-05-31: completed `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`.
+- `services/bot-factory.service.ts` now owns explicit validated/safe runtime-source entrypoints, so runtime-source helpers and guardrails no longer have to route through class-only indirection.
+- `factories/create-trading-bot-runtime.ts` now exposes a direct runtime-source handoff for `TradingBot`, and tracked lifecycle harnesses can reuse an existing runtime source without rebuilding the factory path.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts packages/core/src/__tests__/vector-db/vector-db.service.functional.test.ts packages/core/src/__tests__/vector-db/vector-db.index.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`
