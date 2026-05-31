@@ -41,21 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts runtime fixture helper guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts grouped runtime builder guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/grouped-services.builder.ts grouped runtime builder boundary follow-up`.
-- `bot-factory-runtime-test.utils.ts` now exposes an explicit tracked raw builder-state helper, so builder guardrail suites can inspect pre-finalized runtime ownership without lying to the type system via runtime-source casts.
-- `grouped-service-inputs.builder.ts` and `grouped-services.builder.ts` now narrow the grouped-builder contract to the exact source-and-assignment slices they own, and grouped functional coverage now asserts against the real builder state instead of a narrowed runtime-source shell.
+- 2026-05-31: completed `packages/core/src/__tests__/services/optional-services.builder.functional.test.ts optional runtime builder guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts monitoring resilience runtime builder guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/optional-services.builder.ts optional runtime builder boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/monitoring-resilience.builder.ts monitoring resilience runtime builder boundary follow-up`.
+- `optional-services.builder.ts` now exposes explicit foundational, execution, and optional-monitoring phases with a narrowed builder-state contract instead of one full-state composition-root step.
+- `monitoring-resilience.builder.ts` now separates monitoring-health setup from resilience setup, and both suites assert against raw builder-state ownership rather than finalized runtime-source casts.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts` (2 suites, 22 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts` (2 suites, 11 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/services/optional-services.builder.functional.test.ts optional runtime builder guardrail follow-up`.
-- Keep the next batch on the optional/monitoring/runtime-builder stream so the newly explicit raw builder-state seam can converge across the remaining composition-root builder boundaries.
+- Start with `packages/core/src/services/factories/bot-factory-options.ts runtime option contract boundary follow-up`.
+- Keep the next batch on the runtime-builder dependency stream so the narrowed builder-state seams can continue converging across `bot-factory-options`, grouped builder inputs, and runtime-core ownership.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

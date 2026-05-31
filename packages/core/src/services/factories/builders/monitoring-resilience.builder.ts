@@ -18,9 +18,39 @@ import {
   createRetryPolicyConfig,
 } from './resilience-service-config.builder';
 
-export const initializeMonitoringAndResilience = (
-  state: BotServiceState,
+type MonitoringHealthServicesState = Pick<
+  BotServiceState,
+  | 'bybitService'
+  | 'webSocketManager'
+  | 'logger'
+  | 'errorHandler'
+  | 'metricsService'
+  | 'healthCheckService'
+  | 'monitoringServer'
+>;
+
+type ResilienceServicesState = Pick<
+  BotServiceState,
+  | 'logger'
+  | 'errorHandler'
+  | 'metricsService'
+  | 'circuitBreaker'
+  | 'rateLimiter'
+  | 'retryPolicy'
+  | 'bulkhead'
+  | 'resilienceCoordinator'
+>;
+
+export type MonitoringResilienceBuilderState =
+  & MonitoringHealthServicesState
+  & ResilienceServicesState;
+
+const resolveResilienceConfig = (
   config: Config,
+): ResilienceConfig | undefined => (config as Partial<{ resilience?: ResilienceConfig }>).resilience;
+
+export const initializeMonitoringHealthServices = (
+  state: MonitoringHealthServicesState,
   monitoring?: MonitoringConfig,
 ): void => {
   if (monitoring?.healthCheckEnabled) {
@@ -56,65 +86,81 @@ export const initializeMonitoringAndResilience = (
       healthPath: monitoringServerConfig.healthPath,
     });
   }
+};
 
-  const resilience = (config as Partial<{ resilience?: ResilienceConfig }>).resilience;
-  if (resilience?.enabled) {
-    const circuitBreakerConfig = createCircuitBreakerConfig(resilience);
-    const rateLimiterConfig = createRateLimiterConfig(resilience);
-    const retryPolicyConfig = createRetryPolicyConfig(resilience);
-    const bulkheadConfig = createBulkheadConfig(resilience);
-    const metricsRecorder = resolveMonitoringMetricsRecorder(state.metricsService);
-
-    state.circuitBreaker = new CircuitBreakerService(
-      circuitBreakerConfig,
-      state.logger,
-      state.errorHandler,
-    );
-    state.logger.info('Circuit Breaker initialized (Phase 14.2.1)', {
-      failureThreshold: circuitBreakerConfig.failureThreshold,
-      timeout: circuitBreakerConfig.timeout,
-    });
-
-    state.rateLimiter = new RateLimiterService(
-      rateLimiterConfig,
-      state.logger,
-      state.errorHandler,
-    );
-    state.logger.info('Rate Limiter initialized (Phase 14.2.2)', {
-      configs: Object.keys(resilience.rateLimiter || { bybit: {} }),
-    });
-
-    state.retryPolicy = new RetryPolicyService(
-      retryPolicyConfig,
-      state.logger,
-      state.errorHandler,
-    );
-    state.logger.info('Retry Policy initialized (Phase 14.2.3)', {
-      maxAttempts: retryPolicyConfig.maxAttempts,
-      retryBudget: `${retryPolicyConfig.retryBudgetPercent}%`,
-    });
-
-    state.bulkhead = new BulkheadService(
-      bulkheadConfig,
-      state.logger,
-      state.errorHandler,
-    );
-    state.logger.info('Bulkhead initialized (Phase 14.2.4)', {
-      pools: Object.keys(resilience.bulkhead || { trading: {} }),
-    });
-
-    state.resilienceCoordinator = new ResilienceCoordinator(
-      state.circuitBreaker,
-      state.rateLimiter,
-      state.retryPolicy,
-      state.bulkhead,
-      metricsRecorder,
-      state.logger,
-      state.errorHandler,
-    );
-    state.logger.info('Resilience Coordinator initialized (Phase 14.2.5)', {
-      patterns: ['circuitBreaker', 'rateLimiter', 'retryPolicy', 'bulkhead'],
-      hasMetrics: !!state.metricsService,
-    });
+export const initializeResilienceServices = (
+  state: ResilienceServicesState,
+  config: Config,
+): void => {
+  const resilience = resolveResilienceConfig(config);
+  if (!resilience?.enabled) {
+    return;
   }
+
+  const circuitBreakerConfig = createCircuitBreakerConfig(resilience);
+  const rateLimiterConfig = createRateLimiterConfig(resilience);
+  const retryPolicyConfig = createRetryPolicyConfig(resilience);
+  const bulkheadConfig = createBulkheadConfig(resilience);
+  const metricsRecorder = resolveMonitoringMetricsRecorder(state.metricsService);
+
+  state.circuitBreaker = new CircuitBreakerService(
+    circuitBreakerConfig,
+    state.logger,
+    state.errorHandler,
+  );
+  state.logger.info('Circuit Breaker initialized (Phase 14.2.1)', {
+    failureThreshold: circuitBreakerConfig.failureThreshold,
+    timeout: circuitBreakerConfig.timeout,
+  });
+
+  state.rateLimiter = new RateLimiterService(
+    rateLimiterConfig,
+    state.logger,
+    state.errorHandler,
+  );
+  state.logger.info('Rate Limiter initialized (Phase 14.2.2)', {
+    configs: Object.keys(resilience.rateLimiter || { bybit: {} }),
+  });
+
+  state.retryPolicy = new RetryPolicyService(
+    retryPolicyConfig,
+    state.logger,
+    state.errorHandler,
+  );
+  state.logger.info('Retry Policy initialized (Phase 14.2.3)', {
+    maxAttempts: retryPolicyConfig.maxAttempts,
+    retryBudget: `${retryPolicyConfig.retryBudgetPercent}%`,
+  });
+
+  state.bulkhead = new BulkheadService(
+    bulkheadConfig,
+    state.logger,
+    state.errorHandler,
+  );
+  state.logger.info('Bulkhead initialized (Phase 14.2.4)', {
+    pools: Object.keys(resilience.bulkhead || { trading: {} }),
+  });
+
+  state.resilienceCoordinator = new ResilienceCoordinator(
+    state.circuitBreaker,
+    state.rateLimiter,
+    state.retryPolicy,
+    state.bulkhead,
+    metricsRecorder,
+    state.logger,
+    state.errorHandler,
+  );
+  state.logger.info('Resilience Coordinator initialized (Phase 14.2.5)', {
+    patterns: ['circuitBreaker', 'rateLimiter', 'retryPolicy', 'bulkhead'],
+    hasMetrics: !!state.metricsService,
+  });
+};
+
+export const initializeMonitoringAndResilience = (
+  state: MonitoringResilienceBuilderState,
+  config: Config,
+  monitoring?: MonitoringConfig,
+): void => {
+  initializeMonitoringHealthServices(state, monitoring);
+  initializeResilienceServices(state, config);
 };

@@ -14,22 +14,81 @@ import { initializeRetestEntryService } from './retest-entry-service.builder';
 import { initializeSmartOrderExecutionService } from './smart-order-execution-service.builder';
 import { initializeWallTrackerService } from './wall-tracker-service.builder';
 
-export const initializeOptionalServices = (
-  state: BotServiceState,
+type FoundationalOptionalServicesState = Pick<
+  BotServiceState,
+  | 'logger'
+  | 'errorHandler'
+  | 'bybitService'
+  | 'journal'
+  | 'compoundInterestCalculator'
+  | 'retestEntryService'
+  | 'deltaAnalyzerService'
+  | 'orderbookImbalanceService'
+  | 'wallTrackerService'
+>;
+
+type ExecutionOptionalServicesState = Pick<
+  BotServiceState,
+  | 'logger'
+  | 'errorHandler'
+  | 'bybitService'
+  | 'advancedOrderFlowService'
+  | 'dynamicPositionSizer'
+  | 'positionScalingService'
+  | 'smartOrderExecution'
+  | 'ladderExitDetector'
+>;
+
+type OptionalMonitoringServicesState = Pick<
+  BotServiceState,
+  'logger' | 'errorHandler' | 'orderStateMachine' | 'metricsService'
+>;
+
+export type OptionalServicesBuilderState =
+  & FoundationalOptionalServicesState
+  & ExecutionOptionalServicesState
+  & OptionalMonitoringServicesState;
+
+export const initializeFoundationalOptionalServices = (
+  state: FoundationalOptionalServicesState,
+  config: Config,
+): void => {
+  const builderState = state as BotServiceState;
+  initializeCompoundInterestService(builderState, config);
+  initializeRetestEntryService(builderState, config);
+  initializeDeltaAnalyzerService(builderState, config);
+  initializeOrderbookImbalanceService(builderState, config);
+  initializeWallTrackerService(builderState, config);
+};
+
+export const initializeExecutionOptionalServices = (
+  state: ExecutionOptionalServicesState,
+  config: Config,
+): void => {
+  const builderState = state as BotServiceState;
+  initializeAdvancedOrderFlowService(builderState, config);
+  initializeDynamicPositionSizerService(builderState, config);
+  initializePositionScalingService(builderState, config);
+  initializeSmartOrderExecutionService(builderState, config);
+  initializeLadderExitDetectorService(builderState);
+};
+
+export const initializeOptionalMonitoringServices = (
+  state: OptionalMonitoringServicesState,
   config: Config,
   monitoring?: MonitoringConfig,
 ): void => {
-  initializeCompoundInterestService(state, config);
-  initializeRetestEntryService(state, config);
-  initializeDeltaAnalyzerService(state, config);
-  initializeOrderbookImbalanceService(state, config);
-  initializeWallTrackerService(state, config);
-  initializeAdvancedOrderFlowService(state, config);
-  initializeDynamicPositionSizerService(state, config);
-  initializePositionScalingService(state, config);
-  initializeSmartOrderExecutionService(state, config);
-  initializeOrderStateMachineService(state, config);
-  initializePrometheusMetricsService(state, monitoring);
+  const builderState = state as BotServiceState;
+  initializeOrderStateMachineService(builderState, config);
+  initializePrometheusMetricsService(builderState, monitoring);
+};
 
-  initializeLadderExitDetectorService(state);
+export const initializeOptionalServices = (
+  state: OptionalServicesBuilderState,
+  config: Config,
+  monitoring?: MonitoringConfig,
+): void => {
+  initializeFoundationalOptionalServices(state, config);
+  initializeExecutionOptionalServices(state, config);
+  initializeOptionalMonitoringServices(state, config, monitoring);
 };

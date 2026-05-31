@@ -1,5 +1,11 @@
 import type { BotServiceState } from '../../services/bot-services.builder';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import type { MonitoringConfig } from '../../services/factories/builders/bot-services.types';
 import { createHealthCheckConfig } from '../../services/factories/builders/health-check-config.builder';
+import {
+  initializeMonitoringHealthServices,
+  initializeResilienceServices,
+} from '../../services/factories/builders/monitoring-resilience.builder';
 import { resolveMonitoringMetricsRecorder } from '../../services/factories/builders/monitoring-metrics-recorder.builder';
 import { createMonitoringServerConfig } from '../../services/factories/builders/monitoring-server-config.builder';
 import {
@@ -10,7 +16,7 @@ import {
 } from '../../services/factories/builders/resilience-service-config.builder';
 import {
   createMonitoringResilienceBuilderRuntimeDefaultConfig,
-  createTrackedBotFactoryRuntimeSource,
+  createTrackedBotFactoryBuilderState,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesState,
@@ -56,6 +62,32 @@ describe('Monitoring/resilience builder boundaries', () => {
     });
   });
 
+  test('creates monitoring health services outside the composition root body', () => {
+    const config = createMonitoringResilienceBuilderRuntimeDefaultConfig();
+    const builderState = createTrackedBotFactoryBuilderState(trackedServices, config);
+    const logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+    const state = {
+      logger,
+      errorHandler: new ErrorHandler(logger as never),
+      bybitService: builderState.bybitService,
+      webSocketManager: builderState.webSocketManager,
+      metricsService: builderState.metricsService,
+    } as unknown as BotServiceState;
+
+    initializeMonitoringHealthServices(
+      state,
+      (config as typeof config & { monitoring?: MonitoringConfig }).monitoring,
+    );
+
+    expect(state.healthCheckService).toBeDefined();
+    expect(state.monitoringServer).toBeDefined();
+  });
+
   test('creates resilience config helpers and narrows metrics recorder capability', () => {
     const resilience = {
       enabled: true,
@@ -94,13 +126,35 @@ describe('Monitoring/resilience builder boundaries', () => {
     expect(resolveMonitoringMetricsRecorder({})).toBeUndefined();
   });
 
-  test('factory path wires extracted monitoring and resilience builders through service creation', () => {
+  test('creates resilience runtime builders outside the composition root body', () => {
+    const config = createMonitoringResilienceBuilderRuntimeDefaultConfig();
+    const logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+    const state = {
+      logger,
+      errorHandler: new ErrorHandler(logger as never),
+      metricsService: {
+        recordOrderLatency: jest.fn(),
+      },
+    } as unknown as BotServiceState;
+
+    initializeResilienceServices(state, config);
+
+    expect(state.circuitBreaker).toBeDefined();
+    expect(state.rateLimiter).toBeDefined();
+    expect(state.retryPolicy).toBeDefined();
+    expect(state.bulkhead).toBeDefined();
+    expect(state.resilienceCoordinator).toBeDefined();
+  });
+
+  test('builder path wires extracted monitoring and resilience builders through service creation', () => {
     const config = createMonitoringResilienceBuilderRuntimeDefaultConfig();
 
-    const services = createTrackedBotFactoryRuntimeSource(
-      trackedServices,
-      config,
-    ) as BotServiceState;
+    const services = createTrackedBotFactoryBuilderState(trackedServices, config);
 
     expect(services.metricsService).toBeDefined();
     expect(services.healthCheckService).toBeDefined();

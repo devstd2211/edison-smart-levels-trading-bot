@@ -1,26 +1,19 @@
 import type { BotServiceState } from '../../services/bot-services.builder';
 import { ErrorHandler } from '../../errors/ErrorHandler';
-import { initializeAdvancedOrderFlowService } from '../../services/factories/builders/advanced-order-flow-service.builder';
-import { initializeCompoundInterestService } from '../../services/factories/builders/compound-interest-service.builder';
-import { initializeDeltaAnalyzerService } from '../../services/factories/builders/delta-analyzer-service.builder';
-import { initializeDynamicPositionSizerService } from '../../services/factories/builders/dynamic-position-sizer-service.builder';
-import { initializeLadderExitDetectorService } from '../../services/factories/builders/ladder-exit-detector-service.builder';
+import {
+  initializeExecutionOptionalServices,
+  initializeFoundationalOptionalServices,
+  initializeOptionalMonitoringServices,
+} from '../../services/factories/builders/optional-services.builder';
 import { createDynamicPositionSizingConfig } from '../../services/factories/builders/dynamic-position-sizing-config.builder';
-import { initializeOrderbookImbalanceService } from '../../services/factories/builders/orderbook-imbalance-service.builder';
 import { createOrderStateMachineConfig } from '../../services/factories/builders/order-state-machine-config.builder';
-import { initializeOrderStateMachineService } from '../../services/factories/builders/order-state-machine-service.builder';
-import { initializePositionScalingService } from '../../services/factories/builders/position-scaling-service.builder';
 import { createPositionScalingConfig } from '../../services/factories/builders/position-scaling-config.builder';
 import { createPrometheusMetricsConfig } from '../../services/factories/builders/prometheus-metrics-config.builder';
-import { initializePrometheusMetricsService } from '../../services/factories/builders/prometheus-metrics-service.builder';
-import { initializeRetestEntryService } from '../../services/factories/builders/retest-entry-service.builder';
-import { initializeSmartOrderExecutionService } from '../../services/factories/builders/smart-order-execution-service.builder';
 import { createSmartOrderExecutionConfig } from '../../services/factories/builders/smart-order-execution-config.builder';
-import { initializeWallTrackerService } from '../../services/factories/builders/wall-tracker-service.builder';
 import { createLadderExitBybitService } from '../helpers/ladder-exit-detector-test.utils';
 import {
   createOptionalServicesBuilderRuntimeDefaultConfig,
-  createTrackedBotFactoryRuntimeSource,
+  createTrackedBotFactoryBuilderState,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesState,
@@ -85,7 +78,7 @@ describe('Optional services builder boundaries', () => {
     });
   });
 
-  test('creates state-machine and metrics builders outside the composition root body', async () => {
+  test('creates optional monitoring builders outside the composition root body', async () => {
     const config = createOptionalServicesBuilderRuntimeDefaultConfig();
     const logger = {
       info: jest.fn(),
@@ -108,15 +101,14 @@ describe('Optional services builder boundaries', () => {
       }
     ).monitoring;
 
-    initializeOrderStateMachineService(state, config);
-    initializePrometheusMetricsService(state, monitoring);
+    initializeOptionalMonitoringServices(state, config, monitoring);
 
     expect(state.orderStateMachine).toBeDefined();
     expect(state.metricsService).toBeDefined();
     expect(await state.metricsService?.getMetrics()).toContain('edison_');
   });
 
-  test('creates early optional service builders outside the composition root body', () => {
+  test('creates foundational optional service builders outside the composition root body', () => {
     const config = createOptionalServicesBuilderRuntimeDefaultConfig();
     const logger = {
       info: jest.fn(),
@@ -135,11 +127,7 @@ describe('Optional services builder boundaries', () => {
       },
     } as unknown as BotServiceState;
 
-    initializeCompoundInterestService(state, config);
-    initializeRetestEntryService(state, config);
-    initializeDeltaAnalyzerService(state, config);
-    initializeOrderbookImbalanceService(state, config);
-    initializeWallTrackerService(state, config);
+    initializeFoundationalOptionalServices(state, config);
 
     expect(state.compoundInterestCalculator).toBeDefined();
     expect(state.retestEntryService).toBeDefined();
@@ -162,11 +150,7 @@ describe('Optional services builder boundaries', () => {
       bybitService: createLadderExitBybitService(),
     } as unknown as BotServiceState;
 
-    initializeAdvancedOrderFlowService(state, config);
-    initializeDynamicPositionSizerService(state, config);
-    initializePositionScalingService(state, config);
-    initializeSmartOrderExecutionService(state, config);
-    initializeLadderExitDetectorService(state);
+    initializeExecutionOptionalServices(state, config);
 
     expect(state.advancedOrderFlowService).toBeDefined();
     expect(state.dynamicPositionSizer).toBeDefined();
@@ -175,10 +159,10 @@ describe('Optional services builder boundaries', () => {
     expect(state.ladderExitDetector).toBeDefined();
   });
 
-  test('factory path wires extracted optional service builders through service creation', async () => {
+  test('builder path wires extracted optional service builders through service creation', async () => {
     const config = createOptionalServicesBuilderRuntimeDefaultConfig();
 
-    const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const services = createTrackedBotFactoryBuilderState(trackedServices, config);
 
     expect(services.compoundInterestCalculator).toBeDefined();
     expect(services.retestEntryService).toBeDefined();
