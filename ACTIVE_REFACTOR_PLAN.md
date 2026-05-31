@@ -41,21 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/vector-db/cli.ts standalone vector-db runtime helper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/vector-db/vector-db-runtime-paths.ts standalone vector-db runtime paths boundary follow-up`.
-- `vector-db/cli.ts` no longer owns a duplicate runtime-path contract or local path assembly; it now imports the shared `VectorDbRuntimePaths` type and `resolveVectorDbRuntimePaths(...)` helper from `vector-db-runtime-paths.ts`.
-- The vector-db entrypoint and package-boundary guardrails now prove the CLI/runtime helper surface stays thin and that path resolution ownership remains on the dedicated runtime-path module instead of drifting back into the CLI wrapper.
+- 2026-05-31: completed `packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts standalone vector-db runtime paths guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/vector-db/vector-db-index-storage.ts standalone vector-db index storage boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/vector-db/vector-db-service-index.ts standalone vector-db persisted index runtime boundary follow-up`.
+- `vector-db-index-storage.ts` now owns a bound persisted-index storage contract, so callers bind `indexPath` once and then interact through `has/load/save/export` operations instead of re-threading file paths through each helper call.
+- `vector-db-service-index.ts` and `vector-db.service.ts` now consume that bound storage boundary directly, which removes duplicate persisted-path plumbing and keeps persisted-index ownership behind the dedicated storage module.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/core/vector-db.entrypoint.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts` (3 suites, 29 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts packages/core/src/__tests__/vector-db/vector-db.service.functional.test.ts packages/core/src/__tests__/vector-db/vector-db.index.test.ts` (3 suites, 8 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts standalone vector-db runtime paths guardrail follow-up`.
-- Keep the next batch on the vector-db runtime storage/index stream so the remaining persisted-index helpers converge on the same dedicated runtime ownership split.
+- Start with `packages/core/src/vector-db/vector-db.service.ts standalone vector-db service runtime ownership follow-up`.
+- Keep the next batch on the vector-db service/package-boundary stream so the remaining runtime-facing vector-db surfaces converge on the same dedicated persisted-index/storage ownership split.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

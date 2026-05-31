@@ -9,9 +9,8 @@ import { ProjectIndexer } from './project-indexer';
 import { EmbeddedDocument, SearchQuery, SearchResult, SearchResultItem, ProjectIndex, IndexConfig } from './vector-db.types';
 import { ICONS } from '../cli/cli-runtime';
 import {
-  hasStoredProjectIndex,
-  loadStoredProjectIndex,
-  saveStoredProjectIndex,
+  createVectorDbIndexStorage,
+  type VectorDbIndexStorage,
 } from './vector-db-index-storage';
 import {
   DEFAULT_VECTOR_DB_PATH,
@@ -39,11 +38,7 @@ type VectorDatabaseServiceDependencies = {
   createSearchService?: (store: SQLiteVectorStore) => SemanticSearchService;
   createStore?: (dbPath: string) => SQLiteVectorStore;
   logger?: VectorDbLogger;
-  storage?: {
-    hasStoredProjectIndex(indexPath: string): boolean;
-    loadStoredProjectIndex(indexPath: string): ProjectIndex;
-    saveStoredProjectIndex(indexPath: string, index: ProjectIndex): void;
-  };
+  storage?: VectorDbIndexStorage;
 };
 
 export class VectorDatabaseService {
@@ -51,10 +46,9 @@ export class VectorDatabaseService {
   private searchService: SemanticSearchService;
   private indexer: ProjectIndexer;
   private projectPath: string;
-  private indexPath: string;
   private initialized: boolean = false;
   private logger: VectorDbLogger;
-  private storage: NonNullable<VectorDatabaseServiceDependencies['storage']>;
+  private storage: VectorDbIndexStorage;
 
   constructor(
     projectPath: string = process.cwd(),
@@ -64,14 +58,10 @@ export class VectorDatabaseService {
   ) {
     const runtimePaths = resolveVectorDbRuntimePaths(projectPath, dbPath, indexPath);
     this.logger = dependencies.logger ?? console;
-    this.storage = dependencies.storage ?? {
-      hasStoredProjectIndex,
-      loadStoredProjectIndex,
-      saveStoredProjectIndex,
-    };
+    this.storage =
+      dependencies.storage ?? createVectorDbIndexStorage(runtimePaths.indexPath);
 
     this.projectPath = runtimePaths.projectPath;
-    this.indexPath = runtimePaths.indexPath;
     this.store =
       (dependencies.createStore ?? ((resolvedDbPath) => new SQLiteVectorStore(resolvedDbPath)))(
         runtimePaths.dbPath,
@@ -99,7 +89,6 @@ export class VectorDatabaseService {
 
     await initializeVectorDbIndex({
       createAndSaveIndex: () => this.createAndSaveIndex(),
-      indexPath: this.indexPath,
       loadIndex: () => this.loadIndex(),
       logger: this.logger,
       storage: this.storage,
@@ -115,7 +104,6 @@ export class VectorDatabaseService {
    */
   async createAndSaveIndex(): Promise<ProjectIndex> {
     return createAndSaveVectorDbIndex({
-      indexPath: this.indexPath,
       indexer: this.indexer,
       storage: this.storage,
       store: this.store,
@@ -127,7 +115,6 @@ export class VectorDatabaseService {
    */
   async loadIndex(): Promise<ProjectIndex | null> {
     return loadVectorDbIndex({
-      indexPath: this.indexPath,
       logger: this.logger,
       storage: this.storage,
       store: this.store,
@@ -236,7 +223,7 @@ export class VectorDatabaseService {
    * Export index as JSON
    */
   async exportIndex(): Promise<string> {
-    return exportVectorDbIndex(this.indexPath, this.storage);
+    return exportVectorDbIndex(this.storage);
   }
 
   /**

@@ -1,4 +1,5 @@
 import type { EmbeddedDocument, ProjectIndex } from './vector-db.types';
+import type { VectorDbIndexStorage } from './vector-db-index-storage';
 
 type VectorDbLogger = Pick<Console, 'log' | 'warn'>;
 
@@ -11,15 +12,8 @@ type VectorDbProjectIndexer = {
   indexProject(): Promise<ProjectIndex>;
 };
 
-type VectorDbIndexStorage = {
-  hasStoredProjectIndex(indexPath: string): boolean;
-  loadStoredProjectIndex(indexPath: string): ProjectIndex;
-  saveStoredProjectIndex(indexPath: string, index: ProjectIndex): void;
-};
-
 type InitializeVectorDbIndexOptions = {
   createAndSaveIndex: () => Promise<ProjectIndex>;
-  indexPath: string;
   loadIndex: () => Promise<ProjectIndex | null>;
   logger: VectorDbLogger;
   storage: VectorDbIndexStorage;
@@ -30,14 +24,12 @@ type InitializeVectorDbIndexOptions = {
 };
 
 type CreateAndSaveVectorDbIndexOptions = {
-  indexPath: string;
   indexer: VectorDbProjectIndexer;
   storage: VectorDbIndexStorage;
   store: VectorDbDocumentStore;
 };
 
 type LoadVectorDbIndexOptions = {
-  indexPath: string;
   logger: VectorDbLogger;
   storage: VectorDbIndexStorage;
   store: VectorDbDocumentStore;
@@ -53,13 +45,12 @@ type ReindexVectorDbProjectOptions = {
 
 export const initializeVectorDbIndex = async ({
   createAndSaveIndex,
-  indexPath,
   loadIndex,
   logger,
   storage,
   icons,
 }: InitializeVectorDbIndexOptions): Promise<ProjectIndex | null> => {
-  if (storage.hasStoredProjectIndex(indexPath)) {
+  if (storage.hasStoredProjectIndex()) {
     logger.log(`${icons.open_folder} Loading existing index...`);
     return loadIndex();
   }
@@ -69,26 +60,24 @@ export const initializeVectorDbIndex = async ({
 };
 
 export const createAndSaveVectorDbIndex = async ({
-  indexPath,
   indexer,
   storage,
   store,
 }: CreateAndSaveVectorDbIndexOptions): Promise<ProjectIndex> => {
   const index = await indexer.indexProject();
   await store.storeDocuments(index.documents);
-  storage.saveStoredProjectIndex(indexPath, index);
+  storage.saveStoredProjectIndex(index);
   return index;
 };
 
 export const loadVectorDbIndex = async ({
-  indexPath,
   logger,
   storage,
   store,
   icons,
 }: LoadVectorDbIndexOptions): Promise<ProjectIndex | null> => {
   try {
-    const index = storage.loadStoredProjectIndex(indexPath);
+    const index = storage.loadStoredProjectIndex();
     await store.storeDocuments(index.documents);
     return index;
   } catch (error) {
@@ -106,6 +95,5 @@ export const reindexVectorDbProject = async ({
 };
 
 export const exportVectorDbIndex = (
-  indexPath: string,
-  storage: Pick<VectorDbIndexStorage, 'loadStoredProjectIndex'>,
-): string => JSON.stringify(storage.loadStoredProjectIndex(indexPath), null, 2);
+  storage: Pick<VectorDbIndexStorage, 'exportStoredProjectIndex'>,
+): string => storage.exportStoredProjectIndex();

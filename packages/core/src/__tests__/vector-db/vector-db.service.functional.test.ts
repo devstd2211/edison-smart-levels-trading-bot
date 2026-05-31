@@ -64,6 +64,7 @@ describe('VectorDatabaseService functional behavior', () => {
       hasStoredProjectIndex: jest.fn().mockReturnValue(true),
       loadStoredProjectIndex: jest.fn().mockReturnValue(storedIndex),
       saveStoredProjectIndex: jest.fn(),
+      exportStoredProjectIndex: jest.fn().mockReturnValue(JSON.stringify(storedIndex, null, 2)),
     };
     const logger = {
       log: jest.fn(),
@@ -93,10 +94,8 @@ describe('VectorDatabaseService functional behavior', () => {
     await expect(service.reindex()).resolves.toEqual(rebuiltIndex);
     expect(store.clear).toHaveBeenCalledTimes(1);
     expect(indexer.indexProject).toHaveBeenCalledTimes(1);
-    expect(storage.saveStoredProjectIndex).toHaveBeenCalledWith(
-      expect.stringContaining('.vector-db'),
-      rebuiltIndex,
-    );
+    expect(storage.saveStoredProjectIndex).toHaveBeenCalledWith(rebuiltIndex);
+    expect(storage.exportStoredProjectIndex).toHaveBeenCalledTimes(1);
   });
 
   test('getVectorDB caches the first initialized instance', async () => {

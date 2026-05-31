@@ -7,9 +7,7 @@ import {
   resolveVectorDbRuntimePaths,
 } from '../../vector-db/vector-db-runtime-paths';
 import {
-  hasStoredProjectIndex,
-  loadStoredProjectIndex,
-  saveStoredProjectIndex,
+  createVectorDbIndexStorage,
 } from '../../vector-db/vector-db-index-storage';
 import {
   createAndSaveVectorDbIndex,
@@ -44,6 +42,7 @@ describe('vector-db service helpers', () => {
   test('saveStoredProjectIndex creates the parent directory and round-trips stored data', () => {
     const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'vector-db-index-'));
     const indexPath = path.join(tempDirectory, '.vector-db', 'index.json');
+    const storage = createVectorDbIndexStorage(indexPath);
     const index: ProjectIndex = {
       version: '1.0',
       generatedAt: '2026-05-22T00:00:00.000Z',
@@ -61,10 +60,11 @@ describe('vector-db service helpers', () => {
       lastIndexUpdate: '2026-05-22T00:00:00.000Z',
     };
 
-    saveStoredProjectIndex(indexPath, index);
+    storage.saveStoredProjectIndex(index);
 
-    expect(hasStoredProjectIndex(indexPath)).toBe(true);
-    expect(loadStoredProjectIndex(indexPath)).toEqual(index);
+    expect(storage.hasStoredProjectIndex()).toBe(true);
+    expect(storage.loadStoredProjectIndex()).toEqual(index);
+    expect(exportVectorDbIndex(storage)).toContain('Edison');
 
     fs.rmSync(tempDirectory, { recursive: true, force: true });
   });
@@ -78,13 +78,13 @@ describe('vector-db service helpers', () => {
       hasStoredProjectIndex: jest.fn().mockReturnValue(true),
       loadStoredProjectIndex: jest.fn(),
       saveStoredProjectIndex: jest.fn(),
+      exportStoredProjectIndex: jest.fn(),
     };
     const loadIndex = jest.fn().mockResolvedValue({ version: '1.0' });
     const createAndSaveIndex = jest.fn();
 
     await initializeVectorDbIndex({
       createAndSaveIndex,
-      indexPath: 'D:/repo/.vector-db/index.json',
       loadIndex,
       logger,
       storage,
@@ -137,6 +137,7 @@ describe('vector-db service helpers', () => {
       hasStoredProjectIndex: jest.fn(),
       loadStoredProjectIndex: jest.fn().mockReturnValue(index),
       saveStoredProjectIndex: jest.fn(),
+      exportStoredProjectIndex: jest.fn().mockReturnValue(JSON.stringify(index, null, 2)),
     };
     const logger = {
       log: jest.fn(),
@@ -145,7 +146,6 @@ describe('vector-db service helpers', () => {
 
     await expect(
       loadVectorDbIndex({
-        indexPath: 'D:/repo/.vector-db/index.json',
         logger,
         storage,
         store,
@@ -159,7 +159,6 @@ describe('vector-db service helpers', () => {
 
     await expect(
       createAndSaveVectorDbIndex({
-        indexPath: 'D:/repo/.vector-db/index.json',
         indexer,
         storage,
         store,
@@ -170,7 +169,6 @@ describe('vector-db service helpers', () => {
       reindexVectorDbProject({
         createAndSaveIndex: () =>
           createAndSaveVectorDbIndex({
-            indexPath: 'D:/repo/.vector-db/index.json',
             indexer,
             storage,
             store,
@@ -180,11 +178,8 @@ describe('vector-db service helpers', () => {
     ).resolves.toEqual(index);
 
     expect(store.storeDocuments).toHaveBeenCalledWith(index.documents);
-    expect(storage.saveStoredProjectIndex).toHaveBeenCalledWith(
-      'D:/repo/.vector-db/index.json',
-      index,
-    );
+    expect(storage.saveStoredProjectIndex).toHaveBeenCalledWith(index);
     expect(store.clear).toHaveBeenCalledTimes(1);
-    expect(exportVectorDbIndex('D:/repo/.vector-db/index.json', storage)).toContain('LoggerService');
+    expect(exportVectorDbIndex(storage)).toContain('LoggerService');
   });
 });

@@ -22,10 +22,10 @@ Legend:
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts standalone vector-db runtime paths guardrail follow-up`
-- [ ] `packages/core/src/vector-db/vector-db-index-storage.ts standalone vector-db index storage boundary follow-up`
-- [ ] `packages/core/src/vector-db/vector-db-service-index.ts standalone vector-db persisted index runtime boundary follow-up`
 - [ ] `packages/core/src/vector-db/vector-db.service.ts standalone vector-db service runtime ownership follow-up`
+- [ ] `packages/core/src/__tests__/vector-db/vector-db.service.functional.test.ts standalone vector-db service runtime guardrail follow-up`
+- [ ] `packages/core/src/vector-db/index.ts standalone vector-db package barrel boundary follow-up`
+- [ ] `packages/core/src/__tests__/vector-db/vector-db.index.test.ts standalone vector-db package barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts runtime fixture helper guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts grouped runtime builder guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/optional-services.builder.functional.test.ts optional runtime builder guardrail follow-up`
@@ -44,6 +44,9 @@ Legend:
 - [x] `packages/core/src/vector-db/cli.ts standalone vector-db runtime helper boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/vector-db-runtime-paths.ts standalone vector-db runtime paths boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts standalone vector-db runtime paths guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/vector-db-index-storage.ts standalone vector-db index storage boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/vector-db-service-index.ts standalone vector-db persisted index runtime boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/standalone-script-console.ts standalone script console boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone script console guardrail follow-up` | prod: yes | tests: yes | func: yes
