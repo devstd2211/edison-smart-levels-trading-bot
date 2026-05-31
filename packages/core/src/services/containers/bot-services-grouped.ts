@@ -29,7 +29,17 @@ export type GroupedServiceDeps = {
   eventHandlerServices: IEventHandlerServices;
 };
 
-export const createGroupedServices = (deps: GroupedServiceDeps) => ({
+export type GroupedServices = {
+  marketDataServices: IMarketDataServices;
+  executionServices: IExecutionServices;
+  monitoringServices: IMonitoringServices;
+  riskServices: IRiskServices;
+  webApiServices: IWebApiServicesContainer;
+  coreServices: ICoreServices;
+  eventHandlerServices: IEventHandlerServices;
+};
+
+export const createGroupedServices = (deps: GroupedServiceDeps): GroupedServices => ({
   marketDataServices: createMarketDataServices(deps.marketDataServices),
   executionServices: createExecutionServices(deps.executionServices),
   monitoringServices: createMonitoringServices(deps.monitoringServices),

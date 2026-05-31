@@ -12,8 +12,81 @@ import type { BotServiceState } from '../../bot-services.builder';
 import type { GroupedServiceDeps } from '../../containers/bot-services-grouped';
 import { selectWebApiReadServices } from '../../containers/web-api-read-services';
 
+type MarketDataServicesState = Pick<
+  BotServiceState,
+  | 'bybitService'
+  | 'timeframeProvider'
+  | 'candleProvider'
+  | 'orderbookManager'
+  | 'publicWebSocket'
+  | 'webSocketManager'
+  | 'indicatorCache'
+  | 'indicatorPreCalc'
+>;
+
+type ExecutionServicesState = Pick<
+  BotServiceState,
+  | 'positionManager'
+  | 'positionMonitor'
+  | 'positionExitingService'
+  | 'tradingOrchestrator'
+  | 'realTimeRiskMonitor'
+  | 'ladderExitDetector'
+  | 'dynamicPositionSizer'
+  | 'positionScalingService'
+  | 'smartOrderExecution'
+  | 'orderStateMachine'
+>;
+
+type MonitoringServicesState = Pick<
+  BotServiceState,
+  'metrics' | 'metricsService' | 'healthCheckService' | 'monitoringServer' | 'dashboard'
+>;
+
+type RiskServicesState = Pick<
+  BotServiceState,
+  'riskManager' | 'realTimeRiskMonitor' | 'realityCheck'
+>;
+
+type WebApiServicesState = Pick<
+  BotServiceState,
+  'candleProvider' | 'orderbookManager' | 'indicatorCache' | 'journal' | 'bybitService'
+>;
+
+type CoreServicesState = Pick<
+  BotServiceState,
+  'logger' | 'eventBus' | 'telegram' | 'timeService'
+>;
+
+type EventHandlerServicesState = Pick<
+  BotServiceState,
+  'positionEventHandler' | 'webSocketEventHandler'
+>;
+
+type GroupedServicesDependencyState =
+  & MarketDataServicesState
+  & ExecutionServicesState
+  & MonitoringServicesState
+  & RiskServicesState
+  & WebApiServicesState
+  & CoreServicesState
+  & EventHandlerServicesState;
+
+export type GroupedServicesBuilderState =
+  & GroupedServicesDependencyState
+  & Pick<
+    BotServiceState,
+    | 'marketDataServices'
+    | 'executionServices'
+    | 'monitoringServices'
+    | 'riskServices'
+    | 'webApiServices'
+    | 'coreServices'
+    | 'eventHandlerServices'
+  >;
+
 export const createMarketDataServicesDeps = (
-  state: BotServiceState,
+  state: MarketDataServicesState,
 ): IMarketDataServices => ({
   bybitService: state.bybitService,
   timeframeProvider: state.timeframeProvider,
@@ -26,7 +99,7 @@ export const createMarketDataServicesDeps = (
 });
 
 export const createExecutionServicesDeps = (
-  state: BotServiceState,
+  state: ExecutionServicesState,
 ): IExecutionServices => ({
   positionManager: state.positionManager,
   positionMonitor: state.positionMonitor,
@@ -41,7 +114,7 @@ export const createExecutionServicesDeps = (
 });
 
 export const createMonitoringServicesDeps = (
-  state: BotServiceState,
+  state: MonitoringServicesState,
 ): IMonitoringServices => ({
   metrics: state.metrics,
   metricsService: state.metricsService,
@@ -51,7 +124,7 @@ export const createMonitoringServicesDeps = (
 });
 
 export const createRiskServicesDeps = (
-  state: BotServiceState,
+  state: RiskServicesState,
 ): IRiskServices => ({
   riskManager: state.riskManager,
   realTimeRiskMonitor: state.realTimeRiskMonitor,
@@ -59,7 +132,7 @@ export const createRiskServicesDeps = (
 });
 
 export const createWebApiServicesDeps = (
-  state: BotServiceState,
+  state: WebApiServicesState,
   config: Config,
 ): IWebApiServicesContainer => {
   const normalizedWebApiConfig = normalizeWebApiConfig(config.webApi);
@@ -77,7 +150,7 @@ export const createWebApiServicesDeps = (
 };
 
 export const createCoreServicesDeps = (
-  state: BotServiceState,
+  state: CoreServicesState,
 ): ICoreServices => ({
   logger: state.logger,
   eventBus: state.eventBus,
@@ -86,14 +159,14 @@ export const createCoreServicesDeps = (
 });
 
 export const createEventHandlerServicesDeps = (
-  state: BotServiceState,
+  state: EventHandlerServicesState,
 ): IEventHandlerServices => ({
   positionEventHandler: state.positionEventHandler,
   webSocketEventHandler: state.webSocketEventHandler,
 });
 
 export const createGroupedServicesDeps = (
-  state: BotServiceState,
+  state: GroupedServicesDependencyState,
   config: Config,
 ): GroupedServiceDeps => ({
   marketDataServices: createMarketDataServicesDeps(state),

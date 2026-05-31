@@ -41,21 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`.
-- `services/bot-factory.service.ts` now owns explicit validated/safe runtime-source entrypoints, so tests and helper fixtures no longer need to route runtime-source handoffs through class-only indirection.
-- `factories/create-trading-bot-runtime.ts` now exposes a direct `runtimeSource -> TradingBot runtime` seam, and the tracked lifecycle harness can materialize bot runtime from an existing runtime source without rebuilding the factory handoff.
+- 2026-05-31: completed `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts runtime fixture helper guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts grouped runtime builder guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/grouped-services.builder.ts grouped runtime builder boundary follow-up`.
+- `bot-factory-runtime-test.utils.ts` now exposes an explicit tracked raw builder-state helper, so builder guardrail suites can inspect pre-finalized runtime ownership without lying to the type system via runtime-source casts.
+- `grouped-service-inputs.builder.ts` and `grouped-services.builder.ts` now narrow the grouped-builder contract to the exact source-and-assignment slices they own, and grouped functional coverage now asserts against the real builder state instead of a narrowed runtime-source shell.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts` (5 suites, 82 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts` (2 suites, 22 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts runtime fixture helper guardrail follow-up`.
-- Keep the next batch on the grouped/optional/monitoring builder stream so the helper guardrails and builder boundaries converge on the same narrowed runtime ownership model.
+- Start with `packages/core/src/__tests__/services/optional-services.builder.functional.test.ts optional runtime builder guardrail follow-up`.
+- Keep the next batch on the optional/monitoring/runtime-builder stream so the newly explicit raw builder-state seam can converge across the remaining composition-root builder boundaries.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -1,14 +1,29 @@
 import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
-import { createGroupedServices } from '../../containers/bot-services-grouped';
-import { createGroupedServicesDeps } from './grouped-service-inputs.builder';
+import {
+  createGroupedServices,
+  type GroupedServices,
+} from '../../containers/bot-services-grouped';
+import {
+  createGroupedServicesDeps,
+  type GroupedServicesBuilderState,
+} from './grouped-service-inputs.builder';
 
-export const initializeGroupedServices = (
-  state: BotServiceState,
-  config: Config,
+type GroupedServicesState = Pick<
+  BotServiceState,
+  | 'marketDataServices'
+  | 'executionServices'
+  | 'monitoringServices'
+  | 'riskServices'
+  | 'webApiServices'
+  | 'coreServices'
+  | 'eventHandlerServices'
+>;
+
+const assignGroupedServices = (
+  state: GroupedServicesState,
+  groupedServices: GroupedServices,
 ): void => {
-  const groupedServices = createGroupedServices(createGroupedServicesDeps(state, config));
-
   state.marketDataServices = groupedServices.marketDataServices;
   state.executionServices = groupedServices.executionServices;
   state.monitoringServices = groupedServices.monitoringServices;
@@ -16,4 +31,12 @@ export const initializeGroupedServices = (
   state.webApiServices = groupedServices.webApiServices;
   state.coreServices = groupedServices.coreServices;
   state.eventHandlerServices = groupedServices.eventHandlerServices;
+};
+
+export const initializeGroupedServices = (
+  state: GroupedServicesBuilderState,
+  config: Config,
+): void => {
+  const groupedServices = createGroupedServices(createGroupedServicesDeps(state, config));
+  assignGroupedServices(state, groupedServices);
 };

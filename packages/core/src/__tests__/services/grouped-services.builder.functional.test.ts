@@ -1,4 +1,3 @@
-import type { BotServiceState } from '../../services/bot-services.builder';
 import {
   createBotStateWebApiReadServices,
   createCoreServicesDeps,
@@ -17,7 +16,7 @@ import { createRiskServices } from '../../services/containers/risk-services';
 import { getDefaultWebApiIndicatorPreferences } from '../../config/web-api-config';
 import {
   createGroupedServicesBuilderRuntimeDefaultConfig,
-  createTrackedBotFactoryRuntimeSource,
+  createTrackedBotFactoryBuilderState,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesState,
@@ -37,10 +36,10 @@ describe('Grouped services builder boundaries', () => {
   });
 
   test('creates market-data, execution, monitoring, and risk deps outside the composition root body', () => {
-    const state = createTrackedBotFactoryRuntimeSource(
+    const state = createTrackedBotFactoryBuilderState(
       trackedServices,
       createGroupedServicesBuilderRuntimeDefaultConfig(),
-    ) as BotServiceState;
+    );
 
     const marketDataDeps = createMarketDataServicesDeps(state);
     const executionDeps = createExecutionServicesDeps(state);
@@ -59,7 +58,7 @@ describe('Grouped services builder boundaries', () => {
 
   test('creates one explicit grouped-service deps object for the grouped container', () => {
     const config = createGroupedServicesBuilderRuntimeDefaultConfig();
-    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const state = createTrackedBotFactoryBuilderState(trackedServices, config);
 
     const groupedDeps = createGroupedServicesDeps(state, config);
 
@@ -83,7 +82,7 @@ describe('Grouped services builder boundaries', () => {
       },
     } as NonNullable<typeof config.webApi>;
 
-    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const state = createTrackedBotFactoryBuilderState(trackedServices, config);
 
     const webApiDeps = createWebApiServicesDeps(state, config);
     const webApiReadDeps = createBotStateWebApiReadServices(state);
@@ -102,8 +101,12 @@ describe('Grouped services builder boundaries', () => {
     expect(webApiReadDeps.bybitService).toBe(webApiDeps.bybitService);
     expect(webApiReadDeps.candleProvider).toBe(webApiDeps.marketDataServices.candleProvider);
     expect(coreDeps.logger).toBe(state.logger);
+    expect(coreDeps.logger).toBe(state.coreServices.logger);
     expect(coreDeps.timeService).toBe(state.timeService);
     expect(eventHandlerDeps.positionEventHandler).toBe(state.positionEventHandler);
+    expect(eventHandlerDeps.positionEventHandler).toBe(
+      state.eventHandlerServices.positionEventHandler,
+    );
     expect(eventHandlerDeps.webSocketEventHandler).toBe(state.webSocketEventHandler);
   });
 
@@ -111,7 +114,7 @@ describe('Grouped services builder boundaries', () => {
     const config = createGroupedServicesBuilderRuntimeDefaultConfig();
     delete config.webApi;
 
-    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const state = createTrackedBotFactoryBuilderState(trackedServices, config);
     const webApiDeps = createWebApiServicesDeps(state, config);
 
     expect(webApiDeps.indicatorPreferences).toEqual(getDefaultWebApiIndicatorPreferences());
@@ -119,7 +122,7 @@ describe('Grouped services builder boundaries', () => {
 
   test('factory path wires extracted grouped-service builders through service creation', () => {
     const config = createGroupedServicesBuilderRuntimeDefaultConfig();
-    const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const services = createTrackedBotFactoryBuilderState(trackedServices, config);
 
     expect(services.marketDataServices.bybitService).toBe(services.bybitService);
     expect(services.marketDataServices.webSocketManager).toBe(services.webSocketManager);
@@ -133,7 +136,7 @@ describe('Grouped services builder boundaries', () => {
 
   test('domain containers clone only their grouped service boundary fields', () => {
     const config = createGroupedServicesBuilderRuntimeDefaultConfig();
-    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const state = createTrackedBotFactoryBuilderState(trackedServices, config);
     const marketDataServices = createMarketDataServices(createMarketDataServicesDeps(state));
     const executionServices = createExecutionServices(createExecutionServicesDeps(state));
     const monitoringServices = createMonitoringServices(createMonitoringServicesDeps(state));

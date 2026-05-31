@@ -12,6 +12,7 @@ import {
   createPositionManagementBuilderRiskMonitoringEnabledConfig,
   createRiskManagerBuilderRuntimeDefaultConfig,
   createRootBotFactoryBoundaryRuntimeDefaultConfig,
+  createTrackedBotFactoryBuilderState,
   createTrackedBotFactoryRuntimeSource,
   createTrackedSafeBotFactoryRuntimeSource,
   createWebSocketMonitoringBuilderCandleEnabledConfig,
@@ -203,6 +204,30 @@ describe('bot factory runtime test utils', () => {
       expect(validatedRuntimeSource.coreServices.eventBus).toBeDefined();
       expect(safeRuntimeSource.marketDataServices.webSocketManager).toBeDefined();
       expect(trackedServices).toHaveLength(2);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test('tracked builder-state helper keeps guardrail suites on the raw builder state while preserving cleanup tracking', async () => {
+    const { trackedServices, cleanup } = createManagedTrackedServicesState();
+    const config = createGroupedServicesBuilderRuntimeDefaultConfig();
+
+    try {
+      const builderState = createTrackedBotFactoryBuilderState(trackedServices, config);
+
+      expect(builderState.positionEventHandler).toBeDefined();
+      expect(builderState.webSocketEventHandler).toBeDefined();
+      expect(builderState.coreServices.logger).toBe(builderState.logger);
+      expect(builderState.eventHandlerServices.positionEventHandler).toBe(
+        builderState.positionEventHandler,
+      );
+      expect(trackedServices).toHaveLength(1);
+      expect(trackedServices[0]?.config.logging).toEqual({
+        level: 'error',
+        logDir: './logs',
+        logToFile: false,
+      });
     } finally {
       await cleanup();
     }

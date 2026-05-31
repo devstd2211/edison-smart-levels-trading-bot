@@ -4,6 +4,10 @@ import {
   createSafeBotFactoryRuntimeSource,
   createValidatedBotFactoryRuntimeSource,
 } from '../../services/bot-factory.service';
+import {
+  buildBotFactoryServiceState,
+} from '../../services/factories/bot-service-state';
+import type { BotServiceState } from '../../services/bot-services.builder';
 import type { TrackedServiceState } from './service-lifecycle-test.utils';
 import { createAdvancedOrderFlowConfig } from './advanced-order-flow-test.utils';
 import { createCompoundInterestConfig } from './compound-interest-calculator-test.utils';
@@ -257,6 +261,16 @@ export function createTrackedSafeBotFactoryRuntimeSource(
   }
 
   return trackCreatedServices(trackedServices, trackedConfig, result.services);
+}
+
+export function createTrackedBotFactoryBuilderState(
+  trackedServices: TrackedServiceState[],
+  config: Config,
+): BotServiceState {
+  const trackedConfig = normalizeTrackedLifecycleConfig(config);
+  const state = buildBotFactoryServiceState(trackedConfig);
+  trackedServices.push({ config: trackedConfig, services: state });
+  return state;
 }
 
 export function deleteBotFactoryConfigPath(config: Config, dottedPath: string): void {
