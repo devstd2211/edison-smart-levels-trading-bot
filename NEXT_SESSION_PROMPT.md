@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`
-2. `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up`
-3. `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up`
+1. `packages/core/src/vector-db/cli.ts standalone vector-db runtime helper boundary follow-up`
+2. `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up`
+3. `packages/core/src/vector-db/vector-db-runtime-paths.ts standalone vector-db runtime paths boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,15 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-31: completed `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/collect-data-entrypoint-runtime.ts standalone collect-data runtime helper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/test-balance-entrypoint-runtime.ts standalone test-balance runtime helper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone test-balance wrapper guardrail follow-up`.
+- `collect-data.entrypoint.ts` and `test-balance.entrypoint.ts` now stay as thin compatibility barrels over dedicated runtime helper modules, so standalone helper imports no longer carry concrete workflow orchestration ownership.
+- `collect-data-entrypoint-runtime.ts` and `test-balance-entrypoint-runtime.ts` now own config/env loading, service wiring, and workflow execution while preserving the previous helper API through re-exports.
+- The collect-data, test-balance, and package boundary guardrails now prove the thin barrels keep their stable helper surface and the runtime files keep the orchestration imports.
 - 2026-05-31: completed `packages/core/src/collect-data.ts standalone collect-data compatibility wrapper boundary follow-up`.
 - 2026-05-31: completed `packages/core/src/test-balance.ts standalone test-balance compatibility wrapper boundary follow-up`.
 - 2026-05-31: completed `packages/core/src/vector-db.ts standalone vector-db compatibility wrapper boundary follow-up`.
@@ -146,6 +155,9 @@ After all three slices are complete:
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
 
 ## Last Verification
+- `npm test -- --runInBand packages/core/src/__tests__/core/collect-data.entrypoint.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
+- `npm test -- --runInBand position-monitor`
+- `npm run build`
 - `npm test -- --runInBand packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/collect-data.entrypoint.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS,
   createTestBalanceExchangeConfig,
@@ -11,6 +13,22 @@ import {
 } from '../../test-balance.entrypoint';
 
 describe('test-balance entrypoint helpers', () => {
+  test('keeps the public test-balance helper surface as a thin barrel over the runtime helper module', () => {
+    const entrypointSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'test-balance.entrypoint.ts'),
+      'utf8',
+    );
+    const runtimeSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'test-balance-entrypoint-runtime.ts'),
+      'utf8',
+    );
+
+    expect(entrypointSource).toContain("from './test-balance-entrypoint-runtime';");
+    expect(entrypointSource).not.toContain("import * as dotenv from 'dotenv';");
+    expect(runtimeSource).toContain("import * as dotenv from 'dotenv';");
+    expect(runtimeSource).toContain('export async function runTestBalanceWorkflow');
+  });
+
   test('loadTestBalanceEnvironment delegates to the provided loader', () => {
     const environmentLoader = jest.fn();
 

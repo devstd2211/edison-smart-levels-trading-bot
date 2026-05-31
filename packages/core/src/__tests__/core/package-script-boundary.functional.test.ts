@@ -274,11 +274,13 @@ describe('package script boundary', () => {
     const standaloneConsoleSource = readTextFile(
       'packages/core/src/standalone-script-console.ts',
     );
-    const collectDataHelperSource = readTextFile(
-      'packages/core/src/collect-data.entrypoint.ts',
+    const collectDataHelperSource = readTextFile('packages/core/src/collect-data.entrypoint.ts');
+    const collectDataRuntimeHelperSource = readTextFile(
+      'packages/core/src/collect-data-entrypoint-runtime.ts',
     );
-    const testBalanceHelperSource = readTextFile(
-      'packages/core/src/test-balance.entrypoint.ts',
+    const testBalanceHelperSource = readTextFile('packages/core/src/test-balance.entrypoint.ts');
+    const testBalanceRuntimeHelperSource = readTextFile(
+      'packages/core/src/test-balance-entrypoint-runtime.ts',
     );
     const vectorDbEntrypointSource = readTextFile('packages/core/src/vector-db.ts');
     const vectorDbCliSource = readTextFile('packages/core/src/vector-db/cli.ts');
@@ -499,23 +501,35 @@ describe('package script boundary', () => {
     expect(standaloneConsoleSource).toContain('printStandaloneScriptBanner');
     expect(standaloneConsoleSource).toContain('printStandaloneScriptMessageBlock');
     expect(standaloneConsoleSource).toContain('printStandaloneScriptLines');
-    expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
-    expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');
-    expect(collectDataHelperSource).toContain(
+    expect(collectDataHelperSource).toContain("from './collect-data-entrypoint-runtime';");
+    expect(collectDataHelperSource).toContain('Stable collect-data entrypoint helper barrel.');
+    expect(collectDataHelperSource).not.toContain("import { getConfig } from './config';");
+    expect(collectDataHelperSource).not.toContain('export function loadCollectDataRuntimeConfig');
+    expect(collectDataRuntimeHelperSource).toContain("import { getConfig } from './config';");
+    expect(collectDataRuntimeHelperSource).toContain(
+      'export function loadCollectDataRuntimeConfig',
+    );
+    expect(collectDataRuntimeHelperSource).toContain(
       'export function createCollectDataWorkflowRuntime',
     );
-    expect(collectDataHelperSource).toContain(
+    expect(collectDataRuntimeHelperSource).toContain(
       'export function resolveCollectDataTimeSyncSettings',
     );
-    expect(collectDataHelperSource).toContain(
+    expect(collectDataRuntimeHelperSource).toContain(
       'export async function startCollectDataWorkflowRuntime',
     );
-    expect(collectDataHelperSource).toContain(
+    expect(collectDataRuntimeHelperSource).toContain(
       'export function logCollectDataStartupSummary',
     );
-    expect(collectDataHelperSource).toContain('export function registerCollectDataShutdown');
-    expect(collectDataHelperSource).toContain('export function startCollectDataRecurringTasks');
-    expect(collectDataHelperSource).toContain('export async function runCollectDataWorkflow');
+    expect(collectDataRuntimeHelperSource).toContain(
+      'export function registerCollectDataShutdown',
+    );
+    expect(collectDataRuntimeHelperSource).toContain(
+      'export function startCollectDataRecurringTasks',
+    );
+    expect(collectDataRuntimeHelperSource).toContain(
+      'export async function runCollectDataWorkflow',
+    );
     expect(collectDataEntrypointSource).toContain("from './collect-data.entrypoint';");
     expect(collectDataEntrypointSource).toContain(
       "from './standalone-entrypoint-runtime';",
@@ -534,18 +548,39 @@ describe('package script boundary', () => {
       'if (currentModule === module)',
     );
     expect(collectDataEntrypointSource).not.toContain("../config.json");
-    expect(testBalanceHelperSource).toContain('export function loadTestBalanceEnvironment');
-    expect(testBalanceHelperSource).toContain('export function readTestBalanceCredentials');
-    expect(testBalanceHelperSource).toContain(
+    expect(testBalanceHelperSource).toContain("from './test-balance-entrypoint-runtime';");
+    expect(testBalanceHelperSource).toContain('Stable test-balance entrypoint helper barrel.');
+    expect(testBalanceHelperSource).not.toContain(
+      'export function loadTestBalanceEnvironment',
+    );
+    expect(testBalanceRuntimeHelperSource).toContain(
+      'export function loadTestBalanceEnvironment',
+    );
+    expect(testBalanceRuntimeHelperSource).toContain(
+      'export function readTestBalanceCredentials',
+    );
+    expect(testBalanceRuntimeHelperSource).toContain(
       'export const TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS',
     );
-    expect(testBalanceHelperSource).toContain('export function createTestBalanceWorkflowRuntime');
-    expect(testBalanceHelperSource).toContain('export function prepareTestBalanceRuntime');
-    expect(testBalanceHelperSource).toContain('export async function runTestBalanceChecks');
-    expect(testBalanceHelperSource).toContain('export async function runTestBalanceWorkflow');
-    expect(testBalanceHelperSource).toContain('printStandaloneScriptMessageBlock');
-    expect(testBalanceHelperSource).not.toContain("consoleRef.log('\\n========================================');");
-    expect(testBalanceHelperSource).not.toContain("consoleRef.log('========================================\\n');");
+    expect(testBalanceRuntimeHelperSource).toContain(
+      'export function createTestBalanceWorkflowRuntime',
+    );
+    expect(testBalanceRuntimeHelperSource).toContain(
+      'export function prepareTestBalanceRuntime',
+    );
+    expect(testBalanceRuntimeHelperSource).toContain(
+      'export async function runTestBalanceChecks',
+    );
+    expect(testBalanceRuntimeHelperSource).toContain(
+      'export async function runTestBalanceWorkflow',
+    );
+    expect(testBalanceRuntimeHelperSource).toContain('printStandaloneScriptMessageBlock');
+    expect(testBalanceRuntimeHelperSource).not.toContain(
+      "consoleRef.log('\\n========================================');",
+    );
+    expect(testBalanceRuntimeHelperSource).not.toContain(
+      "consoleRef.log('========================================\\n');",
+    );
     expect(testBalanceEntrypointSource).toContain(
       'void runTestBalanceEntrypointIfMain();',
     );

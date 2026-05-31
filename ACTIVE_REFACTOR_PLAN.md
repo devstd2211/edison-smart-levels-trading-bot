@@ -41,22 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/collect-data.ts standalone collect-data compatibility wrapper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/test-balance.ts standalone test-balance compatibility wrapper boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/vector-db.ts standalone vector-db compatibility wrapper boundary follow-up`.
-- `standalone-entrypoint-runtime.ts` now exposes `createStandaloneEntrypointWrapperRunners(...)`, so compatibility wrappers keep the same public `main` and `if-main` helper surface without locally branching between module-bound and generic runner owners.
-- The collect-data, test-balance, and vector-db compatibility wrappers now delegate both explicit entrypoint execution and default direct-execution guards through one shared module-aware contract instead of reassembling `currentModule === module` branching inline.
-- The standalone runtime, standalone wrapper, and package boundary guardrails now prove that shared helper preserves override entrypoints, keeps default `require.main` resolution inside the runtime seam, and keeps the compatibility wrappers side-effect free on import.
+- 2026-05-31: completed `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/collect-data-entrypoint-runtime.ts standalone collect-data runtime helper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/test-balance-entrypoint-runtime.ts standalone test-balance runtime helper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone test-balance wrapper guardrail follow-up`.
+- `collect-data.entrypoint.ts` and `test-balance.entrypoint.ts` are now thin compatibility barrels over dedicated runtime helper modules, so standalone workflow orchestration no longer lives on the public helper import path.
+- The new `collect-data-entrypoint-runtime.ts` and `test-balance-entrypoint-runtime.ts` now own the concrete config/env loading, service construction, and workflow execution seams behind those stable entrypoint exports.
+- The collect-data, test-balance, and package-boundary guardrails now prove the thin barrels keep their stable helper surface while the runtime files retain the actual orchestration imports.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/collect-data.entrypoint.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts` (5 suites, 50 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/core/collect-data.entrypoint.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (3 suites, 36 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`.
-- Keep the next batch on the standalone wrapper/runtime stream so the remaining collect-data and test-balance entrypoint helpers converge on the same wrapper-owned direct-execution contract as the compatibility scripts.
+- Start with `packages/core/src/vector-db/cli.ts standalone vector-db runtime helper boundary follow-up`.
+- Keep the next batch on the standalone/vector-db runtime stream so the remaining vector-db entrypoint and runtime-path helpers converge on the same thin-barrel runtime ownership split.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

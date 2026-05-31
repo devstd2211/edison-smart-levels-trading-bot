@@ -22,13 +22,22 @@ Legend:
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`
-- [ ] `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up`
-- [ ] `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up`
-- [ ] `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone test-balance wrapper guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up`
+- [ ] `packages/core/src/vector-db/cli.ts standalone vector-db runtime helper boundary follow-up`
+- [ ] `packages/core/src/vector-db/vector-db-runtime-paths.ts standalone vector-db runtime paths boundary follow-up`
+- [ ] `packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts standalone vector-db runtime paths guardrail follow-up`
+- [ ] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts runtime fixture helper guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts grouped runtime builder guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/optional-services.builder.functional.test.ts optional runtime builder guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts monitoring resilience runtime builder guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone test-balance wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data-entrypoint-runtime.ts standalone collect-data runtime helper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance-entrypoint-runtime.ts standalone test-balance runtime helper boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.ts standalone collect-data compatibility wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.ts standalone test-balance compatibility wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db.ts standalone vector-db compatibility wrapper boundary follow-up` | prod: yes | tests: yes | func: yes

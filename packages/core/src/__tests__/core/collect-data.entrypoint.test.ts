@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   createCollectDataRuntimeServices,
   createCollectDataWorkflowRuntime,
@@ -13,6 +15,22 @@ import {
 import { INTEGER_MULTIPLIERS, TIME_INTERVALS } from '../../constants';
 
 describe('collect-data entrypoint helpers', () => {
+  test('keeps the public collect-data helper surface as a thin barrel over the runtime helper module', () => {
+    const entrypointSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'collect-data.entrypoint.ts'),
+      'utf8',
+    );
+    const runtimeSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'collect-data-entrypoint-runtime.ts'),
+      'utf8',
+    );
+
+    expect(entrypointSource).toContain("from './collect-data-entrypoint-runtime';");
+    expect(entrypointSource).not.toContain("import { getConfig } from './config';");
+    expect(runtimeSource).toContain("import { getConfig } from './config';");
+    expect(runtimeSource).toContain('export async function runCollectDataWorkflow');
+  });
+
   test('loadCollectDataRuntimeConfig keeps only the runtime config sections used by the standalone entrypoint', () => {
     const result = loadCollectDataRuntimeConfig(
       () =>
