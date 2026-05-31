@@ -4,26 +4,61 @@ import { BybitService } from '../../index';
 import { BybitServiceAdapter } from '../../bybit/bybit-service.adapter';
 import { ExchangeFactory } from '../../exchange-factory.service';
 
-export const initializeExchangeServices = (
-  state: BotServiceState,
-  config: Config,
-): void => {
-  const exchangeFactory = new ExchangeFactory(state.logger, {
+type ExchangeServicesBuilderState = Pick<
+  BotServiceState,
+  'logger' | 'marketDataRepository' | 'timeService' | 'bybitService' | 'exchangeFactory'
+>;
+
+type ExchangeServicesDependencies = Pick<
+  ExchangeServicesBuilderState,
+  'logger' | 'marketDataRepository' | 'timeService'
+>;
+
+export type ExchangeServicesConfig = {
+  exchange: ConstructorParameters<typeof ExchangeFactory>[1];
+  useDirectBybitAdapter: boolean;
+};
+
+export const createExchangeServicesConfig = (
+  config: Pick<Config, 'exchange'>,
+): ExchangeServicesConfig => ({
+  exchange: {
     name: (config.exchange.name || 'bybit') as 'bybit' | 'binance',
     symbol: config.exchange.symbol,
     demo: config.exchange.demo,
     testnet: config.exchange.testnet,
     apiKey: config.exchange.apiKey,
     apiSecret: config.exchange.apiSecret,
-  });
+  },
+  useDirectBybitAdapter: !config.exchange.name || config.exchange.name === 'bybit',
+});
 
-  if (!config.exchange.name || config.exchange.name === 'bybit') {
+export const createExchangeServicesDependencies = (
+  state: Pick<BotServiceState, 'logger' | 'marketDataRepository' | 'timeService'>,
+): ExchangeServicesDependencies => ({
+  logger: state.logger,
+  marketDataRepository: state.marketDataRepository,
+  timeService: state.timeService,
+});
+
+export const initializeExchangeServices = (
+  state: ExchangeServicesBuilderState,
+  config: Pick<Config, 'exchange'>,
+): void => {
+  const exchangeServicesConfig = createExchangeServicesConfig(config);
+  const dependencies = createExchangeServicesDependencies(state);
+  const exchangeFactory = new ExchangeFactory(
+    dependencies.logger,
+    exchangeServicesConfig.exchange,
+  );
+
+  if (exchangeServicesConfig.useDirectBybitAdapter) {
     const rawBybitService = new BybitService(
       config.exchange,
-      state.logger,
-      state.marketDataRepository,
+      dependencies.logger,
+      dependencies.marketDataRepository,
     );
-    state.bybitService = new BybitServiceAdapter(rawBybitService, state.logger);
+    state.bybitService = new BybitServiceAdapter(rawBybitService, dependencies.logger);
   } else {
     const exchange = exchangeFactory.getExchange();
     if (!exchange) {
@@ -34,5 +69,5 @@ export const initializeExchangeServices = (
   }
 
   state.exchangeFactory = exchangeFactory;
-  state.timeService.setBybitService(state.bybitService);
+  dependencies.timeService.setBybitService(state.bybitService);
 };

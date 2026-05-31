@@ -5,13 +5,30 @@ import { WebSocketAuthenticationService } from '../../websocket-authentication.s
 import { EventDeduplicationService } from '../../event-deduplication.service';
 import { WebSocketKeepAliveService } from '../../websocket-keep-alive.service';
 import { WebSocketManagerService } from '../../websocket-manager.service';
+import {
+  WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_CAPACITY,
+  WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_TTL_MS,
+  WEBSOCKET_MANAGER_KEEPALIVE_INTERVAL_MS,
+} from './websocket-manager-service.builder.constants';
 
 type WebSocketManagerBuilderState = Pick<
   BotServiceState,
   'logger' | 'errorHandler' | 'webSocketManager'
 >;
 
+type WebSocketManagerDependencies = Pick<
+  WebSocketManagerBuilderState,
+  'logger' | 'errorHandler'
+>;
+
 export type WebSocketManagerConfig = Pick<Config, 'exchange'>;
+
+export type WebSocketManagerRuntimeServices = {
+  orderExecutionDetector: OrderExecutionDetectorService;
+  authService: WebSocketAuthenticationService;
+  deduplicationService: EventDeduplicationService;
+  keepAliveService: WebSocketKeepAliveService;
+};
 
 export const createWebSocketManagerConfig = (
   config: Pick<Config, 'exchange'>,
@@ -19,28 +36,49 @@ export const createWebSocketManagerConfig = (
   exchange: config.exchange,
 });
 
+export const createWebSocketManagerDependencies = (
+  state: Pick<BotServiceState, 'logger' | 'errorHandler'>,
+): WebSocketManagerDependencies => ({
+  logger: state.logger,
+  errorHandler: state.errorHandler,
+});
+
+export const createWebSocketManagerRuntimeServices = (
+  state: Pick<BotServiceState, 'logger' | 'errorHandler'>,
+): WebSocketManagerRuntimeServices => {
+  const dependencies = createWebSocketManagerDependencies(state);
+
+  return {
+    orderExecutionDetector: new OrderExecutionDetectorService(dependencies.logger),
+    authService: new WebSocketAuthenticationService(),
+    deduplicationService: new EventDeduplicationService(
+      WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_CAPACITY,
+      WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_TTL_MS,
+      dependencies.logger,
+      dependencies.errorHandler,
+    ),
+    keepAliveService: new WebSocketKeepAliveService(
+      WEBSOCKET_MANAGER_KEEPALIVE_INTERVAL_MS,
+      dependencies.logger,
+    ),
+  };
+};
+
 export const initializeWebSocketManager = (
   state: WebSocketManagerBuilderState,
   config: Pick<Config, 'exchange'>,
 ): void => {
   const webSocketManagerConfig = createWebSocketManagerConfig(config);
-  const orderExecutionDetector = new OrderExecutionDetectorService(state.logger);
-  const authService = new WebSocketAuthenticationService();
-  const deduplicationService = new EventDeduplicationService(
-    100,
-    60000,
-    state.logger,
-    state.errorHandler,
-  );
-  const keepAliveService = new WebSocketKeepAliveService(20000, state.logger);
+  const dependencies = createWebSocketManagerDependencies(state);
+  const runtimeServices = createWebSocketManagerRuntimeServices(dependencies);
 
   state.webSocketManager = new WebSocketManagerService(
     webSocketManagerConfig.exchange,
     webSocketManagerConfig.exchange.symbol,
-    state.errorHandler,
-    orderExecutionDetector,
-    authService,
-    deduplicationService,
-    keepAliveService,
+    dependencies.errorHandler,
+    runtimeServices.orderExecutionDetector,
+    runtimeServices.authService,
+    runtimeServices.deduplicationService,
+    runtimeServices.keepAliveService,
   );
 };
