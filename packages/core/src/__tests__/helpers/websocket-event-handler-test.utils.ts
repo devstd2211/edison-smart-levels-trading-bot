@@ -200,19 +200,83 @@ function asLoggerService(value: unknown): LoggerService {
   return value as LoggerService;
 }
 
-export function createWebSocketEventHandler(
+type WebSocketEventHandlerResolvedOverrides = Required<WebSocketEventHandlerOverrides>;
+
+function createDefaultWebSocketEventHandlerOverrides(): WebSocketEventHandlerResolvedOverrides {
+  return {
+    mockPositionManager: asPositionLifecycleService({
+      getCurrentPosition: jest.fn(),
+      syncWithWebSocket: jest.fn(),
+      closePositionWithAtomicLock: jest.fn(async (_reason: string, callback: () => Promise<void>) => {
+        await callback();
+      }),
+      clearPosition: jest.fn(),
+    }),
+    mockPositionExitingService: asPositionExitingService({
+      closeFullPosition: jest.fn(),
+      onTakeProfitHit: jest.fn(),
+    }),
+    mockBybitService: asExchange({
+      getCurrentPrice: jest.fn(),
+    }),
+    mockWebSocketManager: asWebSocketManagerService({
+      getLastCloseReason: jest.fn().mockReturnValue('TP'),
+      resetLastCloseReason: jest.fn(),
+    }),
+    mockJournal: asTradingJournalService({
+      getTrade: jest.fn(),
+      recordTrade: jest.fn(),
+    }),
+    mockTelegram: asTelegramService({
+      notifyPositionClosed: jest.fn(),
+    }),
+    mockLogger: {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+    } as jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>,
+  };
+}
+
+function resolveWebSocketEventHandlerOverrides(
   options: WebSocketEventHandlerOverrides = {},
+): WebSocketEventHandlerResolvedOverrides {
+  const defaults = createDefaultWebSocketEventHandlerOverrides();
+
+  return {
+    mockPositionManager: options.mockPositionManager ?? defaults.mockPositionManager,
+    mockPositionExitingService:
+      options.mockPositionExitingService ?? defaults.mockPositionExitingService,
+    mockBybitService: options.mockBybitService ?? defaults.mockBybitService,
+    mockWebSocketManager: options.mockWebSocketManager ?? defaults.mockWebSocketManager,
+    mockJournal: options.mockJournal ?? defaults.mockJournal,
+    mockTelegram: options.mockTelegram ?? defaults.mockTelegram,
+    mockLogger: options.mockLogger ?? defaults.mockLogger,
+  };
+}
+
+function createWebSocketEventHandlerFromResolvedOverrides(
+  options: WebSocketEventHandlerResolvedOverrides,
 ): WebSocketEventHandler {
   return new WebSocketEventHandler(
     createWebSocketEventHandlerDependencies({
-      positionManager: options.mockPositionManager as jest.Mocked<PositionLifecycleService>,
-      positionExitingService: options.mockPositionExitingService as jest.Mocked<PositionExitingService>,
-      bybitService: options.mockBybitService as jest.Mocked<IExchange>,
-      webSocketManager: options.mockWebSocketManager as jest.Mocked<WebSocketManagerService>,
-      journal: options.mockJournal as jest.Mocked<TradingJournalService>,
-      telegram: options.mockTelegram as jest.Mocked<TelegramService>,
+      positionManager: options.mockPositionManager,
+      positionExitingService: options.mockPositionExitingService,
+      bybitService: options.mockBybitService,
+      webSocketManager: options.mockWebSocketManager,
+      journal: options.mockJournal,
+      telegram: options.mockTelegram,
       logger: asLoggerService(options.mockLogger),
     }),
+  );
+}
+
+export function createWebSocketEventHandler(
+  options: WebSocketEventHandlerOverrides = {},
+): WebSocketEventHandler {
+  return createWebSocketEventHandlerFromResolvedOverrides(
+    resolveWebSocketEventHandlerOverrides(options),
   );
 }
 
@@ -223,44 +287,15 @@ export function createStandardWebSocketEventHandler(
 }
 
 export function createWebSocketEventHandlerHarness(): WebSocketEventHandlerHarness {
-  const mockPositionManager = asPositionLifecycleService({
-    getCurrentPosition: jest.fn(),
-    syncWithWebSocket: jest.fn(),
-    closePositionWithAtomicLock: jest.fn(async (_reason: string, callback: () => Promise<void>) => {
-      await callback();
-    }),
-    clearPosition: jest.fn(),
-  });
-
-  const mockPositionExitingService = asPositionExitingService({
-    closeFullPosition: jest.fn(),
-    onTakeProfitHit: jest.fn(),
-  });
-
-  const mockBybitService = asExchange({
-    getCurrentPrice: jest.fn(),
-  });
-
-  const mockWebSocketManager = asWebSocketManagerService({
-    getLastCloseReason: jest.fn().mockReturnValue('TP'),
-    resetLastCloseReason: jest.fn(),
-  });
-
-  const mockJournal = asTradingJournalService({
-    getTrade: jest.fn(),
-    recordTrade: jest.fn(),
-  });
-
-  const mockTelegram = asTelegramService({
-    notifyPositionClosed: jest.fn(),
-  });
-
-  const mockLogger = {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  } as jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
+  const {
+    mockPositionManager,
+    mockPositionExitingService,
+    mockBybitService,
+    mockWebSocketManager,
+    mockJournal,
+    mockTelegram,
+    mockLogger,
+  } = resolveWebSocketEventHandlerOverrides();
 
   jest.spyOn(ErrorHandler, 'handle').mockResolvedValue({
     success: true,
@@ -271,7 +306,7 @@ export function createWebSocketEventHandlerHarness(): WebSocketEventHandlerHarne
   });
 
   return {
-    handler: createStandardWebSocketEventHandler({
+    handler: createWebSocketEventHandlerFromResolvedOverrides({
       mockPositionManager,
       mockPositionExitingService,
       mockBybitService,

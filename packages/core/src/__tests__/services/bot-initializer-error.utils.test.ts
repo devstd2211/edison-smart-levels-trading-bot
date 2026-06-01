@@ -46,6 +46,28 @@ describe('bot-initializer error utils', () => {
     expect(error).toBeInstanceOf(WebSocketConnectionError);
   });
 
+  test('classifies secure websocket endpoint failures from runtime context', () => {
+    const error = classifyBotInitializerError(
+      new Error('startup failed'),
+      'connectFeed',
+      { url: 'wss://stream.bybit.com/v5/public/linear' },
+    );
+
+    expect(error).toBeInstanceOf(WebSocketConnectionError);
+  });
+
+  test('classifies uppercase timeout failures as exchange connection errors', () => {
+    const originalError = new Error('NETWORK TIMEOUT DURING BOOTSTRAP');
+    const error = classifyBotInitializerError(
+      originalError,
+      'initializeBybit',
+      { exchangeName: 'paper-trading' },
+    );
+
+    expect(error).toBeInstanceOf(ExchangeConnectionError);
+    expect((error as ExchangeConnectionError).originalError).toBe(originalError);
+  });
+
   test('classifies session/stat failures as configuration errors', () => {
     const error = classifyBotInitializerError(
       new Error('stats unavailable'),

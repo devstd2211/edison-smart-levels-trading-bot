@@ -19,10 +19,6 @@ Legend:
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/services/bot-initializer/bot-initializer-error.utils.ts initializer runtime error utility boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts initializer runtime error utility guardrail follow-up`
-- [ ] `packages/core/src/services/containers/event-handler-services.ts event handler runtime container boundary follow-up`
-- [ ] `packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.ts websocket handler runtime fixture boundary follow-up`
 - [ ] `packages/core/src/__tests__/helpers/bot-initializer-test.utils.ts initializer runtime fixture boundary follow-up`
 - [ ] `packages/core/src/services/bot-initializer/bot-initializer-retry.utils.ts initializer runtime retry utility boundary follow-up`
 - [ ] `packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts initializer runtime retry utility guardrail follow-up`
@@ -30,8 +26,16 @@ Legend:
 - [ ] `packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts initializer runtime shutdown utility guardrail follow-up`
 - [ ] `packages/core/src/__tests__/helpers/websocket-authentication-test.utils.ts websocket authentication runtime fixture boundary follow-up`
 - [ ] `packages/core/src/__tests__/bot-initializer.test.ts initializer runtime collaborator guardrail follow-up`
+- [ ] `packages/core/src/services/bot-initializer/bot-initializer-periodic.utils.ts initializer runtime periodic utility boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts initializer runtime periodic utility guardrail follow-up`
+- [ ] `packages/core/src/services/bot-initializer/bot-initializer-lifecycle.utils.ts initializer runtime lifecycle utility boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts initializer runtime lifecycle utility guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/bot-initializer/bot-initializer-error.utils.ts initializer runtime error utility boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts initializer runtime error utility guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/containers/event-handler-services.ts event handler runtime container boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.ts websocket handler runtime fixture boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/event-handlers.error-handling.test.ts orchestrator event handlers runtime error guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts initializer runtime error guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/websocket-authentication.service.ts websocket authentication runtime collaborator boundary follow-up` | prod: yes | tests: yes | func: yes

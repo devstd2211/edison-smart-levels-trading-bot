@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-01: completed the `event-handlers.error-handling` slice together with `event-handlers.test.ts` and `helpers/event-handlers-test.utils.ts`.
-- 2026-06-01: completed the `bot-initializer.error-handling` slice by routing the initializer through grouped live collaborators and extending functional guardrails around exchange handoff.
-- 2026-06-01: completed the `websocket-authentication.service.ts` slice together with the related collaborator and error-handling guardrail suites.
-- `websocket-authentication.service.ts` now accepts explicit auth collaborators for time and signature generation, so crypto-failure and deterministic-payload behavior are exercised through a narrow runtime seam instead of module-mocking after import.
-- `bot-initializer.ts` now reads grouped collaborators rather than scattering direct access across the full initializer service bundle, while preserving live exchange-factory/runtime handoff semantics.
-- Event-handler boundary tests now build from shared full-contract mock factories, so the common fixture owns the runtime mock surface that both guardrail suites actually exercise.
+- 2026-06-01: completed `packages/core/src/services/bot-initializer/bot-initializer-error.utils.ts initializer runtime error utility boundary follow-up`.
+- 2026-06-01: completed `packages/core/src/services/containers/event-handler-services.ts event handler runtime container boundary follow-up`.
+- 2026-06-01: completed `packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.ts websocket handler runtime fixture boundary follow-up`.
+- `bot-initializer-error.utils.ts` now normalizes message, operation, and context heuristics before classification, so uppercase transport failures and `wss://` runtime endpoints resolve through the narrow exchange/websocket error boundary instead of falling through to generic API errors.
+- `event-handler-services.ts` now exposes an explicit container-deps contract instead of accepting the full grouped interface as both input and output, which clarifies ownership at the runtime container seam.
+- `websocket-event-handler-test.utils.ts` now resolves a single default collaborator surface for direct factory and harness paths, so the fixture no longer creates unusable handlers when callers omit explicit overrides.
 
 ## Latest Verification
-- 2026-06-01: `npm test -- --runInBand packages/core/src/__tests__/event-handlers.test.ts packages/core/src/__tests__/services/event-handlers.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/websocket-authentication.service.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts` (7 suites, 129 tests)
+- 2026-06-01: `npm test -- --runInBand packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.test.ts` (6 suites, 60 tests)
 - 2026-06-01: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-01: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/bot-initializer/bot-initializer-error.utils.ts initializer runtime error utility boundary follow-up`.
-- Keep the next batch on the initializer and event-handler container/fixture stream.
+- Start with `packages/core/src/__tests__/helpers/bot-initializer-test.utils.ts initializer runtime fixture boundary follow-up`.
+- Keep the next batch on the initializer utility and fixture stream.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

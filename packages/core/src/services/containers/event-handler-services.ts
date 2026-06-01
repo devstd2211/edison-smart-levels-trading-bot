@@ -7,16 +7,21 @@
 
 import type { IEventHandlerServices } from '../../interfaces/IEventHandlerServices';
 
+export type EventHandlerServiceContainerDeps = Pick<
+  IEventHandlerServices,
+  'positionEventHandler' | 'webSocketEventHandler'
+>;
+
 export class EventHandlerServices implements IEventHandlerServices {
   readonly positionEventHandler: IEventHandlerServices['positionEventHandler'];
   readonly webSocketEventHandler: IEventHandlerServices['webSocketEventHandler'];
 
-  constructor(deps: IEventHandlerServices) {
+  constructor(deps: EventHandlerServiceContainerDeps) {
     this.positionEventHandler = deps.positionEventHandler;
     this.webSocketEventHandler = deps.webSocketEventHandler;
   }
 }
 
 export const createEventHandlerServices = (
-  deps: IEventHandlerServices,
+  deps: EventHandlerServiceContainerDeps,
 ): IEventHandlerServices => new EventHandlerServices(deps);
