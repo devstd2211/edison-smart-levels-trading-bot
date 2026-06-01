@@ -1,5 +1,8 @@
 import type { Position } from '../../types/legacy';
-import { BotInitializer } from '../../services/bot-initializer';
+import {
+  BotInitializer,
+  createBotInitializerCollaborators,
+} from '../../services/bot-initializer';
 import { createTradingBotRuntimeDependencies } from '../../services/runtime-service-adapters';
 import { LifecycleManager } from '../../services/lifecycle-manager.service';
 import {
@@ -17,6 +20,22 @@ import {
 describe('BotInitializer functional behavior', () => {
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('creates grouped collaborators that keep exchange runtime reads live after handoff', () => {
+    const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerCollaborators(services);
+    const replacementExchange = {
+      ...services.exchangeRuntime.current,
+      getOpenPositions: jest.fn().mockResolvedValue([{ id: 'replacement-open-position' }]),
+    };
+
+    services.exchangeRuntime.setCurrent(replacementExchange);
+
+    expect(collaborators.exchangeRuntime.current).toBe(replacementExchange);
+    expect(collaborators.core.logger).toBe(services.coreServices.logger);
+    expect(collaborators.execution.positionMonitor).toBe(services.executionServices.positionMonitor);
+    expect(collaborators.marketData.webSocketManager).toBe(services.marketDataServices.webSocketManager);
   });
 
   it('restores an open exchange position before periodic cleanup starts', async () => {

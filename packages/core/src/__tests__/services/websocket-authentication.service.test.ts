@@ -8,6 +8,7 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
+  createWebSocketAuthenticationCollaborators,
   type WebSocketAuthenticationManagedRuntime,
 } from '../helpers/websocket-authentication-test.utils';
 
@@ -160,6 +161,25 @@ describe('WebSocketAuthenticationService', () => {
         .digest('hex');
 
       expect(payload1.args[2]).toBe(signature);
+    });
+
+    it('uses injected collaborators to make auth payload generation deterministic', () => {
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const fixedNow = 1_700_000_000_000;
+      const instance = createService({
+        collaborators: createWebSocketAuthenticationCollaborators({
+          now: () => fixedNow,
+          sign: (secret, payload) =>
+            crypto.createHmac('sha256', secret).update(payload).digest('hex'),
+        }),
+      });
+
+      const payload = instance.generateAuthPayload(apiKey, apiSecret);
+
+      expect(payload.args[1]).toBe(String(fixedNow + 10_000));
+      expect(payload.args[2]).toBe(
+        crypto.createHmac('sha256', apiSecret).update(`GET/realtime${fixedNow + 10_000}`).digest('hex'),
+      );
     });
   });
 

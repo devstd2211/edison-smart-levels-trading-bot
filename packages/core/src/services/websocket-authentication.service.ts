@@ -20,6 +20,21 @@ import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 const AUTH_EXPIRES_OFFSET_MS = TIMING_CONSTANTS.AUTH_EXPIRES_OFFSET_MS;
 
+export interface WebSocketAuthenticationCollaborators {
+  now(): number;
+  sign(secret: string, payload: string): string;
+}
+
+export const createWebSocketAuthenticationCollaborators = (
+  overrides: Partial<WebSocketAuthenticationCollaborators> = {},
+): WebSocketAuthenticationCollaborators => ({
+  now: overrides.now ?? (() => Date.now()),
+  sign:
+    overrides.sign ??
+    ((secret: string, payload: string) =>
+      crypto.createHmac('sha256', secret).update(payload).digest('hex')),
+});
+
 /**
  * Auth payload sent to Bybit WebSocket
  */
@@ -35,13 +50,16 @@ export interface WebSocketAuthPayload {
 export class WebSocketAuthenticationService {
   private errorHandler: ErrorHandler | undefined;
   private logger: Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: Record<string, unknown>) => void>> | undefined;
+  private readonly collaborators: WebSocketAuthenticationCollaborators;
 
   constructor(
     logger?: Partial<Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: Record<string, unknown>) => void>>,
     errorHandler?: ErrorHandler,
+    collaborators: WebSocketAuthenticationCollaborators = createWebSocketAuthenticationCollaborators(),
   ) {
     this.logger = logger;
     this.errorHandler = errorHandler;
+    this.collaborators = collaborators;
   }
 
   private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
@@ -83,14 +101,10 @@ export class WebSocketAuthenticationService {
     }
 
     try {
-      // Calculate expiration (5 seconds in future)
-      const expires = Date.now() + AUTH_EXPIRES_OFFSET_MS;
+      const expires = this.collaborators.now() + AUTH_EXPIRES_OFFSET_MS;
+      const authPayload = `GET/realtime${expires}`;
 
-      // Generate HMAC-SHA256 signature
-      const signature = crypto
-        .createHmac('sha256', apiSecret)
-        .update(`GET/realtime${expires}`)
-        .digest('hex');
+      const signature = this.collaborators.sign(apiSecret, authPayload);
 
       this.safeLog('debug', 'Generated WebSocket auth payload', {
         apiKeyLength: apiKey.length,
@@ -109,7 +123,7 @@ export class WebSocketAuthenticationService {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
 
       // Return a safe default with empty signature
-      const expires = Date.now() + AUTH_EXPIRES_OFFSET_MS;
+      const expires = this.collaborators.now() + AUTH_EXPIRES_OFFSET_MS;
       return {
         op: 'auth',
         args: [apiKey || '', expires.toString(), ''],

@@ -24,6 +24,44 @@ import { runBotInitializerShutdownStep } from './bot-initializer/bot-initializer
 
 const TREND_ANALYSIS_WARMUP_DELAY_MS = 500;
 
+export type BotInitializerCollaborators = {
+  core: Pick<IBotInitializerServices['coreServices'], 'logger' | 'telegram' | 'timeService'>;
+  marketData: IBotInitializerServices['marketDataServices'];
+  exchangeRuntime: IBotInitializerServices['exchangeRuntime'];
+  execution: IBotInitializerServices['executionServices'];
+  journal: IBotInitializerServices['journal'];
+  sessionStats: IBotInitializerServices['sessionStats'];
+  btcMarketState: IBotInitializerServices['btcMarketState'];
+  monitoringServices: IBotInitializerServices['monitoringServices'];
+  resilienceServices: IBotInitializerServices['resilienceServices'];
+  exchangeFactory: IBotInitializerServices['exchangeFactory'];
+};
+
+export const createBotInitializerCollaborators = (
+  services: IBotInitializerServices,
+): BotInitializerCollaborators => ({
+  core: {
+    logger: services.coreServices.logger,
+    telegram: services.coreServices.telegram,
+    timeService: services.coreServices.timeService,
+  },
+  marketData: services.marketDataServices,
+  exchangeRuntime: services.exchangeRuntime,
+  execution: services.executionServices,
+  journal: services.journal,
+  sessionStats: services.sessionStats,
+  btcMarketState: services.btcMarketState,
+  get monitoringServices() {
+    return services.monitoringServices;
+  },
+  get resilienceServices() {
+    return services.resilienceServices;
+  },
+  get exchangeFactory() {
+    return services.exchangeFactory;
+  },
+});
+
 /**
  * BotInitializer - Manages bot lifecycle (initialization and shutdown)
  *
@@ -39,6 +77,7 @@ export class BotInitializer {
   private logger: LoggerService;
   private periodicTaskInterval: NodeJS.Timeout | null = null;
   private readonly lifecycleManager: LifecycleManager;
+  private readonly collaborators: BotInitializerCollaborators;
 
   // Retry configurations for different operations
   private readonly BYBIT_INIT_RETRY_CONFIG: RetryConfig = {
@@ -81,7 +120,8 @@ export class BotInitializer {
     private config: Config,
     private errorHandler?: ErrorHandler,
   ) {
-    this.logger = services.coreServices.logger;
+    this.collaborators = createBotInitializerCollaborators(services);
+    this.logger = this.collaborators.core.logger;
     this.lifecycleManager = new LifecycleManager(this.logger);
     registerBotInitializerLifecycleServices(this.lifecycleManager, this.services);
   }
@@ -239,9 +279,9 @@ export class BotInitializer {
       await new Promise(resolve => setTimeout(resolve, TREND_ANALYSIS_WARMUP_DELAY_MS));
       this.logger.debug('Starting TradingOrchestrator trend analysis after WebSocket warm-up');
 
-      if (this.services.executionServices.tradingOrchestrator) {
+      if (this.collaborators.execution.tradingOrchestrator) {
         this.logger.info(`${ICONS.success} TradingOrchestrator found, calling initializeTrendAnalysis()...`);
-        await this.services.executionServices.tradingOrchestrator.initializeTrendAnalysis();
+        await this.collaborators.execution.tradingOrchestrator.initializeTrendAnalysis();
         this.logger.info(`${ICONS.success} TradingOrchestrator.initializeTrendAnalysis() returned`);
       } else {
         this.logger.error(`${ICONS.warning} TradingOrchestrator not available in services bundle`);
@@ -325,7 +365,7 @@ export class BotInitializer {
       this.logger.info('Checking for open positions to restore...');
 
       // Fetch all open positions from exchange (BybitService is single-position, so max 1)
-      const openPositions = await this.services.exchangeRuntime.current.getOpenPositions();
+      const openPositions = await this.collaborators.exchangeRuntime.current.getOpenPositions();
       const exchangePosition = openPositions.length > 0 ? openPositions[0] : null;
 
       if (exchangePosition === null || exchangePosition.quantity === 0) {
@@ -342,9 +382,9 @@ export class BotInitializer {
       });
 
       // Sync position with WebSocket (this handles journal linking)
-      this.services.executionServices.positionManager.syncWithWebSocket(exchangePosition);
+      this.collaborators.execution.positionManager.syncWithWebSocket(exchangePosition);
 
-      const restoredPosition = this.services.executionServices.positionManager.getCurrentPosition();
+      const restoredPosition = this.collaborators.execution.positionManager.getCurrentPosition();
       if (restoredPosition) {
         this.logger.info(`${ICONS.success} Position restored successfully`, {
           positionId: restoredPosition.id,
@@ -403,13 +443,13 @@ export class BotInitializer {
 
         // End session statistics tracking
         await runBotInitializerShutdownStep(this.logger, 'end session statistics', () => {
-          this.services.sessionStats.endSession();
+          this.collaborators.sessionStats.endSession();
           this.logger.info(`${ICONS.chart} Session ended`);
         });
 
         // Send Telegram notification
         await runBotInitializerShutdownStep(this.logger, 'send Telegram notification', async () => {
-          await this.services.coreServices.telegram.notifyBotStopped();
+          await this.collaborators.core.telegram.notifyBotStopped();
         });
       } else {
         // Without ErrorHandler: original behavior (throws on errors)
@@ -424,11 +464,11 @@ export class BotInitializer {
         });
 
         // End session statistics tracking
-        this.services.sessionStats.endSession();
+        this.collaborators.sessionStats.endSession();
         this.logger.info(`${ICONS.chart} Session ended`);
 
         // Send Telegram notification
-        await this.services.coreServices.telegram.notifyBotStopped();
+        await this.collaborators.core.telegram.notifyBotStopped();
       }
 
       if (hooks.afterShutdown) {
@@ -452,14 +492,14 @@ export class BotInitializer {
     this.logger.info(`Initializing ${exchangeName} service...`);
 
     const performInit = async () => {
-      const exchange = this.services.exchangeRuntime.current;
+      const exchange = this.collaborators.exchangeRuntime.current;
 
       // If using factory-created exchange (non-Bybit), create it asynchronously
-      const exchangeFactory = this.services.exchangeFactory;
+      const exchangeFactory = this.collaborators.exchangeFactory;
       if (exchangeFactory && exchangeName !== 'bybit') {
         this.logger.info(`Creating ${exchangeName} exchange via factory...`);
         const runtimeExchange = await exchangeFactory.createExchange();
-        this.services.exchangeRuntime.setCurrent(runtimeExchange);
+        this.collaborators.exchangeRuntime.setCurrent(runtimeExchange);
         this.logger.info(`${ICONS.success} ${exchangeName} exchange created and initialized`);
       } else if (exchange.initialize) {
         // Traditional Bybit initialization
@@ -492,9 +532,9 @@ export class BotInitializer {
     this.logger.info('Starting session statistics...');
 
     const performStats = async () => {
-      this.services.journal.start();
-      this.services.sessionStats.start();
-      const sessionId = this.services.sessionStats.startSession(
+      this.collaborators.journal.start();
+      this.collaborators.sessionStats.start();
+      const sessionId = this.collaborators.sessionStats.startSession(
         this.config,
         this.config.exchange.symbol,
       );
@@ -528,9 +568,9 @@ export class BotInitializer {
     this.logger.info('Synchronizing time with exchange...');
 
     const performSync = async () => {
-      await this.services.coreServices.timeService.syncWithExchange();
+      await this.collaborators.core.timeService.syncWithExchange();
 
-      const syncInfo = this.services.coreServices.timeService.getSyncInfo();
+      const syncInfo = this.collaborators.core.timeService.getSyncInfo();
       this.logger.info('Time synchronized', {
         offset: syncInfo.offset,
         nextSyncIn: `${Math.round(syncInfo.nextSyncIn / TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND)}s`,
@@ -558,7 +598,7 @@ export class BotInitializer {
     this.logger.info('Initializing candle cache for all enabled timeframes...');
 
     const performInit = async () => {
-      await this.services.marketDataServices.candleProvider.initialize();
+      await this.collaborators.marketData.candleProvider.initialize();
       this.logger.debug(`${ICONS.success} Candle cache initialized (async preload disabled)`);
     };
 
@@ -626,13 +666,13 @@ export class BotInitializer {
         lookbackCandles: btcConfig.lookbackCandles,
       });
 
-      const btcCandles = await this.services.exchangeRuntime.current.getCandles({
+      const btcCandles = await this.collaborators.exchangeRuntime.current.getCandles({
         symbol: btcConfig.symbol,
         timeframe: btcConfig.timeframe,
         limit: btcConfig.lookbackCandles || 100,
       });
 
-      this.services.btcMarketState.btcCandles1m = btcCandles;
+      this.collaborators.btcMarketState.btcCandles1m = btcCandles;
 
       this.logger.info(`${ICONS.success} BTC candles loaded successfully`, {
         count: btcCandles.length,
@@ -641,12 +681,12 @@ export class BotInitializer {
     } catch (error) {
       this.logger.error('Failed to load BTC candles', { error: getErrorMessage(error) });
       // Don't throw - allow bot to continue without BTC confirmation
-      this.services.btcMarketState.btcCandles1m = [];
+      this.collaborators.btcMarketState.btcCandles1m = [];
     }
   }
 
   private async startMonitoringServices(): Promise<void> {
-    const monitoring = this.services.monitoringServices;
+    const monitoring = this.collaborators.monitoringServices;
     if (!monitoring || !this.hasMonitoringStageServices()) {
       return;
     }
@@ -654,7 +694,7 @@ export class BotInitializer {
   }
 
   private async startResilienceServices(): Promise<void> {
-    const resilience = this.services.resilienceServices;
+    const resilience = this.collaborators.resilienceServices;
     if (!resilience || !this.hasResilienceStageServices()) {
       return;
     }
@@ -666,7 +706,7 @@ export class BotInitializer {
   }
 
   private hasMonitoringStageServices(): boolean {
-    const monitoring = this.services.monitoringServices;
+    const monitoring = this.collaborators.monitoringServices;
     return Boolean(
       monitoring && (
         isLifecycleService(monitoring.dashboard)
@@ -676,7 +716,7 @@ export class BotInitializer {
   }
 
   private hasResilienceStageServices(): boolean {
-    const resilience = this.services.resilienceServices;
+    const resilience = this.collaborators.resilienceServices;
     return Boolean(
       resilience && (
         isLifecycleService(resilience.rateLimiter)
@@ -690,7 +730,7 @@ export class BotInitializer {
    * Start MonitoringServer if configured (non-blocking)
    */
   private startMonitoringServer(): void {
-    const monitoringServer = this.services.monitoringServices?.monitoringServer;
+    const monitoringServer = this.collaborators.monitoringServices?.monitoringServer;
     if (!monitoringServer) {
       return;
     }

@@ -9,6 +9,7 @@ import {
   createLongWebSocketAuthCredentials,
   createShortWebSocketAuthCredentials,
   createMockWebSocketAuthLogger,
+  createWebSocketAuthenticationCollaborators,
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
   type AuthLogger,
@@ -70,22 +71,15 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   // ===== GRACEFUL_DEGRADE: Signature Generation =====
   describe('GRACEFUL_DEGRADE: Signature Generation', () => {
     it('should return safe default payload on signature generation failure', () => {
-      // Mock crypto to fail
-      const originalCreateHmac = require('crypto').createHmac;
-      jest.doMock('crypto', () => ({
-        createHmac: jest.fn().mockImplementation(() => {
-          throw new Error('Crypto error');
-        }),
-      }));
-
-      // Create new service with mocked crypto
       const newService = createService({
         logger: mockLogger,
         errorHandler,
+        collaborators: createWebSocketAuthenticationCollaborators({
+          sign: () => {
+            throw new Error('Crypto error');
+          },
+        }),
       });
-
-      // Unmock to restore original behavior
-      jest.unmock('crypto');
 
       // Service should still work with valid credentials
       const { apiKey, apiSecret } = createLongWebSocketAuthCredentials();
@@ -94,6 +88,11 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       expect(result.op).toBe('auth');
       expect(result.args).toHaveLength(3);
       expect(result.args[0]).toBe(apiKey);
+      expect(result.args[2]).toBe('');
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Failed to generate WebSocket auth payload',
+        expect.objectContaining({ error: 'Crypto error' }),
+      );
     });
 
     it('should continue with empty signature on crypto failure', () => {

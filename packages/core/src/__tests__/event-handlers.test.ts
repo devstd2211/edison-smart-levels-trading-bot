@@ -6,28 +6,28 @@
  * - WebSocketEventHandler
  */
 
-import {
-  PositionEventHandler,
-  createPositionEventHandlerDependencies,
-} from '../services/handlers/position.handler';
-import {
-  WebSocketEventHandler,
-  createWebSocketEventHandlerDependencies,
-} from '../services/handlers/websocket.handler';
-import { Position, LoggerService, ExitType } from '../types/legacy';
+import { PositionEventHandler } from '../services/handlers/position.handler';
+import { WebSocketEventHandler } from '../services/handlers/websocket.handler';
+import { Position, ExitType } from '../types/legacy';
 import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../types/legacy';
 import { PositionSide } from '../types/legacy';
 import type { StopLossConfig } from '../types/legacy';
 import { ICONS } from '../cli/cli-runtime';
-
-// Mock services
-const createMockLogger = (): Partial<LoggerService> => ({
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  getLogFilePath: jest.fn().mockReturnValue('/mock/log/path'),
-});
+import {
+  createEventHandlersExchangeMock,
+  createEventHandlersPositionExitingMock,
+  createEventHandlersPositionManagerMock,
+  createEventHandlersTelegramMock,
+  createEventHandlersMockLogger,
+  createManagedEventHandlersWebSocketContext,
+  createManagedPositionEventHandlerContext,
+  createEventHandlersMockPosition,
+  type EventHandlersExchangeMock,
+  type EventHandlersLoggerMock,
+  type EventHandlersPositionExitingMock,
+  type EventHandlersPositionManagerMock,
+  type EventHandlersTelegramMock,
+} from './helpers/event-handlers-test.utils';
 
 const createStopLoss = (price: number): StopLossConfig => ({
   price,
@@ -37,73 +37,55 @@ const createStopLoss = (price: number): StopLossConfig => ({
   updatedAt: Date.now(),
 });
 
-const createMockPosition = (): Position => ({
-  id: 'pos-123',
-  journalId: 'j-123',
-  side: PositionSide.LONG,
-  symbol: 'XRPUSDT',
-  entryPrice: 2.0,
-  quantity: 100,
-  leverage: 10,
-  openedAt: Date.now() - 3600000,
-  unrealizedPnL: 100,
-  takeProfits: [
-    { level: 1, percent: 0.6, price: 2.012, sizePercent: 25, hit: false, orderId: 'tp1-order' },
-    { level: 2, percent: 1.2, price: 2.024, sizePercent: 35, hit: false, orderId: 'tp2-order' },
-    { level: 3, percent: 2.0, price: 2.04, sizePercent: 40, hit: false, orderId: 'tp3-order' },
-  ],
-  stopLoss: createStopLoss(1.96),
-  status: 'OPEN',
-} as Position);
+const createMockPosition = (): Position =>
+  createEventHandlersMockPosition({
+    journalId: 'j-123',
+    symbol: 'XRPUSDT',
+    entryPrice: 2.0,
+    quantity: 100,
+    leverage: 10,
+    unrealizedPnL: 100,
+    takeProfits: [
+      { level: 1, percent: 0.6, price: 2.012, sizePercent: 25, hit: false, orderId: 'tp1-order' },
+      { level: 2, percent: 1.2, price: 2.024, sizePercent: 35, hit: false, orderId: 'tp2-order' },
+      { level: 3, percent: 2.0, price: 2.04, sizePercent: 40, hit: false, orderId: 'tp3-order' },
+    ],
+    stopLoss: createStopLoss(1.96),
+    side: PositionSide.LONG,
+  } as Partial<Position>);
 
 describe('PositionEventHandler', () => {
   let handler: PositionEventHandler;
-  let mockLogger: Partial<LoggerService>;
-  let mockPositionManager: {
-    clearPosition: jest.Mock;
-    recordPositionClose: jest.Mock;
-  };
-  let mockPositionExitingService: {
-    closeFullPosition: jest.Mock;
-  };
-  let mockBybitService: {
-    closePosition: jest.Mock;
-    getCurrentPrice: jest.Mock;
-  };
-  let mockTelegram: {
-    sendAlert: jest.Mock;
-  };
+  let mockLogger: EventHandlersLoggerMock;
+  let mockPositionManager: EventHandlersPositionManagerMock;
+  let mockPositionExitingService: EventHandlersPositionExitingMock;
+  let mockBybitService: EventHandlersExchangeMock;
+  let mockTelegram: EventHandlersTelegramMock;
+  let cleanup: () => void;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-
-    mockPositionManager = {
-      clearPosition: jest.fn().mockResolvedValue(undefined),
-      recordPositionClose: jest.fn().mockResolvedValue(undefined),
-    };
-
-    mockPositionExitingService = {
-      closeFullPosition: jest.fn().mockResolvedValue(undefined),
-    };
-
-    mockBybitService = {
-      closePosition: jest.fn().mockResolvedValue({}),
-      getCurrentPrice: jest.fn().mockResolvedValue(2.05),
-    };
-
-    mockTelegram = {
-      sendAlert: jest.fn().mockResolvedValue(undefined),
-    };
-
-    handler = new PositionEventHandler(
-      createPositionEventHandlerDependencies({
-        positionManager: mockPositionManager as never,
-        positionExitingService: mockPositionExitingService as never,
-        bybitService: mockBybitService as never,
-        telegram: mockTelegram as never,
-        logger: mockLogger as LoggerService,
+    ({
+      handler,
+      mockPositionManager,
+      mockPositionExitingService,
+      mockBybitService,
+      mockTelegram,
+      mockLogger,
+      cleanup,
+    } = createManagedPositionEventHandlerContext({
+      positionManager: createEventHandlersPositionManagerMock(),
+      positionExitingService: createEventHandlersPositionExitingMock(),
+      exchange: createEventHandlersExchangeMock({
+        closePosition: jest.fn().mockResolvedValue({}),
+        getCurrentPrice: jest.fn().mockResolvedValue(2.05),
       }),
-    );
+      telegram: createEventHandlersTelegramMock(),
+      logger: createEventHandlersMockLogger(),
+    }));
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('handleStopLossHit', () => {
@@ -267,22 +249,10 @@ describe('PositionEventHandler', () => {
 
 describe('WebSocketEventHandler', () => {
   let handler: WebSocketEventHandler;
-  let mockLogger: Partial<LoggerService>;
-  let mockPositionManager: {
-    syncWithWebSocket: jest.Mock;
-    getCurrentPosition: jest.Mock;
-    clearPosition: jest.Mock;
-    recordPositionClose: jest.Mock;
-    onTakeProfitHit: jest.Mock;
-    closePositionWithAtomicLock: jest.Mock;
-  };
-  let mockPositionExitingService: {
-    closeFullPosition: jest.Mock;
-    onTakeProfitHit: jest.Mock;
-  };
-  let mockBybitService: {
-    getCurrentPrice: jest.Mock;
-  };
+  let mockLogger: EventHandlersLoggerMock;
+  let mockPositionManager: EventHandlersPositionManagerMock;
+  let mockPositionExitingService: EventHandlersPositionExitingMock;
+  let mockBybitService: EventHandlersExchangeMock;
   let mockWebSocketManager: {
     getLastCloseReason: jest.Mock;
     resetLastCloseReason: jest.Mock;
@@ -293,59 +263,42 @@ describe('WebSocketEventHandler', () => {
   let mockTelegram: {
     notifyPositionClosed: jest.Mock;
   };
+  let cleanup: () => void;
 
   beforeEach(() => {
-    mockLogger = createMockLogger();
-
-    mockPositionManager = {
-      syncWithWebSocket: jest.fn(),
-      getCurrentPosition: jest.fn().mockReturnValue(createMockPosition()),
-      clearPosition: jest.fn().mockResolvedValue(undefined),
-      recordPositionClose: jest.fn().mockResolvedValue(undefined),
-      onTakeProfitHit: jest.fn().mockResolvedValue(undefined),
-      closePositionWithAtomicLock: jest.fn().mockImplementation(async (reason: string, callback?: () => Promise<void>) => {
-        // Execute callback if provided (like WebSocket handler would)
-        if (callback) {
-          await callback();
-        }
-        // Otherwise just clear position (like timeout close)
-        return mockPositionManager.clearPosition();
+    ({
+      handler,
+      mockPositionManager,
+      mockPositionExitingService,
+      mockBybitService,
+      mockWebSocketManager,
+      mockJournal,
+      mockTelegram,
+      mockLogger,
+      cleanup,
+    } = createManagedEventHandlersWebSocketContext({
+      positionManager: createEventHandlersPositionManagerMock({
+        getCurrentPosition: jest.fn().mockReturnValue(createMockPosition()),
+        closePositionWithAtomicLock: jest.fn().mockImplementation(
+          async (_reason: string, callback?: () => Promise<void>) => {
+            if (callback) {
+              await callback();
+              return;
+            }
+            return Promise.resolve();
+          },
+        ),
       }),
-    };
-
-    mockPositionExitingService = {
-      onTakeProfitHit: jest.fn().mockResolvedValue(undefined),
-      closeFullPosition: jest.fn().mockResolvedValue(undefined),
-    };
-
-    mockBybitService = {
-      getCurrentPrice: jest.fn().mockResolvedValue(2.05),
-    };
-
-    mockWebSocketManager = {
-      getLastCloseReason: jest.fn().mockReturnValue(null),
-      resetLastCloseReason: jest.fn(),
-    };
-
-    mockJournal = {
-      getTrade: jest.fn().mockReturnValue(null),
-    };
-
-    mockTelegram = {
-      notifyPositionClosed: jest.fn().mockResolvedValue(undefined),
-    };
-
-    handler = new WebSocketEventHandler(
-      createWebSocketEventHandlerDependencies({
-        positionManager: mockPositionManager as never,
-        positionExitingService: mockPositionExitingService as never,
-        bybitService: mockBybitService as never,
-        webSocketManager: mockWebSocketManager as never,
-        journal: mockJournal as never,
-        telegram: mockTelegram as never,
-        logger: mockLogger as LoggerService,
+      positionExitingService: createEventHandlersPositionExitingMock(),
+      exchange: createEventHandlersExchangeMock({
+        getCurrentPrice: jest.fn().mockResolvedValue(2.05),
       }),
-    );
+      logger: createEventHandlersMockLogger(),
+    }));
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('handlePositionUpdate', () => {

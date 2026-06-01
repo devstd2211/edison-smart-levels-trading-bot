@@ -32,6 +32,8 @@ export type EventHandlersPositionManagerMock = {
   getCurrentPosition: jest.Mock;
   clearPosition: jest.Mock;
   syncWithWebSocket: jest.Mock;
+  recordPositionClose: jest.Mock;
+  onTakeProfitHit: jest.Mock;
   closePositionWithAtomicLock: jest.Mock;
 };
 
@@ -41,7 +43,7 @@ export type EventHandlersPositionExitingMock = {
 };
 
 export type EventHandlersExchangeMock = {
-  closePosition?: jest.Mock;
+  closePosition: jest.Mock;
   getCurrentPrice: jest.Mock;
 };
 
@@ -224,6 +226,52 @@ export function createEventHandlersMockLogger(): EventHandlersLoggerMock {
   };
 }
 
+export function createEventHandlersPositionManagerMock(
+  overrides: Partial<EventHandlersPositionManagerMock> = {},
+): EventHandlersPositionManagerMock {
+  return {
+    getCurrentPosition: overrides.getCurrentPosition ?? jest.fn(),
+    clearPosition: overrides.clearPosition ?? jest.fn(async () => {}),
+    syncWithWebSocket: overrides.syncWithWebSocket ?? jest.fn(),
+    recordPositionClose: overrides.recordPositionClose ?? jest.fn(async () => {}),
+    onTakeProfitHit: overrides.onTakeProfitHit ?? jest.fn(async () => {}),
+    closePositionWithAtomicLock:
+      overrides.closePositionWithAtomicLock ??
+      jest.fn(async (_reason: string, callback?: () => Promise<void>) => {
+        if (callback) {
+          await callback();
+        }
+      }),
+  };
+}
+
+export function createEventHandlersPositionExitingMock(
+  overrides: Partial<EventHandlersPositionExitingMock> = {},
+): EventHandlersPositionExitingMock {
+  return {
+    closeFullPosition: overrides.closeFullPosition ?? jest.fn(async () => {}),
+    onTakeProfitHit: overrides.onTakeProfitHit ?? jest.fn(async () => {}),
+  };
+}
+
+export function createEventHandlersExchangeMock(
+  overrides: Partial<EventHandlersExchangeMock> = {},
+): EventHandlersExchangeMock {
+  return {
+    closePosition: overrides.closePosition ?? jest.fn(async () => {}),
+    getCurrentPrice: overrides.getCurrentPrice ?? jest.fn(async () => 45_500),
+  };
+}
+
+export function createEventHandlersTelegramMock(
+  overrides: Partial<EventHandlersTelegramMock> = {},
+): EventHandlersTelegramMock {
+  return {
+    sendAlert: overrides.sendAlert ?? jest.fn(async () => {}),
+    notifyPositionClosed: overrides.notifyPositionClosed ?? jest.fn(async () => {}),
+  };
+}
+
 function asPositionManager(value: unknown): PositionManagerInput {
   return value as PositionManagerInput;
 }
@@ -260,23 +308,12 @@ export function createPositionEventHandler(options?: {
   logger?: EventHandlersLoggerMock;
 }) {
   const positionManager = options?.positionManager ?? {
-    getCurrentPosition: jest.fn(),
-    clearPosition: jest.fn(async () => {}),
-    syncWithWebSocket: jest.fn(async () => {}),
-    closePositionWithAtomicLock: jest.fn(),
+    ...createEventHandlersPositionManagerMock(),
+    ...options?.positionManager,
   };
-  const positionExitingService = options?.positionExitingService ?? {
-    closeFullPosition: jest.fn(async () => {}),
-    onTakeProfitHit: jest.fn(async () => {}),
-  };
-  const exchange = options?.exchange ?? {
-    closePosition: jest.fn(async () => {}),
-    getCurrentPrice: jest.fn(),
-  };
-  const telegram = options?.telegram ?? {
-    sendAlert: jest.fn(async () => {}),
-    notifyPositionClosed: jest.fn(async () => {}),
-  };
+  const positionExitingService = options?.positionExitingService ?? createEventHandlersPositionExitingMock();
+  const exchange = options?.exchange ?? createEventHandlersExchangeMock();
+  const telegram = options?.telegram ?? createEventHandlersTelegramMock();
   const logger = options?.logger ?? createEventHandlersMockLogger();
 
   return new PositionEventHandler(
@@ -298,30 +335,16 @@ export function createPositionEventHandlerHarness(
   options?: PositionEventHandlerFactoryOptions,
 ): PositionEventHandlerHarness {
   const mockPositionManager =
-    options?.positionManager ?? {
-      getCurrentPosition: jest.fn(),
-      clearPosition: jest.fn(async () => {}),
-      syncWithWebSocket: jest.fn(async () => {}),
-      closePositionWithAtomicLock: jest.fn(),
-    };
+    options?.positionManager ?? createEventHandlersPositionManagerMock();
 
   const mockPositionExitingService =
-    options?.positionExitingService ?? {
-      closeFullPosition: jest.fn(async () => {}),
-      onTakeProfitHit: jest.fn(async () => {}),
-    };
+    options?.positionExitingService ?? createEventHandlersPositionExitingMock();
 
   const mockBybitService =
-    options?.exchange ?? {
-      closePosition: jest.fn(async () => {}),
-      getCurrentPrice: jest.fn(),
-    };
+    options?.exchange ?? createEventHandlersExchangeMock();
 
   const mockTelegram =
-    options?.telegram ?? {
-      sendAlert: jest.fn(async () => {}),
-      notifyPositionClosed: jest.fn(async () => {}),
-    };
+    options?.telegram ?? createEventHandlersTelegramMock();
 
   const mockLogger = options?.logger ?? createEventHandlersMockLogger();
 
@@ -345,27 +368,23 @@ export function createWebSocketEventHandlerHarness(
   options?: WebSocketEventHandlerFactoryOptions,
 ): WebSocketEventHandlerHarness {
   const mockPositionManager =
-    options?.positionManager ?? {
-      getCurrentPosition: jest.fn(),
-      clearPosition: jest.fn(async () => {}),
-      syncWithWebSocket: jest.fn(),
+    options?.positionManager ??
+    createEventHandlersPositionManagerMock({
       closePositionWithAtomicLock: jest.fn(
         async (_reason: string, callback: () => Promise<void>) => {
           await callback();
         },
       ),
-    };
+    });
 
   const mockPositionExitingService =
-    options?.positionExitingService ?? {
-      closeFullPosition: jest.fn(async () => {}),
-      onTakeProfitHit: jest.fn(async () => {}),
-    };
+    options?.positionExitingService ?? createEventHandlersPositionExitingMock();
 
   const mockBybitService =
-    options?.exchange ?? {
+    options?.exchange ??
+    createEventHandlersExchangeMock({
       getCurrentPrice: jest.fn(async () => 45500),
-    };
+    });
 
   const mockWebSocketManager =
     options?.webSocketManager ?? {
@@ -380,10 +399,10 @@ export function createWebSocketEventHandlerHarness(
     };
 
   const mockTelegram =
-    options?.telegram ?? {
-      notifyPositionClosed: jest.fn(async () => {}),
+    options?.telegram ??
+    createEventHandlersTelegramMock({
       sendAlert: jest.fn(),
-    };
+    });
 
   const mockLogger = options?.logger ?? createEventHandlersMockLogger();
 

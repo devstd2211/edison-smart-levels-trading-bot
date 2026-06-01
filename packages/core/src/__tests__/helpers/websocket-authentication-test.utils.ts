@@ -1,6 +1,10 @@
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { ErrorLogger } from '../../errors/ErrorHandler';
-import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
+import {
+  WebSocketAuthenticationService,
+  createWebSocketAuthenticationCollaborators as createWebSocketAuthenticationCollaboratorsInternal,
+  type WebSocketAuthenticationCollaborators,
+} from '../../services/websocket-authentication.service';
 import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export type AuthLogger = Partial<
@@ -12,6 +16,7 @@ export type MockErrorLogger = jest.Mocked<ErrorLogger>;
 export type WebSocketAuthenticationServiceFactoryOptions = {
   logger?: AuthLogger;
   errorHandler?: ErrorHandler;
+  collaborators?: WebSocketAuthenticationCollaborators;
   withErrorHandler?: boolean;
 };
 
@@ -21,6 +26,7 @@ export type WebSocketAuthenticationLegacyFactoryOptions = {
 
 export type WebSocketAuthenticationLoggerlessFactoryOptions = {
   errorHandler?: ErrorHandler;
+  collaborators?: WebSocketAuthenticationCollaborators;
   withErrorHandler?: boolean;
 };
 
@@ -88,6 +94,12 @@ export function createMockWebSocketAuthErrorLogger(): MockErrorLogger {
   };
 }
 
+export function createWebSocketAuthenticationCollaborators(
+  overrides: Partial<WebSocketAuthenticationCollaborators> = {},
+): WebSocketAuthenticationCollaborators {
+  return createWebSocketAuthenticationCollaboratorsInternal(overrides);
+}
+
 export function createWebSocketAuthenticationHarness(
   options: WebSocketAuthenticationServiceFactoryOptions = {},
 ): WebSocketAuthenticationHarness {
@@ -104,6 +116,7 @@ export function createWebSocketAuthenticationHarness(
       : createStandardWebSocketAuthenticationService({
           logger: mockLogger,
           errorHandler,
+          collaborators: options.collaborators,
         });
 
   return {
@@ -115,6 +128,7 @@ export function createWebSocketAuthenticationHarness(
       createStandardWebSocketAuthenticationService({
         logger: serviceOptions.logger ?? mockLogger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        collaborators: serviceOptions.collaborators,
       }),
     createService: (serviceOptions = {}) =>
       serviceOptions.withErrorHandler === false
@@ -124,6 +138,7 @@ export function createWebSocketAuthenticationHarness(
         : createStandardWebSocketAuthenticationService({
             logger: serviceOptions.logger ?? mockLogger,
             errorHandler: serviceOptions.errorHandler ?? errorHandler,
+            collaborators: serviceOptions.collaborators,
           }),
     createLegacyService: (serviceOptions = {}) =>
       createLegacyWebSocketAuthenticationService({
@@ -137,6 +152,7 @@ export function createWebSocketAuthenticationHarness(
         : createStandardWebSocketAuthenticationService({
             logger: undefined,
             errorHandler: serviceOptions.errorHandler ?? errorHandler,
+            collaborators: serviceOptions.collaborators,
           }),
   };
 }
@@ -177,7 +193,11 @@ export function createManagedWebSocketAuthenticationContext(
 export function createStandardWebSocketAuthenticationService(
   options: WebSocketAuthenticationServiceFactoryOptions = {},
 ): WebSocketAuthenticationService {
-  return new WebSocketAuthenticationService(options.logger, options.errorHandler);
+  return new WebSocketAuthenticationService(
+    options.logger,
+    options.errorHandler,
+    options.collaborators,
+  );
 }
 
 export function createLegacyWebSocketAuthenticationService(
