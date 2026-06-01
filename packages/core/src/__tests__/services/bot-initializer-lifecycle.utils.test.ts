@@ -1,7 +1,10 @@
 import { LifecycleManager } from '../../services/lifecycle-manager.service';
 import {
   BOT_INITIALIZER_LIFECYCLE_IDS,
+  createBotInitializerLifecycleCollaborators,
+  getBotInitializerMonitoringServer,
   getBotInitializerListenerCleanupTargets,
+  hasBotInitializerLifecycleStageServices,
   isLifecycleService,
   registerBotInitializerLifecycleServices,
 } from '../../services/bot-initializer/bot-initializer-lifecycle.utils';
@@ -40,8 +43,9 @@ describe('bot initializer lifecycle utils', () => {
 
     const registerAllSpy = jest.spyOn(LifecycleManager.prototype, 'registerAll');
     const lifecycleManager = new LifecycleManager();
+    const collaborators = createBotInitializerLifecycleCollaborators(services);
 
-    registerBotInitializerLifecycleServices(lifecycleManager, services);
+    registerBotInitializerLifecycleServices(lifecycleManager, collaborators);
 
     expect(registerAllSpy).toHaveBeenCalledTimes(1);
     const registrations = registerAllSpy.mock.calls[0]?.[0];
@@ -117,13 +121,56 @@ describe('bot initializer lifecycle utils', () => {
 
   test('returns only listener cleanup targets that expose removeAllListeners', () => {
     const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerLifecycleCollaborators(services);
     delete ((services.marketDataServices.publicWebSocket as unknown) as Record<string, unknown>).removeAllListeners;
 
-    const targets = getBotInitializerListenerCleanupTargets(services);
+    const targets = getBotInitializerListenerCleanupTargets(collaborators);
 
     expect(targets.map((target) => target.label)).toEqual([
       'Position monitor',
       'Private WebSocket',
     ]);
+  });
+
+  test('reports optional lifecycle stages only when the stage contains lifecycle services', () => {
+    const services = createBotInitializerMockServices();
+
+    expect(hasBotInitializerLifecycleStageServices(
+      createBotInitializerLifecycleCollaborators(services),
+      'monitoring',
+    )).toBe(false);
+    expect(hasBotInitializerLifecycleStageServices(
+      createBotInitializerLifecycleCollaborators(services),
+      'resilience',
+    )).toBe(false);
+
+    services.monitoringServices = {
+      dashboard: { start: jest.fn(), stop: jest.fn() },
+    } as never;
+    services.resilienceServices = {
+      retryPolicy: { start: jest.fn(), stop: jest.fn() },
+    } as never;
+
+    const collaborators = createBotInitializerLifecycleCollaborators(services);
+
+    expect(hasBotInitializerLifecycleStageServices(collaborators, 'monitoring')).toBe(true);
+    expect(hasBotInitializerLifecycleStageServices(collaborators, 'resilience')).toBe(true);
+  });
+
+  test('returns the monitoring server only when it exposes a lifecycle contract', () => {
+    const services = createBotInitializerMockServices();
+
+    expect(getBotInitializerMonitoringServer(
+      createBotInitializerLifecycleCollaborators(services),
+    )).toBeNull();
+
+    const monitoringServer = { start: jest.fn(), stop: jest.fn() };
+    services.monitoringServices = {
+      monitoringServer,
+    } as never;
+
+    expect(getBotInitializerMonitoringServer(
+      createBotInitializerLifecycleCollaborators(services),
+    )).toBe(monitoringServer);
   });
 });

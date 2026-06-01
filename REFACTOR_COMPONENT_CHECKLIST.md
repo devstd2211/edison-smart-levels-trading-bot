@@ -19,10 +19,6 @@ Legend:
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/services/bot-initializer/bot-initializer-periodic.utils.ts initializer runtime periodic utility boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts initializer runtime periodic utility guardrail follow-up`
-- [ ] `packages/core/src/services/bot-initializer/bot-initializer-lifecycle.utils.ts initializer runtime lifecycle utility boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts initializer runtime lifecycle utility guardrail follow-up`
 - [ ] `packages/core/src/__tests__/helpers/websocket-manager-test.utils.ts websocket manager runtime fixture boundary follow-up`
 - [ ] `packages/core/src/services/websocket-manager/websocket-manager-connection.utils.ts websocket manager runtime connection utility boundary follow-up`
 - [ ] `packages/core/src/services/websocket-manager/websocket-manager-message.utils.ts websocket manager runtime message utility boundary follow-up`
@@ -30,8 +26,16 @@ Legend:
 - [ ] `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime functional guardrail follow-up`
 - [ ] `packages/core/src/services/websocket-keep-alive.service.ts websocket keep-alive runtime collaborator boundary follow-up`
+- [ ] `packages/core/src/__tests__/helpers/websocket-keep-alive-test.utils.ts websocket keep-alive runtime fixture boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts websocket keep-alive runtime guardrail follow-up`
+- [ ] `packages/core/src/services/websocket-manager/websocket-position-mapping.utils.ts websocket manager runtime state utility boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts websocket manager runtime state guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts initializer runtime lifecycle utility guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-initializer/bot-initializer-lifecycle.utils.ts initializer runtime lifecycle utility boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts initializer runtime periodic utility guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-initializer/bot-initializer-periodic.utils.ts initializer runtime periodic utility boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/bot-initializer.test.ts initializer runtime collaborator guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/helpers/websocket-authentication-test.utils.ts websocket authentication runtime fixture boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts initializer runtime shutdown utility guardrail follow-up` | prod: yes | tests: yes | func: yes

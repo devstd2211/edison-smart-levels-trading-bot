@@ -8,14 +8,19 @@ import { LifecycleManager } from './lifecycle-manager.service';
 import { cleanupListenerTargets } from './lifecycle-manager.service';
 import {
   BOT_INITIALIZER_LIFECYCLE_IDS,
+  createBotInitializerLifecycleCollaborators,
+  getBotInitializerMonitoringServer,
   getBotInitializerListenerCleanupTargets,
-  isLifecycleService,
+  hasBotInitializerLifecycleStageServices,
   registerBotInitializerLifecycleServices,
+  type BotInitializerLifecycleCollaborators,
 } from './bot-initializer/bot-initializer-lifecycle.utils';
 import { ErrorHandler, RetryConfig } from '../errors/ErrorHandler';
 import {
   BOT_INITIALIZER_PERIODIC_INTERVAL_MS,
+  createBotInitializerPeriodicCollaborators,
   runBotInitializerPeriodicCycle,
+  type BotInitializerPeriodicCollaborators,
 } from './bot-initializer/bot-initializer-periodic.utils';
 import { getErrorMessage, getErrorStack } from '../utils/error.utils';
 import { classifyBotInitializerError } from './bot-initializer/bot-initializer-error.utils';
@@ -81,7 +86,9 @@ export class BotInitializer {
   private logger: LoggerService;
   private periodicTaskInterval: NodeJS.Timeout | null = null;
   private readonly lifecycleManager: LifecycleManager;
+  private readonly lifecycleCollaborators: BotInitializerLifecycleCollaborators;
   private readonly collaborators: BotInitializerCollaborators;
+  private readonly periodicCollaborators: BotInitializerPeriodicCollaborators;
 
   // Retry configurations for different operations
   private readonly BYBIT_INIT_RETRY_CONFIG: RetryConfig = {
@@ -125,9 +132,11 @@ export class BotInitializer {
     private errorHandler?: ErrorHandler,
   ) {
     this.collaborators = createBotInitializerCollaborators(services);
+    this.lifecycleCollaborators = createBotInitializerLifecycleCollaborators(services);
     this.logger = this.collaborators.core.logger;
     this.lifecycleManager = new LifecycleManager(this.logger);
-    registerBotInitializerLifecycleServices(this.lifecycleManager, this.services);
+    this.periodicCollaborators = createBotInitializerPeriodicCollaborators(services);
+    registerBotInitializerLifecycleServices(this.lifecycleManager, this.lifecycleCollaborators);
   }
 
   /**
@@ -421,7 +430,7 @@ export class BotInitializer {
         await hooks.beforeShutdown();
       }
 
-      const cleanupTargets = getBotInitializerListenerCleanupTargets(this.services);
+      const cleanupTargets = getBotInitializerListenerCleanupTargets(this.lifecycleCollaborators);
 
       if (this.errorHandler) {
         const shutdownSteps: BotInitializerShutdownStep[] = [
@@ -650,7 +659,7 @@ export class BotInitializer {
   }
 
   private async runPeriodicTaskCycle(): Promise<void> {
-    const result = await runBotInitializerPeriodicCycle(this.services);
+    const result = await runBotInitializerPeriodicCycle(this.periodicCollaborators);
     if (result.shouldStop) {
       this.stopPeriodicTasks();
     }
@@ -693,16 +702,14 @@ export class BotInitializer {
   }
 
   private async startMonitoringServices(): Promise<void> {
-    const monitoring = this.collaborators.monitoringServices;
-    if (!monitoring || !this.hasMonitoringStageServices()) {
+    if (!hasBotInitializerLifecycleStageServices(this.lifecycleCollaborators, 'monitoring')) {
       return;
     }
     await this.lifecycleManager.startStage('monitoring');
   }
 
   private async startResilienceServices(): Promise<void> {
-    const resilience = this.collaborators.resilienceServices;
-    if (!resilience || !this.hasResilienceStageServices()) {
+    if (!hasBotInitializerLifecycleStageServices(this.lifecycleCollaborators, 'resilience')) {
       return;
     }
     await this.lifecycleManager.startStage('resilience');
@@ -712,32 +719,11 @@ export class BotInitializer {
     await this.lifecycleManager.startStage('execution', { throwOnError: true });
   }
 
-  private hasMonitoringStageServices(): boolean {
-    const monitoring = this.collaborators.monitoringServices;
-    return Boolean(
-      monitoring && (
-        isLifecycleService(monitoring.dashboard)
-        || isLifecycleService(monitoring.metricsService)
-      ),
-    );
-  }
-
-  private hasResilienceStageServices(): boolean {
-    const resilience = this.collaborators.resilienceServices;
-    return Boolean(
-      resilience && (
-        isLifecycleService(resilience.rateLimiter)
-        || isLifecycleService(resilience.retryPolicy)
-        || isLifecycleService(resilience.bulkhead)
-      ),
-    );
-  }
-
   /**
    * Start MonitoringServer if configured (non-blocking)
    */
   private startMonitoringServer(): void {
-    const monitoringServer = this.collaborators.monitoringServices?.monitoringServer;
+    const monitoringServer = getBotInitializerMonitoringServer(this.lifecycleCollaborators);
     if (!monitoringServer) {
       return;
     }

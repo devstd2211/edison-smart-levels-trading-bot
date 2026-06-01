@@ -1,5 +1,8 @@
 import { ExchangeAPIError } from '../../errors/DomainErrors';
-import { runBotInitializerPeriodicCycle } from '../../services/bot-initializer/bot-initializer-periodic.utils';
+import {
+  createBotInitializerPeriodicCollaborators,
+  runBotInitializerPeriodicCycle,
+} from '../../services/bot-initializer/bot-initializer-periodic.utils';
 import {
   asBotInitializerMock,
   createBotInitializerMockServices,
@@ -8,8 +11,9 @@ import {
 describe('bot-initializer periodic utils', () => {
   it('runs cleanup when there is no active or opening position', async () => {
     const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerPeriodicCollaborators(services);
 
-    await expect(runBotInitializerPeriodicCycle(services)).resolves.toEqual({
+    await expect(runBotInitializerPeriodicCycle(collaborators)).resolves.toEqual({
       shouldStop: false,
     });
 
@@ -19,26 +23,29 @@ describe('bot-initializer periodic utils', () => {
 
   it('skips cleanup when an active position exists', async () => {
     const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerPeriodicCollaborators(services);
     asBotInitializerMock(services.executionServices.positionManager.getCurrentPosition).mockReturnValue({
       id: 'pos-1',
     });
 
-    await runBotInitializerPeriodicCycle(services);
+    await runBotInitializerPeriodicCycle(collaborators);
 
     expect(services.exchangeRuntime.current.cancelAllConditionalOrders).not.toHaveBeenCalled();
   });
 
   it('skips cleanup while a position is opening', async () => {
     const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerPeriodicCollaborators(services);
     asBotInitializerMock(services.executionServices.positionManager.isPositionOpening).mockReturnValue(true);
 
-    await runBotInitializerPeriodicCycle(services);
+    await runBotInitializerPeriodicCycle(collaborators);
 
     expect(services.exchangeRuntime.current.cancelAllConditionalOrders).not.toHaveBeenCalled();
   });
 
   it('emits a critical error and asks the caller to stop periodic tasks', async () => {
     const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerPeriodicCollaborators(services);
     const error = new ExchangeAPIError('Unauthorized API key', {
       exchangeName: 'bybit',
       endpoint: '/v5/order/realtime',
@@ -46,7 +53,7 @@ describe('bot-initializer periodic utils', () => {
     });
     asBotInitializerMock(services.exchangeRuntime.current.resyncTime).mockRejectedValue(error);
 
-    await expect(runBotInitializerPeriodicCycle(services)).resolves.toEqual({
+    await expect(runBotInitializerPeriodicCycle(collaborators)).resolves.toEqual({
       shouldStop: true,
     });
 
@@ -56,11 +63,12 @@ describe('bot-initializer periodic utils', () => {
 
   it('logs and continues on non-critical errors', async () => {
     const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerPeriodicCollaborators(services);
     asBotInitializerMock(services.exchangeRuntime.current.cancelAllConditionalOrders).mockRejectedValue(
       new Error('temporary cleanup failure'),
     );
 
-    await expect(runBotInitializerPeriodicCycle(services)).resolves.toEqual({
+    await expect(runBotInitializerPeriodicCycle(collaborators)).resolves.toEqual({
       shouldStop: false,
     });
 
@@ -68,5 +76,26 @@ describe('bot-initializer periodic utils', () => {
       error: 'temporary cleanup failure',
     });
     expect(services.coreServices.eventBus.emit).not.toHaveBeenCalled();
+  });
+
+  it('uses the latest exchange runtime when collaborators outlive an exchange swap', async () => {
+    const services = createBotInitializerMockServices();
+    const collaborators = createBotInitializerPeriodicCollaborators(services);
+    const originalExchange = services.exchangeRuntime.current;
+    const replacementExchange = {
+      ...originalExchange,
+      resyncTime: jest.fn().mockResolvedValue(undefined),
+      cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
+    };
+
+    services.exchangeRuntime.setCurrent(replacementExchange);
+
+    await expect(runBotInitializerPeriodicCycle(collaborators)).resolves.toEqual({
+      shouldStop: false,
+    });
+
+    expect(replacementExchange.resyncTime).toHaveBeenCalledTimes(1);
+    expect(replacementExchange.cancelAllConditionalOrders).toHaveBeenCalledTimes(1);
+    expect(originalExchange.cancelAllConditionalOrders).not.toHaveBeenCalled();
   });
 });
