@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/__tests__/helpers/bot-initializer-test.utils.ts initializer runtime fixture boundary follow-up`
-2. `packages/core/src/services/bot-initializer/bot-initializer-retry.utils.ts initializer runtime retry utility boundary follow-up`
-3. `packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts initializer runtime retry utility guardrail follow-up`
+1. `packages/core/src/services/bot-initializer/bot-initializer-shutdown.utils.ts initializer runtime shutdown utility boundary follow-up`
+2. `packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts initializer runtime shutdown utility guardrail follow-up`
+3. `packages/core/src/__tests__/helpers/websocket-authentication-test.utils.ts websocket authentication runtime fixture boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-01: completed `packages/core/src/services/bot-initializer/bot-initializer-error.utils.ts initializer runtime error utility boundary follow-up`.
-- 2026-06-01: completed `packages/core/src/services/containers/event-handler-services.ts event handler runtime container boundary follow-up`.
-- 2026-06-01: completed `packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.ts websocket handler runtime fixture boundary follow-up`.
-- `bot-initializer-error.utils.ts` now normalizes operation/message/context heuristics, so uppercase transport failures and `wss://` runtime endpoints map into the intended exchange or websocket error types.
-- `event-handler-services.ts` now accepts an explicit container dependency slice instead of the full grouped interface, which keeps the event-handler container boundary honest.
-- `websocket-event-handler-test.utils.ts` now resolves a shared default collaborator surface for both direct factory calls and managed harness creation, so omitted overrides no longer produce unusable handlers.
+- 2026-06-01: completed `packages/core/src/__tests__/helpers/bot-initializer-test.utils.ts initializer runtime fixture boundary follow-up`.
+- 2026-06-01: completed `packages/core/src/services/bot-initializer/bot-initializer-retry.utils.ts initializer runtime retry utility boundary follow-up`.
+- 2026-06-01: completed `packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts initializer runtime retry utility guardrail follow-up`.
+- `bot-initializer-test.utils.ts` now resolves managed runtime state through live getters and a shared builder path, so `rebuild()` updates remain visible to callers instead of leaking stale snapshots.
+- `bot-initializer-retry.utils.ts` now honors shared `RetryConfig.customBackoff` while preserving capped delay behavior, so initializer retry policy matches the central error-handler contract.
+- `bot-initializer-retry.utils.test.ts` now guards both capped exponential and custom-backoff delay paths, which makes future retry-boundary drift visible immediately.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts packages/core/src/__tests__/helpers/bot-initializer-test.utils.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

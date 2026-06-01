@@ -1,9 +1,7 @@
 import { ICONS } from '../../cli/cli-runtime';
-import type { RetryConfig } from '../../errors/ErrorHandler';
+import type { ErrorLogger, RetryConfig } from '../../errors/ErrorHandler';
 
-type RetryLogger = {
-  warn(message: string, context?: Record<string, unknown>): void;
-};
+type RetryLogger = Pick<ErrorLogger, 'warn'>;
 
 export type BotInitializerRetryOptions = {
   classifyError: (error: unknown, operation: string, context?: Record<string, unknown>) => Error;
@@ -19,9 +17,10 @@ export function calculateBotInitializerRetryDelay(
   attempt: number,
   config: RetryConfig,
 ): number {
-  const delay =
-    config.initialDelayMs *
-    Math.pow(config.backoffMultiplier, attempt - 1);
+  const delay = config.customBackoff
+    ? config.customBackoff(attempt, config)
+    : config.initialDelayMs *
+      Math.pow(config.backoffMultiplier, attempt - 1);
   return Math.min(delay, config.maxDelayMs || delay);
 }
 

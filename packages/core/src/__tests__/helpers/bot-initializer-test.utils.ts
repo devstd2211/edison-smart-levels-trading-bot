@@ -6,6 +6,16 @@ import type { Config } from '../../types/legacy';
 import { LogLevel, OrderType } from '../../types/legacy';
 
 type LoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error' | 'getLogFilePath'>;
+type BotInitializerTestContextOptions = {
+  services?: IBotInitializerServices;
+  config?: Config;
+  errorHandler?: ErrorHandler;
+};
+type ResolvedBotInitializerTestContextState = {
+  services: IBotInitializerServices;
+  config: Config;
+  errorHandler?: ErrorHandler;
+};
 
 export function createBotInitializerMockLogger(): LoggerLike {
   return {
@@ -238,6 +248,27 @@ export function createBotInitializerHarness(options: {
   };
 }
 
+function resolveBotInitializerTestContextState(
+  options: BotInitializerTestContextOptions,
+): ResolvedBotInitializerTestContextState {
+  return {
+    services: options.services ?? createBotInitializerMockServices(),
+    config: options.config ?? createBotInitializerConfig(),
+    errorHandler: options.errorHandler,
+  };
+}
+
+function buildBotInitializerFromState(
+  context: Pick<BotInitializerTestContext, 'services' | 'config' | 'errorHandler' | 'initializer'>,
+): BotInitializer {
+  context.initializer = createBotInitializerHarness({
+    services: context.services,
+    config: context.config,
+    errorHandler: context.errorHandler,
+  }).initializer;
+  return context.initializer;
+}
+
 export function createBotInitializerWithoutHandler(
   services: IBotInitializerServices,
   config: Config,
@@ -273,15 +304,14 @@ export type BotInitializerErrorHandlingState = Pick<
   'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler' | 'cleanup'
 >;
 
-export function createBotInitializerTestContext(options: {
-  services?: IBotInitializerServices;
-  config?: Config;
-  errorHandler?: ErrorHandler;
-} = {}): BotInitializerTestContext {
+export function createBotInitializerTestContext(
+  options: BotInitializerTestContextOptions = {},
+): BotInitializerTestContext {
+  const state = resolveBotInitializerTestContextState(options);
   const context: BotInitializerTestContext = {
-    services: options.services ?? createBotInitializerMockServices(),
-    config: options.config ?? createBotInitializerConfig(),
-    errorHandler: options.errorHandler,
+    services: state.services,
+    config: state.config,
+    errorHandler: state.errorHandler,
     initializer: undefined as unknown as BotInitializer,
     rebuild(overrides = {}) {
       context.services = overrides.services ?? context.services;
@@ -290,12 +320,7 @@ export function createBotInitializerTestContext(options: {
         Object.prototype.hasOwnProperty.call(overrides, 'errorHandler')
           ? overrides.errorHandler
           : context.errorHandler;
-      context.initializer = createBotInitializerHarness({
-        services: context.services,
-        config: context.config,
-        errorHandler: context.errorHandler,
-      }).initializer;
-      return context.initializer;
+      return buildBotInitializerFromState(context);
     },
     createWithoutHandler() {
       return createBotInitializerWithoutHandler(context.services, context.config);
@@ -305,24 +330,38 @@ export function createBotInitializerTestContext(options: {
     },
   };
 
-  context.rebuild();
+  buildBotInitializerFromState(context);
 
   return context;
 }
 
-export function createManagedBotInitializerTestContext(options: {
-  services?: IBotInitializerServices;
-  config?: Config;
-  errorHandler?: ErrorHandler;
-} = {}): ManagedBotInitializerTestContext {
+export function createManagedBotInitializerTestContext(
+  options: BotInitializerTestContextOptions = {},
+): ManagedBotInitializerTestContext {
   const context = createBotInitializerTestContext(options);
 
-  return {
-    ...context,
+  const managedContext: ManagedBotInitializerTestContext = {
+    get services() {
+      return context.services;
+    },
+    get config() {
+      return context.config;
+    },
+    get errorHandler() {
+      return context.errorHandler;
+    },
+    get initializer() {
+      return context.initializer;
+    },
+    rebuild: context.rebuild,
+    createWithoutHandler: context.createWithoutHandler,
+    shutdown: context.shutdown,
     cleanup: async () => {
       await context.shutdown();
       jest.restoreAllMocks();
       jest.clearAllMocks();
     },
   };
+
+  return managedContext;
 }

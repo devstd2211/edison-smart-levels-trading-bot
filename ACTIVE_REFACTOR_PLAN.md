@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-01: completed `packages/core/src/services/bot-initializer/bot-initializer-error.utils.ts initializer runtime error utility boundary follow-up`.
-- 2026-06-01: completed `packages/core/src/services/containers/event-handler-services.ts event handler runtime container boundary follow-up`.
-- 2026-06-01: completed `packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.ts websocket handler runtime fixture boundary follow-up`.
-- `bot-initializer-error.utils.ts` now normalizes message, operation, and context heuristics before classification, so uppercase transport failures and `wss://` runtime endpoints resolve through the narrow exchange/websocket error boundary instead of falling through to generic API errors.
-- `event-handler-services.ts` now exposes an explicit container-deps contract instead of accepting the full grouped interface as both input and output, which clarifies ownership at the runtime container seam.
-- `websocket-event-handler-test.utils.ts` now resolves a single default collaborator surface for direct factory and harness paths, so the fixture no longer creates unusable handlers when callers omit explicit overrides.
+- 2026-06-01: completed `packages/core/src/__tests__/helpers/bot-initializer-test.utils.ts initializer runtime fixture boundary follow-up`.
+- 2026-06-01: completed `packages/core/src/services/bot-initializer/bot-initializer-retry.utils.ts initializer runtime retry utility boundary follow-up`.
+- 2026-06-01: completed `packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts initializer runtime retry utility guardrail follow-up`.
+- `bot-initializer-test.utils.ts` now resolves mutable test context state through a single builder path and exposes managed-context fields through live getters, so `rebuild()` no longer leaves callers holding stale service, config, error-handler, or initializer snapshots.
+- `bot-initializer-retry.utils.ts` now honors `RetryConfig.customBackoff` while keeping the same retry loop and delay cap behavior, which narrows the retry contract to the shared error-handler configuration surface instead of maintaining a forked interpretation.
+- `bot-initializer-retry.utils.test.ts` now locks both capped exponential delays and custom-backoff behavior, so future retry-boundary changes have direct guardrails instead of only success-path coverage.
 
 ## Latest Verification
-- 2026-06-01: `npm test -- --runInBand packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/helpers/websocket-event-handler-test.utils.test.ts` (6 suites, 60 tests)
+- 2026-06-01: `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts packages/core/src/__tests__/helpers/bot-initializer-test.utils.test.ts` (5 suites, 50 tests)
 - 2026-06-01: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-01: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/helpers/bot-initializer-test.utils.ts initializer runtime fixture boundary follow-up`.
-- Keep the next batch on the initializer utility and fixture stream.
+- Start with `packages/core/src/services/bot-initializer/bot-initializer-shutdown.utils.ts initializer runtime shutdown utility boundary follow-up`.
+- Keep the next batch on the initializer shutdown and websocket-auth fixture stream.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

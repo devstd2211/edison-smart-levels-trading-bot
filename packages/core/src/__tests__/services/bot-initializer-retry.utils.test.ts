@@ -21,6 +21,16 @@ describe('bot-initializer retry utils', () => {
     expect(calculateBotInitializerRetryDelay(3, config)).toBe(250);
   });
 
+  test('uses custom backoff strategy when provided', () => {
+    const customConfig: RetryConfig = {
+      ...config,
+      customBackoff: (attempt) => attempt * 175,
+    };
+
+    expect(calculateBotInitializerRetryDelay(1, customConfig)).toBe(175);
+    expect(calculateBotInitializerRetryDelay(2, customConfig)).toBe(250);
+  });
+
   test('retries until the operation succeeds', async () => {
     const logger = createBotInitializerMockLogger();
     const wait = jest.fn().mockResolvedValue(undefined);
