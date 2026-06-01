@@ -30,6 +30,14 @@ export type WebSocketAuthenticationLoggerlessFactoryOptions = {
   withErrorHandler?: boolean;
 };
 
+type ResolvedWebSocketAuthenticationHarnessState = {
+  collaborators?: WebSocketAuthenticationCollaborators;
+  defaultWithErrorHandler: boolean;
+  errorHandler: ErrorHandler;
+  errorLogger: MockErrorLogger;
+  mockLogger: AuthLogger;
+};
+
 export type WebSocketAuthenticationHarness = {
   service: WebSocketAuthenticationService;
   errorHandler: ErrorHandler;
@@ -100,60 +108,100 @@ export function createWebSocketAuthenticationCollaborators(
   return createWebSocketAuthenticationCollaboratorsInternal(overrides);
 }
 
+function resolveWebSocketAuthenticationHarnessState(
+  options: WebSocketAuthenticationServiceFactoryOptions,
+): ResolvedWebSocketAuthenticationHarnessState {
+  const mockLogger = options.logger ?? createMockWebSocketAuthLogger();
+  const errorLogger = createMockWebSocketAuthErrorLogger();
+
+  return {
+    collaborators: options.collaborators,
+    defaultWithErrorHandler: options.withErrorHandler !== false,
+    errorHandler: options.errorHandler ?? new ErrorHandler(errorLogger),
+    errorLogger,
+    mockLogger,
+  };
+}
+
+function createResolvedWebSocketAuthenticationService(
+  state: ResolvedWebSocketAuthenticationHarnessState,
+  options: WebSocketAuthenticationServiceFactoryOptions = {},
+): WebSocketAuthenticationService {
+  if (options.withErrorHandler === false) {
+    return createLegacyWebSocketAuthenticationService({
+      logger: options.logger,
+    });
+  }
+
+  const logger = Object.prototype.hasOwnProperty.call(options, 'logger')
+    ? options.logger
+    : state.mockLogger;
+
+  return createStandardWebSocketAuthenticationService({
+    logger,
+    errorHandler: options.errorHandler ?? state.errorHandler,
+    collaborators: options.collaborators ?? state.collaborators,
+  });
+}
+
+function createResolvedLoggerlessWebSocketAuthenticationService(
+  state: ResolvedWebSocketAuthenticationHarnessState,
+  options: WebSocketAuthenticationLoggerlessFactoryOptions = {},
+): WebSocketAuthenticationService {
+  if (options.withErrorHandler === false) {
+    return createLegacyWebSocketAuthenticationService({
+      logger: undefined,
+    });
+  }
+
+  return createStandardWebSocketAuthenticationService({
+    logger: undefined,
+    errorHandler: options.errorHandler ?? state.errorHandler,
+    collaborators: options.collaborators ?? state.collaborators,
+  });
+}
+
 export function createWebSocketAuthenticationHarness(
   options: WebSocketAuthenticationServiceFactoryOptions = {},
 ): WebSocketAuthenticationHarness {
-  const mockLogger = options.logger ?? createMockWebSocketAuthLogger();
-  const errorLogger = createMockWebSocketAuthErrorLogger();
-  const errorHandler = options.withErrorHandler === false
-    ? undefined
-    : options.errorHandler ?? new ErrorHandler(errorLogger);
-  const service =
-    options.withErrorHandler === false
-      ? createLegacyWebSocketAuthenticationService({
-          logger: mockLogger,
-        })
-      : createStandardWebSocketAuthenticationService({
-          logger: mockLogger,
-          errorHandler,
-          collaborators: options.collaborators,
-        });
+  const state = resolveWebSocketAuthenticationHarnessState(options);
+  const service = createResolvedWebSocketAuthenticationService(state, {
+    logger: state.mockLogger,
+    withErrorHandler: state.defaultWithErrorHandler,
+  });
 
   return {
     service,
-    errorHandler: (errorHandler ?? new ErrorHandler(errorLogger)),
-    mockLogger,
-    errorLogger,
+    errorHandler: state.errorHandler,
+    mockLogger: state.mockLogger,
+    errorLogger: state.errorLogger,
     createStandardService: (serviceOptions = {}) =>
-      createStandardWebSocketAuthenticationService({
-        logger: serviceOptions.logger ?? mockLogger,
-        errorHandler: serviceOptions.errorHandler ?? errorHandler,
-        collaborators: serviceOptions.collaborators,
+      createResolvedWebSocketAuthenticationService(state, {
+        ...serviceOptions,
+        logger: Object.prototype.hasOwnProperty.call(serviceOptions, 'logger')
+          ? serviceOptions.logger
+          : state.mockLogger,
+        withErrorHandler: true,
       }),
     createService: (serviceOptions = {}) =>
-      serviceOptions.withErrorHandler === false
-        ? createLegacyWebSocketAuthenticationService({
-            logger: serviceOptions.logger ?? mockLogger,
-          })
-        : createStandardWebSocketAuthenticationService({
-            logger: serviceOptions.logger ?? mockLogger,
-            errorHandler: serviceOptions.errorHandler ?? errorHandler,
-            collaborators: serviceOptions.collaborators,
-          }),
+      createResolvedWebSocketAuthenticationService(state, {
+        ...serviceOptions,
+        logger: Object.prototype.hasOwnProperty.call(serviceOptions, 'logger')
+          ? serviceOptions.logger
+          : state.mockLogger,
+        withErrorHandler: serviceOptions.withErrorHandler ?? state.defaultWithErrorHandler,
+      }),
     createLegacyService: (serviceOptions = {}) =>
       createLegacyWebSocketAuthenticationService({
-        logger: serviceOptions.logger ?? mockLogger,
+        logger: Object.prototype.hasOwnProperty.call(serviceOptions, 'logger')
+          ? serviceOptions.logger
+          : state.mockLogger,
       }),
     createServiceWithoutLogger: (serviceOptions = {}) =>
-      serviceOptions.withErrorHandler === false
-        ? createLegacyWebSocketAuthenticationService({
-            logger: undefined,
-          })
-        : createStandardWebSocketAuthenticationService({
-            logger: undefined,
-            errorHandler: serviceOptions.errorHandler ?? errorHandler,
-            collaborators: serviceOptions.collaborators,
-          }),
+      createResolvedLoggerlessWebSocketAuthenticationService(state, {
+        ...serviceOptions,
+        withErrorHandler: serviceOptions.withErrorHandler ?? state.defaultWithErrorHandler,
+      }),
   };
 }
 

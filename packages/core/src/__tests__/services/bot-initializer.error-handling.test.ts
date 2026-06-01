@@ -303,6 +303,21 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       // Verify shutdown continued after telegram error
       expect(mockServices.sessionStats.endSession).toHaveBeenCalled();
     });
+
+    test('D3: Listener cleanup fails -> later shutdown steps still run', async () => {
+      asBotInitializerMock(mockServices.marketDataServices.publicWebSocket.removeAllListeners)
+        .mockImplementationOnce(() => {
+          throw new Error('Listener cleanup failed');
+        });
+
+      await expect(initializer.shutdown()).resolves.not.toThrow();
+
+      expect(mockServices.executionServices.positionMonitor.removeAllListeners).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.webSocketManager.removeAllListeners).toHaveBeenCalled();
+      expect(mockServices.marketDataServices.publicWebSocket.removeAllListeners).toHaveBeenCalled();
+      expect(mockServices.sessionStats.endSession).toHaveBeenCalled();
+      expect(mockServices.coreServices.telegram.notifyBotStopped).toHaveBeenCalled();
+    });
   });
 
   // ============================================================================

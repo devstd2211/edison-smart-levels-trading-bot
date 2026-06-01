@@ -20,7 +20,11 @@ import {
 import { getErrorMessage, getErrorStack } from '../utils/error.utils';
 import { classifyBotInitializerError } from './bot-initializer/bot-initializer-error.utils';
 import { runBotInitializerRetryOperation } from './bot-initializer/bot-initializer-retry.utils';
-import { runBotInitializerShutdownStep } from './bot-initializer/bot-initializer-shutdown.utils';
+import {
+  runBotInitializerShutdownStep,
+  runBotInitializerShutdownSteps,
+  type BotInitializerShutdownStep,
+} from './bot-initializer/bot-initializer-shutdown.utils';
 
 const TREND_ANALYSIS_WARMUP_DELAY_MS = 500;
 
@@ -420,37 +424,40 @@ export class BotInitializer {
       const cleanupTargets = getBotInitializerListenerCleanupTargets(this.services);
 
       if (this.errorHandler) {
-        // Stop periodic tasks
-        await runBotInitializerShutdownStep(this.logger, 'stop periodic tasks', () => {
-          this.stopPeriodicTasks();
-        });
-
-        // Stop lifecycle-managed services
-        await runBotInitializerShutdownStep(this.logger, 'stop lifecycle services', () =>
-          this.lifecycleManager.stopAll(),
-        );
-
-        await cleanupListenerTargets(cleanupTargets, (cleanupTarget) =>
-          runBotInitializerShutdownStep(
-            this.logger,
-            `remove ${cleanupTarget.label.toLowerCase()} listeners`,
-            () => {
+        const shutdownSteps: BotInitializerShutdownStep[] = [
+          {
+            name: 'stop periodic tasks',
+            run: () => {
+              this.stopPeriodicTasks();
+            },
+          },
+          {
+            name: 'stop lifecycle services',
+            run: () => this.lifecycleManager.stopAll(),
+          },
+          ...cleanupTargets.map((cleanupTarget) => ({
+            name: `remove ${cleanupTarget.label.toLowerCase()} listeners`,
+            run: () => {
               cleanupTarget.target.removeAllListeners();
               this.logger.debug(`${cleanupTarget.label} listeners removed`);
             },
-          ),
-        );
+          })),
+          {
+            name: 'end session statistics',
+            run: () => {
+              this.collaborators.sessionStats.endSession();
+              this.logger.info(`${ICONS.chart} Session ended`);
+            },
+          },
+          {
+            name: 'send Telegram notification',
+            run: async () => {
+              await this.collaborators.core.telegram.notifyBotStopped();
+            },
+          },
+        ];
 
-        // End session statistics tracking
-        await runBotInitializerShutdownStep(this.logger, 'end session statistics', () => {
-          this.collaborators.sessionStats.endSession();
-          this.logger.info(`${ICONS.chart} Session ended`);
-        });
-
-        // Send Telegram notification
-        await runBotInitializerShutdownStep(this.logger, 'send Telegram notification', async () => {
-          await this.collaborators.core.telegram.notifyBotStopped();
-        });
+        await runBotInitializerShutdownSteps(this.logger, shutdownSteps);
       } else {
         // Without ErrorHandler: original behavior (throws on errors)
         // Stop periodic tasks

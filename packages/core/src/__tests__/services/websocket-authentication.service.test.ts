@@ -8,6 +8,7 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
+  createWebSocketAuthenticationHarness,
   createWebSocketAuthenticationCollaborators,
   type WebSocketAuthenticationManagedRuntime,
 } from '../helpers/websocket-authentication-test.utils';
@@ -174,6 +175,26 @@ describe('WebSocketAuthenticationService', () => {
         }),
       });
 
+      const payload = instance.generateAuthPayload(apiKey, apiSecret);
+
+      expect(payload.args[1]).toBe(String(fixedNow + 10_000));
+      expect(payload.args[2]).toBe(
+        crypto.createHmac('sha256', apiSecret).update(`GET/realtime${fixedNow + 10_000}`).digest('hex'),
+      );
+    });
+
+    it('reuses harness collaborator defaults when creating additional services', () => {
+      const { apiKey, apiSecret } = createWebSocketAuthCredentials();
+      const fixedNow = 1_700_000_000_000;
+      const harness = createWebSocketAuthenticationHarness({
+        collaborators: createWebSocketAuthenticationCollaborators({
+          now: () => fixedNow,
+          sign: (secret, payload) =>
+            crypto.createHmac('sha256', secret).update(payload).digest('hex'),
+        }),
+      });
+
+      const instance = harness.createStandardService();
       const payload = instance.generateAuthPayload(apiKey, apiSecret);
 
       expect(payload.args[1]).toBe(String(fixedNow + 10_000));
