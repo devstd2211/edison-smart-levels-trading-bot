@@ -82,4 +82,33 @@ describe('PositionMonitorService - Functional behavior', () => {
     expect(context.mockPositionSync.syncClosedPosition).toHaveBeenCalledWith(position);
     expect(context.mockBybit.getCurrentPrice).not.toHaveBeenCalled();
   });
+
+  it('skips stale price checks when the monitored position changes during protection verification', async () => {
+    const initialPosition = createMockMonitoredPosition();
+    const replacementPosition = createMockMonitoredPosition(undefined, undefined, undefined, undefined, undefined, {
+      id: 'replacement-pos-456',
+    });
+    let activePosition = initialPosition;
+
+    context.mockPositionManager.getCurrentPosition.mockImplementation(() => activePosition);
+    context.mockBybit.getPosition.mockResolvedValue(initialPosition);
+    context.mockBybit.verifyProtectionSet.mockImplementation(async () => {
+      activePosition = replacementPosition;
+      return {
+        verified: true,
+        hasStopLoss: true,
+        hasTakeProfit: true,
+        hasTrailingStop: false,
+        activeOrders: 3,
+      };
+    });
+
+    const stopLossSpy = jest.fn();
+    context.monitor.on('stopLossHit', stopLossSpy);
+
+    await runPositionMonitorCycle(context.monitor);
+
+    expect(context.mockBybit.getCurrentPrice).not.toHaveBeenCalled();
+    expect(stopLossSpy).not.toHaveBeenCalled();
+  });
 });

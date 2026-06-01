@@ -126,6 +126,32 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       // Should skip monitoring for already-closed positions
       expect(mockPositionSync.syncClosedPosition).not.toHaveBeenCalled();
     });
+
+    it('should skip cached-position price checks when the monitored position changes after sync degradation', async () => {
+      const initialPosition = createMockMonitoredPosition(undefined, undefined, undefined, undefined, undefined, {
+        protectionVerifiedOnce: true,
+      });
+      const replacementPosition = createMockMonitoredPosition(undefined, undefined, undefined, undefined, undefined, {
+        id: 'replacement-pos-456',
+        protectionVerifiedOnce: true,
+      });
+      let activePosition = initialPosition;
+
+      mockPositionManager.getCurrentPosition.mockImplementation(() => activePosition);
+      mockBybit.getPosition.mockImplementationOnce(async () => {
+        activePosition = replacementPosition;
+        throw new Error('Network error');
+      });
+      mockBybit.getCurrentPrice.mockResolvedValueOnce(initialPosition.stopLoss.price - 1);
+
+      const slHitSpy = jest.fn();
+      monitor.on('stopLossHit', slHitSpy);
+
+      await runPositionMonitorCycle(monitor);
+
+      expect(mockBybit.getCurrentPrice).not.toHaveBeenCalled();
+      expect(slHitSpy).not.toHaveBeenCalled();
+    });
   });
 
   // ==========================================================================

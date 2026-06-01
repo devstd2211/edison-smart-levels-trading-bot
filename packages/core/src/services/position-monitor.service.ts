@@ -126,20 +126,36 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
       }
 
       const exchangePosition = await this.getExchangePosition(currentPosition);
+      const synchronizedPosition = this.getLiveMonitoredPosition(
+        currentPosition.id,
+        'Position changed during exchange sync, skipping stale monitor check',
+      );
+      if (synchronizedPosition === null) {
+        return;
+      }
+
       if (isExchangePositionClosed(exchangePosition)) {
-        const syncedClosedPosition = await this.syncClosedPositionIfNeeded(currentPosition);
+        const syncedClosedPosition = await this.syncClosedPositionIfNeeded(synchronizedPosition);
         if (syncedClosedPosition) {
           return;
         }
       }
 
-      if (!currentPosition.protectionVerifiedOnce) {
+      if (!synchronizedPosition.protectionVerifiedOnce) {
         this.logger.debug('Initial protection verification check');
-        const protection = await this.verifyInitialProtection(currentPosition);
+        const protection = await this.verifyInitialProtection(synchronizedPosition);
         if (!protection.verified) {
-          await this.handleUnprotectedPosition(currentPosition, protection);
+          await this.handleUnprotectedPosition(synchronizedPosition, protection);
           return;
         }
+      }
+
+      const protectedPosition = this.getLiveMonitoredPosition(
+        currentPosition.id,
+        'Position changed during protection verification, skipping stale monitor check',
+      );
+      if (protectedPosition === null) {
+        return;
       }
 
       const currentPrice = await this.getCurrentPriceSafely();
@@ -147,14 +163,17 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
         return;
       }
 
-      if (this.positionManager.getCurrentPosition() === null) {
-        this.logger.debug('Position closed during price fetch, skipping checks');
+      const priceCheckedPosition = this.getLiveMonitoredPosition(
+        currentPosition.id,
+        'Position changed during price fetch, skipping stale monitor check',
+      );
+      if (priceCheckedPosition === null) {
         return;
       }
 
-      if (isStopLossHit(currentPosition, currentPrice)) {
+      if (isStopLossHit(priceCheckedPosition, currentPrice)) {
         this.emit('stopLossHit', {
-          position: currentPosition,
+          position: priceCheckedPosition,
           currentPrice,
           reason: `Stop Loss hit at ${currentPrice}`,
         });
@@ -162,7 +181,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
 
       let timeBasedExit: TimeBasedExitDecision;
       try {
-        timeBasedExit = this.checkTimeBasedExit(currentPosition, currentPrice);
+        timeBasedExit = this.checkTimeBasedExit(priceCheckedPosition, currentPrice);
       } catch (timeExitError) {
         this.logger.warn('Failed to check time-based exit', {
           error: getErrorMessage(timeExitError),
@@ -172,7 +191,7 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
 
       if (timeBasedExit.shouldExit) {
         this.emit('timeBasedExit', {
-          position: currentPosition,
+          position: priceCheckedPosition,
           currentPrice,
           reason: timeBasedExit.reason,
           openedMinutes: timeBasedExit.openedMinutes,
@@ -200,6 +219,33 @@ export class PositionMonitorService extends EventEmitter implements ILifecycle {
       });
       this.emit('error', error);
     }
+  }
+
+  private getLiveMonitoredPosition(expectedPositionId: string, reason: string): Position | null {
+    const livePosition = this.positionManager.getCurrentPosition();
+
+    if (livePosition === null) {
+      this.logger.debug(reason);
+      return null;
+    }
+
+    if (livePosition.id !== expectedPositionId) {
+      this.logger.debug(reason, {
+        expectedPositionId,
+        livePositionId: livePosition.id,
+      });
+      return null;
+    }
+
+    if (isClosedPosition(livePosition)) {
+      this.logger.debug(reason, {
+        expectedPositionId,
+        status: livePosition.status,
+      });
+      return null;
+    }
+
+    return livePosition;
   }
 
   private checkTimeBasedExit(position: Position, currentPrice: number): TimeBasedExitDecision {

@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/public-websocket.functional.test.ts public websocket runtime collaborator guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/public-websocket.error-handling.test.ts public websocket runtime error guardrail follow-up`.
-- `public-websocket.service.ts` now funnels subscription and ping payloads through a single open-socket transport helper and clears the socket eagerly during disconnect cleanup.
-- `public-websocket.functional.test.ts` now proves failed subscription sends do not retain stale subscribed topics on the service state.
-- `public-websocket.error-handling.test.ts` now covers graceful degradation for subscription/ping send failures and verifies disconnect cleanup still leaves the service disconnected after a close error.
+- 2026-06-01: completed `packages/core/src/services/position-monitor.service.ts position monitor runtime collaborator boundary follow-up`.
+- 2026-06-01: completed `packages/core/src/__tests__/services/position-monitor.functional.test.ts position monitor runtime collaborator guardrail follow-up`.
+- 2026-06-01: completed `packages/core/src/__tests__/services/position-monitor.error-handling.test.ts position monitor runtime error guardrail follow-up`.
+- `position-monitor.service.ts` now revalidates the live monitored position after exchange sync, protection verification, and price fetch so stale async work cannot emit events for a replaced or closed position.
+- `position-monitor.functional.test.ts` now proves a position replacement during protection verification short-circuits stale price checks.
+- `position-monitor.error-handling.test.ts` now proves degraded exchange-sync fallback also short-circuits stale price checks when the runtime position changes mid-cycle.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/public-websocket.functional.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/public-websocket-state.utils.test.ts` (3 suites, 19 tests)
-- 2026-05-31: `npm test -- --runInBand position-monitor` (6 suites, 57 tests)
-- 2026-05-31: `npm run build`
+- 2026-06-01: `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor.functional.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts` (2 suites, 22 tests)
+- 2026-06-01: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-01: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/position-monitor.service.ts position monitor runtime collaborator boundary follow-up`.
-- Keep the next batch on the position-monitor stream before returning to websocket handler, initializer, and websocket-authentication follow-ups.
+- Start with `packages/core/src/services/handlers/websocket.handler.ts websocket event handler runtime collaborator boundary follow-up`.
+- Keep the next batch on the websocket handler and initializer stream before returning to websocket-authentication follow-ups.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
