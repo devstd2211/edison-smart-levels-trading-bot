@@ -21,6 +21,22 @@ export interface TpLevelResolution {
   expectedPrice?: number;
 }
 
+const TAKE_PROFIT_EXIT_TYPES = {
+  1: ExitType.TAKE_PROFIT_1,
+  2: ExitType.TAKE_PROFIT_2,
+  3: ExitType.TAKE_PROFIT_3,
+} as const;
+
+export function getFirstUnhitTakeProfitLevel(position: Position): number | null {
+  const nextTakeProfit = position.takeProfits.find((takeProfit) => !takeProfit.hit);
+  return nextTakeProfit?.level ?? null;
+}
+
+export function getTakeProfitExitType(tpHits: number[]): ExitType | null {
+  const lastHitLevel = tpHits[tpHits.length - 1] as keyof typeof TAKE_PROFIT_EXIT_TYPES | undefined;
+  return lastHitLevel ? TAKE_PROFIT_EXIT_TYPES[lastHitLevel] ?? null : null;
+}
+
 export function resolveTakeProfitLevel(
   position: Position,
   event: TakeProfitFilledEvent,
@@ -83,15 +99,14 @@ export function resolveTakeProfitLevel(
     }
   }
 
-  for (const tp of position.takeProfits) {
-    if (!tp.hit) {
-      return {
-        tpLevel: tp.level,
-        method: 'FIRST_UNHIT',
-        fillPrice,
-        qtyFilled,
-      };
-    }
+  const fallbackTakeProfitLevel = getFirstUnhitTakeProfitLevel(position);
+  if (fallbackTakeProfitLevel !== null) {
+    return {
+      tpLevel: fallbackTakeProfitLevel,
+      method: 'FIRST_UNHIT',
+      fillPrice,
+      qtyFilled,
+    };
   }
 
   return {
@@ -107,10 +122,10 @@ export function resolveExitTypeFromCloseReason(
   tpHits: number[],
   isTrailingStop: boolean,
 ): ExitType {
+  const takeProfitExitType = getTakeProfitExitType(tpHits);
+
   if (lastCloseReason === 'TP') {
-    return tpHits.length > 0
-      ? ExitType[`TAKE_PROFIT_${tpHits[tpHits.length - 1]}` as 'TAKE_PROFIT_1' | 'TAKE_PROFIT_2' | 'TAKE_PROFIT_3']
-      : ExitType.STOP_LOSS;
+    return takeProfitExitType ?? ExitType.STOP_LOSS;
   }
 
   if (lastCloseReason === 'TRAILING') {
@@ -121,7 +136,5 @@ export function resolveExitTypeFromCloseReason(
     return ExitType.STOP_LOSS;
   }
 
-  return tpHits.length > 0
-    ? ExitType[`TAKE_PROFIT_${tpHits[tpHits.length - 1]}` as 'TAKE_PROFIT_1' | 'TAKE_PROFIT_2' | 'TAKE_PROFIT_3']
-    : (isTrailingStop ? ExitType.TRAILING_STOP : ExitType.STOP_LOSS);
+  return takeProfitExitType ?? (isTrailingStop ? ExitType.TRAILING_STOP : ExitType.STOP_LOSS);
 }

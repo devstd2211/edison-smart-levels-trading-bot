@@ -6,8 +6,14 @@
  * - WebSocketEventHandler
  */
 
-import { PositionEventHandler } from '../services/handlers/position.handler';
-import { WebSocketEventHandler } from '../services/handlers/websocket.handler';
+import {
+  PositionEventHandler,
+  createPositionEventHandlerDependencies,
+} from '../services/handlers/position.handler';
+import {
+  WebSocketEventHandler,
+  createWebSocketEventHandlerDependencies,
+} from '../services/handlers/websocket.handler';
 import { Position, LoggerService, ExitType } from '../types/legacy';
 import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../types/legacy';
 import { PositionSide } from '../types/legacy';
@@ -90,11 +96,13 @@ describe('PositionEventHandler', () => {
     };
 
     handler = new PositionEventHandler(
-      mockPositionManager as unknown as ConstructorParameters<typeof PositionEventHandler>[0],
-      mockPositionExitingService as unknown as ConstructorParameters<typeof PositionEventHandler>[1],
-      mockBybitService as unknown as ConstructorParameters<typeof PositionEventHandler>[2],
-      mockTelegram as unknown as ConstructorParameters<typeof PositionEventHandler>[3],
-      mockLogger as LoggerService,
+      createPositionEventHandlerDependencies({
+        positionManager: mockPositionManager as never,
+        positionExitingService: mockPositionExitingService as never,
+        bybitService: mockBybitService as never,
+        telegram: mockTelegram as never,
+        logger: mockLogger as LoggerService,
+      }),
     );
   });
 
@@ -328,13 +336,15 @@ describe('WebSocketEventHandler', () => {
     };
 
     handler = new WebSocketEventHandler(
-      mockPositionManager as unknown as ConstructorParameters<typeof WebSocketEventHandler>[0],
-      mockPositionExitingService as unknown as ConstructorParameters<typeof WebSocketEventHandler>[1],
-      mockBybitService as unknown as ConstructorParameters<typeof WebSocketEventHandler>[2],
-      mockWebSocketManager as unknown as ConstructorParameters<typeof WebSocketEventHandler>[3],
-      mockJournal as unknown as ConstructorParameters<typeof WebSocketEventHandler>[4],
-      mockTelegram as unknown as ConstructorParameters<typeof WebSocketEventHandler>[5],
-      mockLogger as LoggerService,
+      createWebSocketEventHandlerDependencies({
+        positionManager: mockPositionManager as never,
+        positionExitingService: mockPositionExitingService as never,
+        bybitService: mockBybitService as never,
+        webSocketManager: mockWebSocketManager as never,
+        journal: mockJournal as never,
+        telegram: mockTelegram as never,
+        logger: mockLogger as LoggerService,
+      }),
     );
   });
 

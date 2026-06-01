@@ -1,5 +1,10 @@
 import type { BotServiceState } from '../../bot-services.builder';
-import { PositionEventHandler, WebSocketEventHandler } from '../../handlers';
+import {
+  PositionEventHandler,
+  WebSocketEventHandler,
+  createPositionEventHandlerDependencies,
+  createWebSocketEventHandlerDependencies,
+} from '../../handlers';
 
 type OrchestratorEventHandlersState = Pick<
   BotServiceState,
@@ -40,31 +45,21 @@ export const createOrchestratorEventHandlerDependencies = (
 export const createPositionEventHandler = (
   state: OrchestratorEventHandlerDependencies,
 ): PositionEventHandler => {
-  const dependencies = createOrchestratorEventHandlerDependencies(state);
-
-  return new PositionEventHandler(
-    dependencies.positionManager,
-    dependencies.positionExitingService,
-    dependencies.bybitService,
-    dependencies.telegram,
-    dependencies.logger,
+  const dependencies = createPositionEventHandlerDependencies(
+    createOrchestratorEventHandlerDependencies(state),
   );
+
+  return new PositionEventHandler(dependencies);
 };
 
 export const createWebSocketEventHandler = (
   state: OrchestratorEventHandlerDependencies,
 ): WebSocketEventHandler => {
-  const dependencies = createOrchestratorEventHandlerDependencies(state);
-
-  return new WebSocketEventHandler(
-    dependencies.positionManager,
-    dependencies.positionExitingService,
-    dependencies.bybitService,
-    dependencies.webSocketManager,
-    dependencies.journal,
-    dependencies.telegram,
-    dependencies.logger,
+  const dependencies = createWebSocketEventHandlerDependencies(
+    createOrchestratorEventHandlerDependencies(state),
   );
+
+  return new WebSocketEventHandler(dependencies);
 };
 
 export const initializeOrchestratorEventHandlers = (

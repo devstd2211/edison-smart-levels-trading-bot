@@ -26,6 +26,24 @@ const DECIMAL_PLACES = {
   PERCENT: 2,
 };
 
+export interface PositionEventHandlerDependencies {
+  positionManager: PositionLifecycleService;
+  positionExitingService: PositionExitingService;
+  bybitService: IExchange;
+  telegram: TelegramService;
+  logger: LoggerService;
+}
+
+export const createPositionEventHandlerDependencies = (
+  dependencies: PositionEventHandlerDependencies,
+): PositionEventHandlerDependencies => ({
+  positionManager: dependencies.positionManager,
+  positionExitingService: dependencies.positionExitingService,
+  bybitService: dependencies.bybitService,
+  telegram: dependencies.telegram,
+  logger: dependencies.logger,
+});
+
 /**
  * Handles position-related events from PositionMonitor service
  *
@@ -37,13 +55,23 @@ const DECIMAL_PLACES = {
  * - Log monitor errors
  */
 export class PositionEventHandler {
+  private readonly positionManager: PositionLifecycleService;
+  private readonly positionExitingService: PositionExitingService;
+  private readonly bybitService: IExchange;
+  private readonly telegram: TelegramService;
+  private readonly logger: LoggerService;
+
   constructor(
-    private positionManager: PositionLifecycleService,
-    private positionExitingService: PositionExitingService,
-    private bybitService: IExchange,
-    private telegram: TelegramService,
-    private logger: LoggerService,
-  ) {}
+    dependencies: PositionEventHandlerDependencies,
+  ) {
+    const resolvedDependencies = createPositionEventHandlerDependencies(dependencies);
+
+    this.positionManager = resolvedDependencies.positionManager;
+    this.positionExitingService = resolvedDependencies.positionExitingService;
+    this.bybitService = resolvedDependencies.bybitService;
+    this.telegram = resolvedDependencies.telegram;
+    this.logger = resolvedDependencies.logger;
+  }
 
   /**
    * Handle stop loss hit event

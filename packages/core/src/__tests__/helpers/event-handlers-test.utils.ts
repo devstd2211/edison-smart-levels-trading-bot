@@ -1,6 +1,14 @@
 import type { IExchange } from '../../interfaces/IExchange';
-import { PositionEventHandler } from '../../services/handlers/position.handler';
-import { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
+import {
+  PositionEventHandler,
+  type PositionEventHandlerDependencies,
+  createPositionEventHandlerDependencies,
+} from '../../services/handlers/position.handler';
+import {
+  WebSocketEventHandler,
+  type WebSocketEventHandlerDependencies,
+  createWebSocketEventHandlerDependencies,
+} from '../../services/handlers/websocket.handler';
 import type { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import type { PositionExitingService } from '../../services/position-exiting.service';
 import type { WebSocketManagerService } from '../../services/websocket-manager.service';
@@ -128,13 +136,13 @@ export type WebSocketEventHandlerStopLossFilledInput = Parameters<
   ManagedWebSocketEventHandlerContext['handler']['handleStopLossFilled']
 >[0];
 
-type PositionManagerInput = ConstructorParameters<typeof PositionEventHandler>[0];
-type PositionExitingInput = ConstructorParameters<typeof PositionEventHandler>[1];
-type ExchangeInput = ConstructorParameters<typeof PositionEventHandler>[2];
-type TelegramInput = ConstructorParameters<typeof PositionEventHandler>[3];
-type PositionLoggerInput = ConstructorParameters<typeof PositionEventHandler>[4];
-type WebSocketManagerInput = ConstructorParameters<typeof WebSocketEventHandler>[3];
-type JournalInput = ConstructorParameters<typeof WebSocketEventHandler>[4];
+type PositionManagerInput = PositionEventHandlerDependencies['positionManager'];
+type PositionExitingInput = PositionEventHandlerDependencies['positionExitingService'];
+type ExchangeInput = PositionEventHandlerDependencies['bybitService'];
+type TelegramInput = PositionEventHandlerDependencies['telegram'];
+type PositionLoggerInput = PositionEventHandlerDependencies['logger'];
+type WebSocketManagerInput = WebSocketEventHandlerDependencies['webSocketManager'];
+type JournalInput = WebSocketEventHandlerDependencies['journal'];
 export type PositionEventHandlerFactoryOptions = {
   positionManager?: EventHandlersPositionManagerMock;
   positionExitingService?: EventHandlersPositionExitingMock;
@@ -272,11 +280,13 @@ export function createPositionEventHandler(options?: {
   const logger = options?.logger ?? createEventHandlersMockLogger();
 
   return new PositionEventHandler(
-    asPositionManager(positionManager),
-    asPositionExiting(positionExitingService),
-    asExchange(exchange),
-    asTelegram(telegram),
-    asPositionLogger(logger as unknown as LoggerService),
+    createPositionEventHandlerDependencies({
+      positionManager: asPositionManager(positionManager),
+      positionExitingService: asPositionExiting(positionExitingService),
+      bybitService: asExchange(exchange),
+      telegram: asTelegram(telegram),
+      logger: asPositionLogger(logger as unknown as LoggerService),
+    }),
   );
 }
 
@@ -379,13 +389,15 @@ export function createWebSocketEventHandlerHarness(
 
   return {
     handler: new WebSocketEventHandler(
-      asPositionManager(mockPositionManager),
-      asPositionExiting(mockPositionExitingService),
-      asExchange(mockBybitService as unknown as IExchange),
-      asWebSocketManager(mockWebSocketManager),
-      asJournal(mockJournal),
-      asTelegram(mockTelegram),
-      asPositionLogger(mockLogger as unknown as LoggerService),
+      createWebSocketEventHandlerDependencies({
+        positionManager: asPositionManager(mockPositionManager),
+        positionExitingService: asPositionExiting(mockPositionExitingService),
+        bybitService: asExchange(mockBybitService as unknown as IExchange),
+        webSocketManager: asWebSocketManager(mockWebSocketManager),
+        journal: asJournal(mockJournal),
+        telegram: asTelegram(mockTelegram),
+        logger: asPositionLogger(mockLogger as unknown as LoggerService),
+      }),
     ),
     mockPositionManager,
     mockPositionExitingService,

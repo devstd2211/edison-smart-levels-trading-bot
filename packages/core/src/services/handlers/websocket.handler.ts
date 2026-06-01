@@ -26,6 +26,7 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { PositionNotFoundError, OrderValidationError } from '../../errors/DomainErrors';
 import { getErrorMessage } from '../../utils/error.utils';
 import {
+  getFirstUnhitTakeProfitLevel,
   resolveExitTypeFromCloseReason,
   resolveTakeProfitLevel,
 } from './websocket-event-decoding.utils';
@@ -37,6 +38,28 @@ const DECIMAL_PLACES = {
 const PRICE_TOLERANCE = {
   BOT_PRICE_MATCHING: 0.003, // 0.3%
 };
+
+export interface WebSocketEventHandlerDependencies {
+  positionManager: PositionLifecycleService;
+  positionExitingService: PositionExitingService;
+  bybitService: IExchange;
+  webSocketManager: WebSocketManagerService;
+  journal: TradingJournalService;
+  telegram: TelegramService;
+  logger: LoggerService;
+}
+
+export const createWebSocketEventHandlerDependencies = (
+  dependencies: WebSocketEventHandlerDependencies,
+): WebSocketEventHandlerDependencies => ({
+  positionManager: dependencies.positionManager,
+  positionExitingService: dependencies.positionExitingService,
+  bybitService: dependencies.bybitService,
+  webSocketManager: dependencies.webSocketManager,
+  journal: dependencies.journal,
+  telegram: dependencies.telegram,
+  logger: dependencies.logger,
+});
 
 /**
  * Handles WebSocket events from exchange
@@ -50,15 +73,27 @@ const PRICE_TOLERANCE = {
  * - Handle WebSocket errors
  */
 export class WebSocketEventHandler {
+  private readonly positionManager: PositionLifecycleService;
+  private readonly positionExitingService: PositionExitingService;
+  private readonly bybitService: IExchange;
+  private readonly webSocketManager: WebSocketManagerService;
+  private readonly journal: TradingJournalService;
+  private readonly telegram: TelegramService;
+  private readonly logger: LoggerService;
+
   constructor(
-    private positionManager: PositionLifecycleService,
-    private positionExitingService: PositionExitingService,
-    private bybitService: IExchange,
-    private webSocketManager: WebSocketManagerService,
-    private journal: TradingJournalService,
-    private telegram: TelegramService,
-    private logger: LoggerService,
-  ) {}
+    dependencies: WebSocketEventHandlerDependencies,
+  ) {
+    const resolvedDependencies = createWebSocketEventHandlerDependencies(dependencies);
+
+    this.positionManager = resolvedDependencies.positionManager;
+    this.positionExitingService = resolvedDependencies.positionExitingService;
+    this.bybitService = resolvedDependencies.bybitService;
+    this.webSocketManager = resolvedDependencies.webSocketManager;
+    this.journal = resolvedDependencies.journal;
+    this.telegram = resolvedDependencies.telegram;
+    this.logger = resolvedDependencies.logger;
+  }
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -480,16 +515,14 @@ export class WebSocketEventHandler {
 
     // Last resort: If still unknown, use first unhit TP
     if (tpLevel === 0) {
-      for (const tp of position.takeProfits) {
-        if (!tp.hit) {
-          tpLevel = tp.level;
-          this.logger.error(`${ICONS.alarm} Using first unhit TP level - GUESSWORK (should not happen)`, {
-            orderId: event.orderId,
-            tpLevel,
-            reason: 'Could not match by OrderID, price, or quantity',
-          });
-          break;
-        }
+      const fallbackTakeProfitLevel = getFirstUnhitTakeProfitLevel(position);
+      if (fallbackTakeProfitLevel !== null) {
+        tpLevel = fallbackTakeProfitLevel;
+        this.logger.error(`${ICONS.alarm} Using first unhit TP level - GUESSWORK (should not happen)`, {
+          orderId: event.orderId,
+          tpLevel,
+          reason: 'Could not match by OrderID, price, or quantity',
+        });
       }
     }
 

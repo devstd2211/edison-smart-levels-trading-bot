@@ -4,7 +4,10 @@ import { PositionExitingService } from '../../services/position-exiting.service'
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { TradingJournalService } from '../../services/trading-journal.service';
 import { TelegramService } from '../../services/telegram.service';
-import { WebSocketEventHandler } from '../../services/handlers/websocket.handler';
+import {
+  WebSocketEventHandler,
+  createWebSocketEventHandlerDependencies,
+} from '../../services/handlers/websocket.handler';
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { LoggerService, Position, PositionSide } from '../../types/legacy';
 import type { OrderFilledEvent, StopLossFilledEvent, TakeProfitFilledEvent } from '../../types/legacy';
@@ -201,13 +204,15 @@ export function createWebSocketEventHandler(
   options: WebSocketEventHandlerOverrides = {},
 ): WebSocketEventHandler {
   return new WebSocketEventHandler(
-    options.mockPositionManager as jest.Mocked<PositionLifecycleService>,
-    options.mockPositionExitingService as jest.Mocked<PositionExitingService>,
-    options.mockBybitService as jest.Mocked<IExchange>,
-    options.mockWebSocketManager as jest.Mocked<WebSocketManagerService>,
-    options.mockJournal as jest.Mocked<TradingJournalService>,
-    options.mockTelegram as jest.Mocked<TelegramService>,
-    asLoggerService(options.mockLogger),
+    createWebSocketEventHandlerDependencies({
+      positionManager: options.mockPositionManager as jest.Mocked<PositionLifecycleService>,
+      positionExitingService: options.mockPositionExitingService as jest.Mocked<PositionExitingService>,
+      bybitService: options.mockBybitService as jest.Mocked<IExchange>,
+      webSocketManager: options.mockWebSocketManager as jest.Mocked<WebSocketManagerService>,
+      journal: options.mockJournal as jest.Mocked<TradingJournalService>,
+      telegram: options.mockTelegram as jest.Mocked<TelegramService>,
+      logger: asLoggerService(options.mockLogger),
+    }),
   );
 }
 
