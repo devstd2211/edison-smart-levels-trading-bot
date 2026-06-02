@@ -16,10 +16,6 @@ Legend:
 
 ## Active Components
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/web-server/src/routes/bot.routes.ts web server route runtime adapter boundary follow-up`
-- [ ] `packages/web-server/tests/bot.routes.functional.test.ts web server route runtime adapter functional guardrail follow-up`
-- [ ] `packages/web-server/src/routes/data.routes.ts web server data route runtime adapter boundary follow-up`
-- [ ] `packages/web-server/tests/data.routes.functional.test.ts web server data route runtime adapter functional guardrail follow-up`
 - [ ] `packages/web-server/src/routes/config.routes.ts web server config route runtime adapter boundary follow-up`
 - [ ] `packages/web-server/src/routes/config-route-contracts.ts web server config route contract boundary follow-up`
 - [ ] `packages/web-server/src/index.ts web server route adapter composition boundary follow-up`
@@ -27,11 +23,19 @@ Legend:
 - [ ] `packages/web-server/src/websocket/ws-server.ts websocket bridge runtime adapter boundary follow-up`
 - [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket bridge runtime adapter functional guardrail follow-up`
 - [ ] `packages/web-server/src/routes/analytics.routes.ts analytics route runtime adapter boundary follow-up`
+- [ ] `packages/web-server/src/routes/route-response.ts web server shared route response runtime boundary follow-up`
+- [ ] `packages/web-server/src/routes/analytics.constants.ts analytics route runtime constants boundary follow-up`
+- [ ] `packages/web-server/src/swagger.config.ts web server OpenAPI contract surface boundary follow-up`
+- [ ] `packages/web-server/src/runtime-discovery-guidance.ts web server runtime discovery guidance boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/bot.routes.ts web server route runtime adapter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/bot.routes.functional.test.ts web server route runtime adapter functional guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/data.routes.ts web server data route runtime adapter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/data.routes.functional.test.ts web server data route runtime adapter functional guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/factories/builders/websocket-manager-service.builder.ts websocket manager runtime reconnect builder boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/websocket-manager-service.builder.functional.test.ts websocket manager runtime reconnect builder guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/bot-bridge.service.ts web server runtime adapter contract follow-up` | prod: yes | tests: yes | func: yes

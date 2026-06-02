@@ -25,14 +25,14 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts/web-api';
+import { createStatusApiError } from '../errors/api-error-response.js';
 import {
   parseLimitQuery,
-  requireNonEmptyParam,
   sendAsyncRouteRead,
   sendRouteRead,
 } from './route-response.js';
 
-export type DataRouteReadApi = Pick<
+type DataRouteBridgeReadApi = Pick<
   BotBridgeService,
   | 'getPosition'
   | 'getBalance'
@@ -46,14 +46,41 @@ export type DataRouteReadApi = Pick<
   | 'getVolumeProfile'
 >;
 
-export function createDataRouteReadApi(bridge: DataRouteReadApi): DataRouteReadApi {
+export type DataRouteReadApi = {
+  getPosition(): Position | null;
+  getBalance(): Promise<BalanceResponsePayload>;
+  getMarketData(): Promise<WebApiMarketData>;
+  getRecentSignals(limit?: number): RecentSignalsResponsePayload;
+  getCandles(timeframe: string, limit: number): Promise<WebApiCandlesResponse>;
+  getPositionHistory(limit?: number): Promise<WebApiPositionsResponse>;
+  getOrderBook(symbol: string): Promise<WebApiOrderBookView>;
+  getWalls(symbol: string): Promise<WebApiWallsView>;
+  getFundingRate(symbol: string): Promise<WebApiFundingRateView>;
+  getVolumeProfile(symbol: string, levels: number): Promise<WebApiVolumeProfileView>;
+};
+
+function requireSymbol(symbol: string | null | undefined): string {
+  if (typeof symbol === 'string' && symbol.trim().length > 0) {
+    return symbol;
+  }
+
+  throw createStatusApiError(400, 'Symbol is required', {
+    code: 'BAD_REQUEST',
+    suggestion: 'Provide a non-empty Symbol value',
+  });
+}
+
+export function createDataRouteReadApi(bridge: DataRouteBridgeReadApi): DataRouteReadApi {
   return {
     getPosition: () => bridge.getPosition(),
-    getBalance: () => bridge.getBalance(),
+    getBalance: async () => ({ balance: await bridge.getBalance() }),
     getMarketData: () => bridge.getMarketData(),
-    getRecentSignals: (limit) => bridge.getRecentSignals(limit),
-    getCandles: (timeframe, limit) => bridge.getCandles(timeframe, limit),
-    getPositionHistory: (limit) => bridge.getPositionHistory(limit),
+    getRecentSignals: (limit) => {
+      const signals = bridge.getRecentSignals(limit);
+      return { signals, count: signals.length };
+    },
+    getCandles: async (timeframe, limit) => ({ candles: await bridge.getCandles(timeframe, limit) }),
+    getPositionHistory: async (limit) => ({ positions: await bridge.getPositionHistory(limit) }),
     getOrderBook: (symbol) => bridge.getOrderBook(symbol),
     getWalls: (symbol) => bridge.getWalls(symbol),
     getFundingRate: (symbol) => bridge.getFundingRate(symbol),
@@ -69,12 +96,7 @@ export function createDataRoutes(bridge: DataRouteReadApi): Router {
     res: Response<ApiResponse<T>>,
     read: (symbol: string) => Promise<T>,
   ): Promise<void> => {
-    const { symbol } = req.params;
-    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-      return;
-    }
-
-    await sendAsyncRouteRead(res, () => read(symbol));
+    await sendAsyncRouteRead(res, () => read(requireSymbol(req.params.symbol)));
   };
 
   /**
@@ -89,7 +111,7 @@ export function createDataRoutes(bridge: DataRouteReadApi): Router {
    * Get current balance
    */
   router.get('/balance', async (_req: Request, res: Response<ApiResponse<BalanceResponsePayload>>) =>
-    sendAsyncRouteRead(res, async () => ({ balance: await bridge.getBalance() })));
+    sendAsyncRouteRead(res, () => bridge.getBalance()));
 
   /**
    * GET /api/data/market
@@ -103,32 +125,24 @@ export function createDataRoutes(bridge: DataRouteReadApi): Router {
    * Get recent signals (cached from signal:generated events)
    */
   router.get('/signals/recent', (req: Request, res: Response<ApiResponse<RecentSignalsResponsePayload>>) =>
-    sendRouteRead(res, () => {
-      const limit = parseLimitQuery(req.query.limit, 50, 100);
-      const signals = bridge.getRecentSignals(limit);
-      return { signals, count: signals.length };
-    }));
+    sendRouteRead(res, () => bridge.getRecentSignals(parseLimitQuery(req.query.limit, 50, 100))));
 
   /**
    * GET /api/data/candles?timeframe=5m&limit=100
    * Get candlestick data for web chart
    */
   router.get('/candles', async (req: Request, res: Response<ApiResponse<WebApiCandlesResponse>>) =>
-    sendAsyncRouteRead(res, async () => {
-      const timeframe = (req.query.timeframe as string) || '5m';
-      const limit = parseLimitQuery(req.query.limit, 100, 500);
-      return { candles: await bridge.getCandles(timeframe, limit) };
-    }));
+    sendAsyncRouteRead(res, () => bridge.getCandles(
+      (req.query.timeframe as string) || '5m',
+      parseLimitQuery(req.query.limit, 100, 500),
+    )));
 
   /**
    * GET /api/data/positions/history?limit=50
    * Get recent closed positions with entry/exit points
    */
   router.get('/positions/history', async (req: Request, res: Response<ApiResponse<WebApiPositionsResponse>>) =>
-    sendAsyncRouteRead(res, async () => {
-      const limit = parseLimitQuery(req.query.limit, 50, 500);
-      return { positions: await bridge.getPositionHistory(limit) };
-    }));
+    sendAsyncRouteRead(res, () => bridge.getPositionHistory(parseLimitQuery(req.query.limit, 50, 500))));
 
 
   /**
@@ -157,13 +171,8 @@ export function createDataRoutes(bridge: DataRouteReadApi): Router {
    * Get volume profile (price levels vs volume)
    */
   router.get('/volume-profile/:symbol', async (req: Request, res: Response<ApiResponse<WebApiVolumeProfileView>>) => {
-    const { symbol } = req.params;
     const limit = parseLimitQuery(req.query.limit, 20, 100);
-    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-      return;
-    }
-
-    await sendAsyncRouteRead(res, () => bridge.getVolumeProfile(symbol, limit));
+    await sendAsyncRouteRead(res, () => bridge.getVolumeProfile(requireSymbol(req.params.symbol), limit));
   });
 
   return router;
