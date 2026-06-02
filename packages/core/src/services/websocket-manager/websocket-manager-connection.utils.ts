@@ -30,30 +30,42 @@ export const PRIVATE_WS_SUBSCRIPTION_TOPICS = [
 
 export type PrivateWebSocketMode = 'DEMO' | 'TESTNET' | 'MAINNET';
 
-export function resolvePrivateWebSocketUrl(config: Pick<ExchangeConfig, 'testnet' | 'demo'>): string {
-  if (config.testnet) {
-    return WS_TESTNET_URL;
-  }
+export type PrivateWebSocketTarget = {
+  url: string;
+  mode: PrivateWebSocketMode;
+};
 
+export function resolvePrivateWebSocketTarget(
+  config: Pick<ExchangeConfig, 'testnet' | 'demo'>,
+): PrivateWebSocketTarget {
   if (config.demo) {
-    return WS_DEMO_URL;
+    return {
+      url: WS_DEMO_URL,
+      mode: 'DEMO',
+    };
   }
 
-  return WS_BASE_URL;
+  if (config.testnet) {
+    return {
+      url: WS_TESTNET_URL,
+      mode: 'TESTNET',
+    };
+  }
+
+  return {
+    url: WS_BASE_URL,
+    mode: 'MAINNET',
+  };
+}
+
+export function resolvePrivateWebSocketUrl(config: Pick<ExchangeConfig, 'testnet' | 'demo'>): string {
+  return resolvePrivateWebSocketTarget(config).url;
 }
 
 export function resolvePrivateWebSocketMode(
   config: Pick<ExchangeConfig, 'testnet' | 'demo'>,
 ): PrivateWebSocketMode {
-  if (config.demo) {
-    return 'DEMO';
-  }
-
-  if (config.testnet) {
-    return 'TESTNET';
-  }
-
-  return 'MAINNET';
+  return resolvePrivateWebSocketTarget(config).mode;
 }
 
 export function calculateWebSocketBackoffDelay(
@@ -77,6 +89,10 @@ export function decodePrivateWebSocketMessage(data: WebSocket.Data): string | nu
 
   if (Buffer.isBuffer(data)) {
     return data.toString('utf-8');
+  }
+
+  if (data instanceof ArrayBuffer) {
+    return Buffer.from(data).toString('utf-8');
   }
 
   if (Array.isArray(data)) {

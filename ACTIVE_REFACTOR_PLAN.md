@@ -41,24 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-01: completed `packages/core/src/services/bot-initializer/bot-initializer-periodic.utils.ts initializer runtime periodic utility boundary follow-up`.
-- 2026-06-01: completed `packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts initializer runtime periodic utility guardrail follow-up`.
-- 2026-06-01: completed `packages/core/src/services/bot-initializer/bot-initializer-lifecycle.utils.ts initializer runtime lifecycle utility boundary follow-up`.
-- 2026-06-01: completed `packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts initializer runtime lifecycle utility guardrail follow-up`.
-- `bot-initializer-periodic.utils.ts` now runs against a narrow collaborator projection with a live `getExchange()` handoff, so periodic maintenance no longer depends on the full initializer service bundle while still following exchange swaps after runtime handoff.
-- `bot-initializer-periodic.utils.test.ts` now locks the live exchange-runtime contract alongside the existing cleanup and critical-error guardrails, which keeps periodic behavior tied to the runtime boundary instead of the container shape.
-- `bot-initializer-lifecycle.utils.ts` now owns lifecycle collaborator projection, optional stage detection, and monitoring-server lookup, so `BotInitializer` no longer duplicates monitoring/resilience presence checks outside the lifecycle boundary.
-- `bot-initializer-lifecycle.utils.test.ts` now verifies optional stage ownership and monitoring-server selection directly at the utility seam while the broader initializer tests stayed green across the consumer refactor.
+- 2026-06-02: completed `packages/core/src/__tests__/helpers/websocket-manager-test.utils.ts websocket manager runtime fixture boundary follow-up`.
+- 2026-06-02: completed `packages/core/src/services/websocket-manager/websocket-manager-connection.utils.ts websocket manager runtime connection utility boundary follow-up`.
+- 2026-06-02: completed `packages/core/src/services/websocket-manager/websocket-manager-message.utils.ts websocket manager runtime message utility boundary follow-up`.
+- `websocket-manager-connection.utils.ts` now resolves a single private websocket target for both URL and mode, so overlapping `demo`/`testnet` flags no longer split logging from the actual connection endpoint, and frame decoding now accepts `ArrayBuffer` payloads.
+- `websocket-manager-message.utils.ts` now normalizes topic payloads through a null-safe record filter, keeping malformed array entries from leaking into websocket manager routing while preserving the existing event-mapping behavior.
+- `websocket-manager-test.utils.ts` now enforces the testnet harness boundary through a single override path, so testnet fixtures and managed contexts cannot silently drift back to mainnet semantics.
 
 ## Latest Verification
-- 2026-06-01: `npm test -- --runInBand packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts` (5 suites, 57 tests)
-- 2026-06-01: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
-- 2026-06-01: `npm run build`
+- 2026-06-02: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.functional.test.ts packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts packages/core/src/__tests__/helpers/websocket-manager-test.utils.test.ts` (5 suites, 46 tests)
+- 2026-06-02: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-02: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/helpers/websocket-manager-test.utils.ts websocket manager runtime fixture boundary follow-up`.
-- Keep the next batch on the websocket manager connection/message and keep-alive boundary stream.
+- Start with `packages/core/src/services/websocket-keep-alive.service.ts websocket keep-alive runtime collaborator boundary follow-up`.
+- Keep the next batch on the websocket keep-alive and websocket manager state/builder boundary stream.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

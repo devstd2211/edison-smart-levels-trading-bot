@@ -36,8 +36,7 @@ import {
   PRIVATE_WS_AUTH_RETRY,
   PRIVATE_WS_CONNECTION_RETRY,
   PRIVATE_WS_CONNECTION_TIMEOUT_MS,
-  resolvePrivateWebSocketMode,
-  resolvePrivateWebSocketUrl,
+  resolvePrivateWebSocketTarget,
 } from './websocket-manager/websocket-manager-connection.utils';
 import {
   buildExecutionEventKey,
@@ -127,8 +126,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
     }
 
     this.isConnecting = true;
-    const wsUrl = resolvePrivateWebSocketUrl(this.config);
-    const mode = resolvePrivateWebSocketMode(this.config);
+    const { url: wsUrl, mode } = resolvePrivateWebSocketTarget(this.config);
 
     this.logger.info('Connecting to WebSocket', { url: wsUrl, mode });
 

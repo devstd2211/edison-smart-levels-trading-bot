@@ -27,6 +27,18 @@ export type PrivateWebSocketEventPayload = {
   execPrice?: string;
 };
 
+function isNonNullableRecord<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
+function normalizePrivateWebSocketRecords<T>(data: T | T[] | null | undefined): T[] {
+  if (data === null || data === undefined) {
+    return [];
+  }
+
+  return (Array.isArray(data) ? data : [data]).filter(isNonNullableRecord);
+}
+
 export function parsePrivateWebSocketMessage(data: string): PrivateWebSocketMessage {
   return JSON.parse(data) as PrivateWebSocketMessage;
 }
@@ -50,17 +62,17 @@ export function hasMessageTopicData(
 }
 
 export function normalizePositionUpdates(data: PositionData | PositionData[]): PositionData[] {
-  return Array.isArray(data) ? data : [data];
+  return normalizePrivateWebSocketRecords(data);
 }
 
 export function normalizeOrderExecutions(
   data: OrderExecutionData | OrderExecutionData[],
 ): OrderExecutionData[] {
-  return Array.isArray(data) ? data : [data];
+  return normalizePrivateWebSocketRecords(data);
 }
 
 export function normalizeOrderUpdates(data: OrderUpdateData | OrderUpdateData[]): OrderUpdateData[] {
-  return Array.isArray(data) ? data : [data];
+  return normalizePrivateWebSocketRecords(data);
 }
 
 export function matchesTrackedSymbol(messageSymbol: string | undefined, trackedSymbol: string): boolean {

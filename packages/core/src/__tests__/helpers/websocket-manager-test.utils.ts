@@ -121,6 +121,15 @@ export function createMockWebSocketManagerConfig(
   };
 }
 
+function forceTestnetConfigOverrides(
+  overrides: Partial<ExchangeConfig> = {},
+): Partial<ExchangeConfig> {
+  return {
+    ...overrides,
+    testnet: true,
+  };
+}
+
 export function createMockWebSocketManagerLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -161,10 +170,7 @@ export function createTestnetWebSocketManagerService(
 ): WebSocketManagerService {
   return createWebSocketManagerService({
     ...options,
-    configOverrides: {
-      testnet: true,
-      ...options.configOverrides,
-    },
+    configOverrides: forceTestnetConfigOverrides(options.configOverrides),
   });
 }
 
@@ -250,10 +256,7 @@ export function createTestnetWebSocketManagerHarness(
 ): WebSocketManagerHarness {
   return createWebSocketManagerHarness({
     ...options,
-    configOverrides: {
-      testnet: true,
-      ...options.configOverrides,
-    },
+    configOverrides: forceTestnetConfigOverrides(options.configOverrides),
   });
 }
 

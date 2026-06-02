@@ -4,6 +4,9 @@ import {
   mapExecutionResultToEvent,
   mapOrderUpdateToEvent,
   matchesTrackedSymbol,
+  normalizeOrderExecutions,
+  normalizeOrderUpdates,
+  normalizePositionUpdates,
 } from '../../services/websocket-manager/websocket-manager-message.utils';
 import {
   buildPrivateWebSocketSubscriptionMessage,
@@ -11,6 +14,7 @@ import {
   decodePrivateWebSocketMessage,
   PRIVATE_WS_AUTH_RETRY,
   PRIVATE_WS_CONNECTION_RETRY,
+  resolvePrivateWebSocketTarget,
   resolvePrivateWebSocketMode,
   resolvePrivateWebSocketUrl,
 } from '../../services/websocket-manager/websocket-manager-connection.utils';
@@ -31,6 +35,15 @@ describe('websocket-manager utils', () => {
       'wss://stream-demo.bybit.com/v5/private',
     );
     expect(resolvePrivateWebSocketMode({ testnet: false, demo: true })).toBe('DEMO');
+  });
+
+  it('resolves a consistent private websocket target when demo and testnet flags overlap', () => {
+    expect(
+      resolvePrivateWebSocketTarget({ testnet: true, demo: true }),
+    ).toEqual({
+      url: 'wss://stream-demo.bybit.com/v5/private',
+      mode: 'DEMO',
+    });
   });
 
   it('calculates retry backoff delays from retry config', () => {
@@ -56,6 +69,11 @@ describe('websocket-manager utils', () => {
         Buffer.from(',"part":2}'),
       ]),
     ).toBe('{"kind":"array","part":2}');
+    expect(
+      decodePrivateWebSocketMessage(
+        new TextEncoder().encode('{"kind":"array-buffer"}').buffer,
+      ),
+    ).toBe('{"kind":"array-buffer"}');
   });
 
   it('maps execution and order update payloads into emitted events', () => {
@@ -134,5 +152,44 @@ describe('websocket-manager utils', () => {
         closedSize: 0.25,
       }),
     ).toBe('sl-1_118');
+  });
+
+  it('normalizes websocket topic payloads without propagating nullish records', () => {
+    const positionData = {
+      symbol: 'APEXUSDT',
+      side: 'Buy',
+      size: '0.1',
+    };
+    const executionData = {
+      symbol: 'APEXUSDT',
+      orderId: 'exec-1',
+      execQty: '0.1',
+      execPrice: '100',
+      side: 'Buy',
+    };
+    const orderData = {
+      symbol: 'APEXUSDT',
+      orderId: 'order-1',
+      orderStatus: 'Filled',
+    };
+
+    expect(
+      normalizePositionUpdates([
+        null as unknown as typeof positionData,
+        positionData,
+      ]),
+    ).toEqual([positionData]);
+    expect(
+      normalizeOrderExecutions([
+        executionData,
+        undefined as unknown as typeof executionData,
+      ]),
+    ).toEqual([executionData]);
+    expect(
+      normalizeOrderUpdates([
+        null as unknown as typeof orderData,
+        orderData,
+      ]),
+    ).toEqual([orderData]);
   });
 });
