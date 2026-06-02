@@ -11,6 +11,16 @@
 import WebSocket from 'ws';
 import { LoggerService } from './logger.service';
 
+export const DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS = 20000;
+export const WEBSOCKET_KEEP_ALIVE_PING_MESSAGE = JSON.stringify({ op: 'ping' });
+
+export interface WebSocketKeepAliveSocket {
+  readyState: number;
+  send(data: string): void;
+}
+
+export type WebSocketKeepAliveLogger = Pick<LoggerService, 'debug'>;
+
 /**
  * WebSocket Keep-Alive Service
  * Sends periodic ping messages to keep WebSocket connection alive
@@ -20,8 +30,8 @@ export class WebSocketKeepAliveService {
   private readonly pingIntervalMs: number;
 
   constructor(
-    pingIntervalMs: number = 20000, // Default 20 seconds
-    private readonly logger?: LoggerService,
+    pingIntervalMs: number = DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS,
+    private readonly logger?: WebSocketKeepAliveLogger,
   ) {
     this.pingIntervalMs = pingIntervalMs;
   }
@@ -30,16 +40,20 @@ export class WebSocketKeepAliveService {
    * Start sending periodic ping messages
    * @param ws - WebSocket instance to ping
    */
-  public start(ws: WebSocket): void {
+  public start(ws: WebSocketKeepAliveSocket): void {
     // Stop any existing ping interval first
     this.stop();
 
     this.pingInterval = setInterval(() => {
-      // Only send ping if connection is open
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ op: 'ping' }));
-        this.logger?.debug('Ping sent');
+      if (ws.readyState !== WebSocket.OPEN) {
+        if (ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) {
+          this.stop();
+        }
+        return;
       }
+
+      ws.send(WEBSOCKET_KEEP_ALIVE_PING_MESSAGE);
+      this.logger?.debug('Ping sent');
     }, this.pingIntervalMs);
   }
 

@@ -1,9 +1,13 @@
 import WebSocket from 'ws';
-import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
+import {
+  DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS,
+  WebSocketKeepAliveService,
+  type WebSocketKeepAliveSocket,
+} from '../../services/websocket-keep-alive.service';
 import { LoggerService, LogLevel } from '../../types/legacy';
 import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
-export interface MockWebSocket extends Partial<WebSocket> {
+export interface MockWebSocket extends WebSocketKeepAliveSocket {
   readyState: WebSocket['readyState'];
   send: jest.Mock;
 }
@@ -93,20 +97,23 @@ export function createWebSocketKeepAliveHarness(): WebSocketKeepAliveHarness {
     createService: (interval?: number, customLogger: LoggerService | undefined = logger) =>
       createWebSocketKeepAliveService(interval, customLogger),
     createStandardService: (options = {}) =>
-      createWebSocketKeepAliveService(options.interval ?? 20000, options.logger ?? logger),
+      createWebSocketKeepAliveService(
+        options.interval ?? DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS,
+        options.logger ?? logger,
+      ),
     createStartedService: (options = {}) => {
       const websocket = options.websocket ?? createMockKeepAliveWebSocket();
-      const interval = options.interval ?? 20000;
+      const interval = options.interval ?? DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS;
       const service = createWebSocketKeepAliveService(interval, options.logger ?? logger);
-      service.start(websocket as WebSocket);
+      service.start(websocket);
 
       return { service, websocket, interval };
     },
     createStartedStandardService: (options = {}) => {
       const websocket = options.websocket ?? createMockKeepAliveWebSocket();
-      const interval = options.interval ?? 20000;
+      const interval = options.interval ?? DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS;
       const service = createWebSocketKeepAliveService(interval, logger);
-      service.start(websocket as WebSocket);
+      service.start(websocket);
 
       return { service, websocket, interval };
     },
@@ -136,9 +143,9 @@ export function startWebSocketKeepAlive(
   options: WebSocketKeepAliveStartedServiceOptions = {},
 ): WebSocketKeepAliveStartedRuntime {
   const websocket = options.websocket ?? harness.createWebSocket();
-  const interval = options.interval ?? 20000;
+  const interval = options.interval ?? DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS;
   const service = harness.createService(interval, options.logger);
-  service.start(websocket as WebSocket);
+  service.start(websocket);
 
   return { service, websocket, interval };
 }

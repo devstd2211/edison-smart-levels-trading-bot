@@ -4,7 +4,10 @@
  */
 
 import WebSocket from 'ws';
-import type { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
+import {
+  DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS,
+  type WebSocketKeepAliveService,
+} from '../../services/websocket-keep-alive.service';
 import type { LoggerService } from '../../types/legacy';
 import {
   advanceKeepAliveIntervals,
@@ -51,7 +54,7 @@ describe('WebSocketKeepAliveService', () => {
     it('should create ping interval when started', () => {
       service = createStandardService({ interval: 20000, logger });
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
 
       expect(jest.getTimerCount()).toBeGreaterThan(0);
     });
@@ -77,10 +80,10 @@ describe('WebSocketKeepAliveService', () => {
     it('should use default ping interval (20 seconds)', () => {
       service = createStandardService({ logger });
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
 
       // Advance less than 20 seconds
-      jest.advanceTimersByTime(19000);
+      jest.advanceTimersByTime(DEFAULT_WEBSOCKET_KEEP_ALIVE_INTERVAL_MS - 1000);
       expect(mockWs.send).not.toHaveBeenCalled();
 
       // Advance to 20 seconds
@@ -102,10 +105,10 @@ describe('WebSocketKeepAliveService', () => {
       service = createStandardService({ interval: 5000, logger });
       const mockWs2 = createWebSocket();
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       const firstTimerCount = jest.getTimerCount();
 
-      service.start(mockWs2 as WebSocket);
+      service.start(mockWs2);
       const secondTimerCount = jest.getTimerCount();
 
       // Should have same number of timers (old one cleared)
@@ -116,7 +119,7 @@ describe('WebSocketKeepAliveService', () => {
       service = createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CONNECTING);
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       advanceKeepAliveIntervals(5000);
 
       // Should not send if not OPEN
@@ -134,7 +137,7 @@ describe('WebSocketKeepAliveService', () => {
       service = createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CLOSING);
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       advanceKeepAliveIntervals(5000);
 
       expect(mockWs.send).not.toHaveBeenCalled();
@@ -144,10 +147,23 @@ describe('WebSocketKeepAliveService', () => {
       service = createStandardService({ interval: 5000, logger });
       setMockWebSocketReadyState(mockWs, WebSocket.CLOSED);
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       advanceKeepAliveIntervals(5000);
 
       expect(mockWs.send).not.toHaveBeenCalled();
+    });
+
+    it('should stop its interval after the socket closes before a scheduled ping', () => {
+      service = createStandardService({ interval: 5000, logger });
+
+      service.start(mockWs);
+      expect(jest.getTimerCount()).toBe(1);
+
+      setMockWebSocketReadyState(mockWs, WebSocket.CLOSED);
+      advanceKeepAliveIntervals(5000);
+
+      expect(mockWs.send).not.toHaveBeenCalled();
+      expect(jest.getTimerCount()).toBe(0);
     });
   });
 
@@ -155,7 +171,7 @@ describe('WebSocketKeepAliveService', () => {
     it('should clear ping interval when stopped', () => {
       service = createStandardService({ interval: 5000, logger });
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       expect(jest.getTimerCount()).toBeGreaterThan(0);
 
       service.stop();
@@ -180,7 +196,7 @@ describe('WebSocketKeepAliveService', () => {
     it('should be safe to call stop multiple times', () => {
       service = createStandardService({ interval: 5000, logger });
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       service.stop();
       service.stop(); // Should not throw
       service.stop(); // Should not throw
@@ -202,7 +218,7 @@ describe('WebSocketKeepAliveService', () => {
       service = createStandardService({ interval: 5000, logger });
 
       // First start
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       advanceKeepAliveIntervals(5000);
       expect(mockWs.send).toHaveBeenCalledTimes(1);
 
@@ -212,7 +228,7 @@ describe('WebSocketKeepAliveService', () => {
       expect(mockWs.send).toHaveBeenCalledTimes(1); // No new pings
 
       // Start again
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       advanceKeepAliveIntervals(5000);
       expect(mockWs.send).toHaveBeenCalledTimes(2); // New ping sent
     });
@@ -223,12 +239,12 @@ describe('WebSocketKeepAliveService', () => {
       const mockWs2 = createWebSocket();
 
       // Start with first WebSocket
-      service.start(mockWs1 as WebSocket);
+      service.start(mockWs1);
       advanceKeepAliveIntervals(5000);
       expect(mockWs1.send).toHaveBeenCalledTimes(1);
 
       // Switch to second WebSocket (stops first)
-      service.start(mockWs2 as WebSocket);
+      service.start(mockWs2);
       advanceKeepAliveIntervals(5000);
 
       // First WebSocket should not get more pings, second should get one
@@ -286,9 +302,9 @@ describe('WebSocketKeepAliveService', () => {
     it('should handle rapid start/stop operations', () => {
       service = createStandardService({ interval: 5000, logger });
 
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       service.stop();
-      service.start(mockWs as WebSocket);
+      service.start(mockWs);
       service.stop();
 
       // Should end in stopped state
@@ -331,7 +347,7 @@ describe('WebSocketKeepAliveService', () => {
       service = createStandardService({ interval: 5000, logger: undefined }); // No logger
 
       expect(() => {
-        service.start(mockWs as WebSocket);
+        service.start(mockWs);
         advanceKeepAliveIntervals(5000);
       }).not.toThrow();
 
