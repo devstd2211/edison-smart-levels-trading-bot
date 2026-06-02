@@ -9,6 +9,7 @@ import {
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerShouldReconnect,
   populateWebSocketManagerDeduplicationCache,
+  setWebSocketManagerSocket,
   type WebSocketManagerServiceState,
 } from '../helpers/websocket-manager-test.utils';
 
@@ -144,6 +145,23 @@ describe('WebSocketManagerService', () => {
     it('should initialize with disconnected state', () => {
       expect(wsManager.isConnected()).toBe(false);
       expect(getWebSocketManagerShouldReconnect(wsManager)).toBe(true);
+    });
+
+    it('marks itself disconnected before invoking the socket close collaborator', async () => {
+      let connectedDuringClose: boolean | null = null;
+
+      setWebSocketManagerSocket(wsManager, {
+        readyState: 1,
+        send: jest.fn(),
+        close: () => {
+          connectedDuringClose = wsManager.isConnected();
+        },
+      });
+
+      await wsManager.disconnect();
+
+      expect(connectedDuringClose).toBe(false);
+      expect(wsManager.isConnected()).toBe(false);
     });
 
     it('should have null last close reason on init', () => {

@@ -247,6 +247,31 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       expect(logSpy).toBeDefined();
       logSpy.mockRestore();
     });
+
+    it('test-5.4: Should clear socket ownership when disconnect cleanup throws', async () => {
+      const handleSpy = jest.spyOn(errorHandler, 'handle');
+
+      setWebSocketManagerSocket(wsManager, {
+        readyState: 1,
+        send: jest.fn(),
+        close: () => {
+          throw new Error('close failed');
+        },
+      });
+
+      await wsManager.disconnect();
+
+      expect(handleSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Disconnect error: close failed',
+        }),
+        expect.objectContaining({
+          strategy: RecoveryStrategy.SKIP,
+          context: 'WebSocketManager.disconnect',
+        }),
+      );
+      expect(wsManager.isConnected()).toBe(false);
+    });
   });
 
   // ============================================================================

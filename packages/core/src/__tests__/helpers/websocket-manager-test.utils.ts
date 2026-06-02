@@ -3,6 +3,7 @@ import { EventDeduplicationService } from '../../services/event-deduplication.se
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
+import type { WebSocketManagerSocket } from '../../services/websocket-manager.service';
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import type { ExchangeConfig } from '../../types/legacy';
 import { LoggerService, LogLevel } from '../../types/legacy';
@@ -44,11 +45,7 @@ export type WebSocketManagerHarness = {
 
 export type WebSocketManagerInternalState = {
   errorHandler: ErrorHandler;
-  ws: {
-    readyState: number;
-    send?: (data: string) => void;
-    close?: () => void;
-  } | null;
+  ws: WebSocketManagerSocket | null;
   reconnectAttempts: number;
   isConnecting: boolean;
   shouldReconnect: boolean;

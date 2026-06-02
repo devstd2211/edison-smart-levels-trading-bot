@@ -58,6 +58,27 @@ describe('WebSocketManagerService functional behavior', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('does not resubscribe after disconnect detaches the socket, even when close throws', async () => {
+    const send = jest.fn();
+    setWebSocketManagerSocket(context.wsManager, {
+      readyState: WebSocket.OPEN,
+      send,
+      close: () => {
+        throw new Error('close failed');
+      },
+    });
+
+    await context.wsManager.disconnect();
+    emitWebSocketManagerMessage(context.wsManager, {
+      op: 'auth',
+      success: true,
+    });
+
+    await Promise.resolve();
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('emits positionUpdate for tracked symbol position messages', () => {
     const positionUpdateSpy = jest.fn();
     context.wsManager.on('positionUpdate', positionUpdateSpy);

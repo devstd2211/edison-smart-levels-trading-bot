@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-02: completed `packages/core/src/services/websocket-keep-alive.service.ts websocket keep-alive runtime collaborator boundary follow-up`.
-- 2026-06-02: completed `packages/core/src/__tests__/helpers/websocket-keep-alive-test.utils.ts websocket keep-alive runtime fixture boundary follow-up`.
-- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts websocket keep-alive runtime guardrail follow-up`.
-- `websocket-keep-alive.service.ts` now depends on a minimal keep-alive socket contract, publishes its default interval and ping payload as named runtime constants, and stops its own interval once the socket has already moved into a terminal state.
-- `websocket-keep-alive-test.utils.ts` now builds keep-alive fixtures against the narrowed socket boundary, so helpers no longer pretend to be full `ws` instances just to exercise timer behavior.
-- `websocket-keep-alive.service.test.ts` now proves the lifecycle guardrail directly by asserting that closed sockets clear the scheduled ping interval instead of leaving dead timers behind.
+- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-manager.service.test.ts websocket manager runtime collaborator guardrail follow-up`.
+- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up`.
+- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime functional guardrail follow-up`.
+- `websocket-manager.service.ts` now runs against a minimal manager socket contract, clears the active socket before disconnect cleanup, and ignores stale close callbacks from replaced sockets so reconnect lifecycle state cannot leak through a failed `close()`.
+- `websocket-manager.service.test.ts` and `websocket-manager.error-handling.test.ts` now assert the disconnect lifecycle guardrail directly by proving the service becomes disconnected before `close()` runs and stays detached when cleanup throws under the SKIP recovery path.
+- `websocket-manager.functional.test.ts` now proves an auth acknowledgement cannot resubscribe through a detached socket after disconnect cleanup fails, tying the runtime contract to observable behavior instead of only internal state.
 
 ## Latest Verification
-- 2026-06-02: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts` (1 suite, 22 tests)
+- 2026-06-02: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.functional.test.ts` (3 suites, 40 tests)
 - 2026-06-02: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-02: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/services/websocket-manager.service.test.ts websocket manager runtime collaborator guardrail follow-up`.
-- Keep the next batch on the websocket manager state/builder boundary stream.
+- Start with `packages/core/src/services/websocket-manager/websocket-position-mapping.utils.ts websocket manager runtime state utility boundary follow-up`.
+- Keep the next batch on the websocket manager state/reconnect builder boundary stream.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -96,12 +96,23 @@ export interface OrderUpdateEvent {
   cumExecQty: string;
 }
 
+export interface WebSocketManagerSocket {
+  readyState: number;
+  send(data: string): void;
+  close(): void;
+  terminate(): void;
+  on(event: 'open', listener: () => void): void;
+  on(event: 'message', listener: (data: WebSocket.Data) => void): void;
+  on(event: 'error', listener: (error: Error) => void): void;
+  on(event: 'close', listener: () => void): void;
+}
+
 // ============================================================================
 // WEBSOCKET MANAGER SERVICE
 // ============================================================================
 
 export class WebSocketManagerService extends EventEmitter implements ILifecycle {
-  private ws: WebSocket | null = null;
+  private ws: WebSocketManagerSocket | null = null;
   private reconnectAttempts: number = 0;
   private isConnecting: boolean = false;
   private shouldReconnect: boolean = true;
@@ -188,16 +199,17 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
   private async connectOnce(wsUrl: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(wsUrl);
+        const socket: WebSocketManagerSocket = new WebSocket(wsUrl);
+        this.ws = socket;
 
         const connectionTimeout = setTimeout(() => {
-          if (this.ws) {
-            this.ws.terminate();
+          if (this.ws === socket) {
+            socket.terminate();
           }
           reject(new WebSocketConnectionError('WebSocket connection timeout after 10s', { url: wsUrl }));
         }, PRIVATE_WS_CONNECTION_TIMEOUT_MS);
 
-        this.ws.on('open', () => {
+        socket.on('open', () => {
           clearTimeout(connectionTimeout);
           this.isConnecting = false;
           this.reconnectAttempts = 0;
@@ -207,22 +219,25 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
           resolve();
         });
 
-        this.ws.on('message', (data: WebSocket.Data) => {
+        socket.on('message', (data: WebSocket.Data) => {
           const message = decodePrivateWebSocketMessage(data);
           if (message !== null) {
             this.handleMessage(message);
           }
         });
 
-        this.ws.on('error', (error: Error) => {
+        socket.on('error', (error: Error) => {
           clearTimeout(connectionTimeout);
           this.emit('error', error);
           reject(new WebSocketConnectionError(`WebSocket error: ${error.message}`, { url: wsUrl }));
         });
 
-        this.ws.on('close', () => {
+        socket.on('close', () => {
           clearTimeout(connectionTimeout);
           this.isConnecting = false;
+          if (this.ws === socket) {
+            this.ws = null;
+          }
           this.stopPing();
           this.emit('disconnected');
 
@@ -243,11 +258,12 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
     this.shouldReconnect = false;
     this.stopPing();
     this.deduplicationService.clear();
+    const socket = this.ws;
+    this.ws = null;
 
     try {
-      if (this.ws !== null) {
-        this.ws.close();
-        this.ws = null;
+      if (socket !== null) {
+        socket.close();
       }
     } catch (error) {
       const disconnectError = normalizeError(error);
