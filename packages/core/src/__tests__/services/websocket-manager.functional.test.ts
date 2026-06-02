@@ -2,6 +2,8 @@ import WebSocket from 'ws';
 import {
   createManagedWebSocketManagerContext,
   emitWebSocketManagerMessage,
+  getWebSocketManagerCloseHandler,
+  getWebSocketManagerReconnectAttempts,
   setWebSocketManagerSocket,
   type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
@@ -77,6 +79,29 @@ describe('WebSocketManagerService functional behavior', () => {
     await Promise.resolve();
 
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it('does not emit disconnected or increment reconnect attempts for a stale close callback', () => {
+    const disconnectedSpy = jest.fn();
+    context.wsManager.on('disconnected', disconnectedSpy);
+
+    setWebSocketManagerSocket(context.wsManager, {
+      readyState: WebSocket.OPEN,
+      send: jest.fn(),
+      close: jest.fn(),
+    });
+
+    getWebSocketManagerCloseHandler(context.wsManager)({
+      readyState: WebSocket.CLOSED,
+      send: jest.fn(),
+      close: jest.fn(),
+      terminate: jest.fn(),
+      on: jest.fn(),
+    });
+
+    expect(disconnectedSpy).not.toHaveBeenCalled();
+    expect(getWebSocketManagerReconnectAttempts(context.wsManager)).toBe(0);
+    expect(context.wsManager.isConnected()).toBe(true);
   });
 
   it('emits positionUpdate for tracked symbol position messages', () => {

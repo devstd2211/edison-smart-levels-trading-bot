@@ -6,12 +6,15 @@
 
 import {
   createManagedWebSocketManagerContext,
+  getWebSocketManagerCloseHandler,
   getWebSocketManagerDuplicateEventChecker,
+  getWebSocketManagerReconnectAttempts,
   getWebSocketManagerShouldReconnect,
   populateWebSocketManagerDeduplicationCache,
   setWebSocketManagerSocket,
   type WebSocketManagerServiceState,
 } from '../helpers/websocket-manager-test.utils';
+import WebSocket from 'ws';
 
 // ============================================================================
 // TESTS
@@ -162,6 +165,30 @@ describe('WebSocketManagerService', () => {
 
       expect(connectedDuringClose).toBe(false);
       expect(wsManager.isConnected()).toBe(false);
+    });
+
+    it('ignores stale close callbacks after socket ownership moves to a replacement connection', () => {
+      const disconnectedSpy = jest.fn();
+      const activeSocket = {
+        readyState: WebSocket.OPEN,
+        send: jest.fn(),
+        close: jest.fn(),
+      };
+
+      setWebSocketManagerSocket(wsManager, activeSocket);
+      wsManager.on('disconnected', disconnectedSpy);
+
+      getWebSocketManagerCloseHandler(wsManager)({
+        readyState: WebSocket.CLOSED,
+        send: jest.fn(),
+        close: jest.fn(),
+        terminate: jest.fn(),
+        on: jest.fn(),
+      });
+
+      expect(disconnectedSpy).not.toHaveBeenCalled();
+      expect(getWebSocketManagerReconnectAttempts(wsManager)).toBe(0);
+      expect(wsManager.isConnected()).toBe(true);
     });
 
     it('should have null last close reason on init', () => {

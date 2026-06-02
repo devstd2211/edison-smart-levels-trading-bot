@@ -116,6 +116,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
   private reconnectAttempts: number = 0;
   private isConnecting: boolean = false;
   private shouldReconnect: boolean = true;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
   private readonly logger: ErrorLogger;
 
   constructor(
@@ -136,6 +137,8 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
       return;
     }
 
+    this.shouldReconnect = true;
+    this.clearReconnectTimeout();
     this.isConnecting = true;
     const { url: wsUrl, mode } = resolvePrivateWebSocketTarget(this.config);
 
@@ -234,19 +237,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
 
         socket.on('close', () => {
           clearTimeout(connectionTimeout);
-          this.isConnecting = false;
-          if (this.ws === socket) {
-            this.ws = null;
-          }
-          this.stopPing();
-          this.emit('disconnected');
-
-          if (this.shouldReconnect && this.reconnectAttempts < getMaxReconnectAttempts()) {
-            this.reconnectAttempts++;
-            setTimeout(() => {
-              void this.connect();
-            }, getReconnectDelayMs());
-          }
+          this.handleSocketClosed(socket);
         });
       } catch (error) {
         reject(new WebSocketConnectionError(`Failed to create WebSocket: ${getErrorMessage(error)}`, { url: wsUrl }));
@@ -256,6 +247,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
 
   async disconnect(): Promise<void> {
     this.shouldReconnect = false;
+    this.clearReconnectTimeout();
     this.stopPing();
     this.deduplicationService.clear();
     const socket = this.ws;
@@ -587,5 +579,37 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
 
   private stopPing(): void {
     this.keepAliveService.stop();
+  }
+
+  private clearReconnectTimeout(): void {
+    if (this.reconnectTimeout !== null) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+  }
+
+  private scheduleReconnect(): void {
+    if (!this.shouldReconnect || this.reconnectAttempts >= getMaxReconnectAttempts()) {
+      return;
+    }
+
+    this.reconnectAttempts++;
+    this.clearReconnectTimeout();
+    this.reconnectTimeout = setTimeout(() => {
+      this.reconnectTimeout = null;
+      void this.connect();
+    }, getReconnectDelayMs());
+  }
+
+  private handleSocketClosed(socket: WebSocketManagerSocket): void {
+    this.isConnecting = false;
+    if (this.ws !== socket) {
+      return;
+    }
+
+    this.ws = null;
+    this.stopPing();
+    this.emit('disconnected');
+    this.scheduleReconnect();
   }
 }

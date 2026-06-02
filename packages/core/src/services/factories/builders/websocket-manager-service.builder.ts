@@ -6,9 +6,7 @@ import { EventDeduplicationService } from '../../event-deduplication.service';
 import { WebSocketKeepAliveService } from '../../websocket-keep-alive.service';
 import { WebSocketManagerService } from '../../websocket-manager.service';
 import {
-  WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_CAPACITY,
-  WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_TTL_MS,
-  WEBSOCKET_MANAGER_KEEPALIVE_INTERVAL_MS,
+  WEBSOCKET_MANAGER_RUNTIME_DEFAULTS,
 } from './websocket-manager-service.builder.constants';
 
 type WebSocketManagerBuilderState = Pick<
@@ -52,13 +50,13 @@ export const createWebSocketManagerRuntimeServices = (
     orderExecutionDetector: new OrderExecutionDetectorService(dependencies.logger),
     authService: new WebSocketAuthenticationService(),
     deduplicationService: new EventDeduplicationService(
-      WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_CAPACITY,
-      WEBSOCKET_MANAGER_EVENT_DEDUPLICATION_TTL_MS,
+      WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.eventDeduplicationCapacity,
+      WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.eventDeduplicationTtlMs,
       dependencies.logger,
       dependencies.errorHandler,
     ),
     keepAliveService: new WebSocketKeepAliveService(
-      WEBSOCKET_MANAGER_KEEPALIVE_INTERVAL_MS,
+      WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.keepAliveIntervalMs,
       dependencies.logger,
     ),
   };

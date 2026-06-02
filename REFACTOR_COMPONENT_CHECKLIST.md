@@ -15,14 +15,8 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/services/factories/builders/websocket-manager-service.builder.constants.ts websocket manager runtime builder constants boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/websocket-manager-service.builder.functional.test.ts websocket manager runtime builder constants guardrail follow-up`
-- [ ] `packages/core/src/services/websocket-manager.service.ts websocket manager runtime reconnect lifecycle boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/websocket-manager.service.test.ts websocket manager runtime reconnect lifecycle guardrail follow-up`
-- [ ] `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime reconnect lifecycle guardrail follow-up`
 - [ ] `packages/core/src/services/factories/builders/websocket-manager-service.builder.ts websocket manager runtime reconnect builder boundary follow-up`
 - [ ] `packages/core/src/__tests__/services/websocket-manager-service.builder.functional.test.ts websocket manager runtime reconnect builder guardrail follow-up`
-- [ ] `packages/core/src/__tests__/helpers/websocket-manager-test.utils.ts websocket manager runtime reconnect fixture boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
@@ -30,8 +24,20 @@ Legend:
 - [ ] `packages/web-server/src/services/bot-bridge.service.ts web server runtime adapter contract follow-up`
 - [ ] `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter guardrail follow-up`
 - [ ] `packages/web-server/tests/bot-bridge.service.functional.test.ts web server runtime adapter functional guardrail follow-up`
+- [ ] `packages/web-server/src/routes/bot.routes.ts web server route runtime adapter boundary follow-up`
+- [ ] `packages/web-server/tests/bot.routes.functional.test.ts web server route runtime adapter functional guardrail follow-up`
+- [ ] `packages/web-server/src/routes/data.routes.ts web server data route runtime adapter boundary follow-up`
+- [ ] `packages/web-server/tests/data.routes.functional.test.ts web server data route runtime adapter functional guardrail follow-up`
+- [ ] `packages/web-server/src/routes/config.routes.ts web server config route runtime adapter boundary follow-up`
+- [ ] `packages/web-server/src/routes/config-route-contracts.ts web server config route contract boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/factories/builders/websocket-manager-service.builder.constants.ts websocket manager runtime builder constants boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/websocket-manager-service.builder.functional.test.ts websocket manager runtime builder constants guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/websocket-manager.service.ts websocket manager runtime reconnect lifecycle boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/websocket-manager.service.test.ts websocket manager runtime reconnect lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime reconnect lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/helpers/websocket-manager-test.utils.ts websocket manager runtime reconnect fixture boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/websocket-manager/websocket-position-mapping.utils.ts websocket manager runtime state utility boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts websocket manager runtime state guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/helpers/websocket-manager-test.utils.test.ts websocket manager runtime fixture guardrail follow-up` | prod: yes | tests: yes | func: yes

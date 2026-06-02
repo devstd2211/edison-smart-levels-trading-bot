@@ -5,6 +5,7 @@ import { WebSocketAuthenticationService } from '../../services/websocket-authent
 import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
 import type { WebSocketManagerSocket } from '../../services/websocket-manager.service';
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
+import { WEBSOCKET_MANAGER_RUNTIME_DEFAULTS } from '../../services/factories/builders/websocket-manager-service.builder.constants';
 import type { ExchangeConfig } from '../../types/legacy';
 import { LoggerService, LogLevel } from '../../types/legacy';
 import { cleanupManagedHarnessesAsync } from './managed-test-context.utils';
@@ -49,6 +50,7 @@ export type WebSocketManagerInternalState = {
   reconnectAttempts: number;
   isConnecting: boolean;
   shouldReconnect: boolean;
+  handleSocketClosed: (socket: WebSocketManagerSocket) => void;
   isDuplicateEvent: (eventType: string, eventId: string, timestamp: number) => boolean;
   handleMessage: (data: string) => void;
 };
@@ -151,8 +153,15 @@ export function createWebSocketManagerService(
     errorHandler,
     options.orderExecutionDetector ?? new OrderExecutionDetectorService(logger),
     options.authService ?? createMockWebSocketAuthenticationService(),
-    options.deduplicationService ?? new EventDeduplicationService(100, 60000, logger),
-    options.keepAliveService ?? new WebSocketKeepAliveService(20000, logger),
+    options.deduplicationService ?? new EventDeduplicationService(
+      WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.eventDeduplicationCapacity,
+      WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.eventDeduplicationTtlMs,
+      logger,
+    ),
+    options.keepAliveService ?? new WebSocketKeepAliveService(
+      WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.keepAliveIntervalMs,
+      logger,
+    ),
   );
 }
 
@@ -179,8 +188,15 @@ export function createWebSocketManagerHarness(
   const errorHandler = createWebSocketManagerErrorHandler(logger);
   const orderExecutionDetector = new OrderExecutionDetectorService(logger);
   const authService = createMockWebSocketAuthenticationService();
-  const deduplicationService = new EventDeduplicationService(100, 60000, logger);
-  const keepAliveService = new WebSocketKeepAliveService(20000, logger);
+  const deduplicationService = new EventDeduplicationService(
+    WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.eventDeduplicationCapacity,
+    WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.eventDeduplicationTtlMs,
+    logger,
+  );
+  const keepAliveService = new WebSocketKeepAliveService(
+    WEBSOCKET_MANAGER_RUNTIME_DEFAULTS.keepAliveIntervalMs,
+    logger,
+  );
   const wsManager = createWebSocketManagerService({
     configOverrides: options.configOverrides,
     symbol: options.symbol,
@@ -327,6 +343,13 @@ export function getWebSocketManagerErrorHandler(
   return getWebSocketManagerInternals(manager).errorHandler;
 }
 
+export function getWebSocketManagerCloseHandler(
+  manager: WebSocketManagerService,
+): (socket: WebSocketManagerSocket) => void {
+  return (socket: WebSocketManagerSocket): void =>
+    getWebSocketManagerInternals(manager).handleSocketClosed.call(manager, socket);
+}
+
 export function getWebSocketManagerReconnectAttempts(
   manager: WebSocketManagerService,
 ): number {
@@ -402,6 +425,24 @@ export function emitWebSocketManagerMessage(
 ): void {
   const rawMessage = typeof message === 'string' ? message : JSON.stringify(message);
   getWebSocketManagerInternals(manager).handleMessage.call(manager, rawMessage);
+}
+
+export function getEventDeduplicationCacheSize(
+  service: EventDeduplicationService,
+): number {
+  return (service as unknown as { cacheSize: number }).cacheSize;
+}
+
+export function getEventDeduplicationCacheTtlMs(
+  service: EventDeduplicationService,
+): number {
+  return (service as unknown as { cacheTtlMs: number }).cacheTtlMs;
+}
+
+export function getWebSocketKeepAliveIntervalMs(
+  service: WebSocketKeepAliveService,
+): number {
+  return (service as unknown as { pingIntervalMs: number }).pingIntervalMs;
 }
 
 export function setWebSocketManagerSocket(
