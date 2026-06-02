@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-manager.service.test.ts websocket manager runtime collaborator guardrail follow-up`.
-- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up`.
-- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime functional guardrail follow-up`.
-- `websocket-manager.service.ts` now runs against a minimal manager socket contract, clears the active socket before disconnect cleanup, and ignores stale close callbacks from replaced sockets so reconnect lifecycle state cannot leak through a failed `close()`.
-- `websocket-manager.service.test.ts` and `websocket-manager.error-handling.test.ts` now assert the disconnect lifecycle guardrail directly by proving the service becomes disconnected before `close()` runs and stays detached when cleanup throws under the SKIP recovery path.
-- `websocket-manager.functional.test.ts` now proves an auth acknowledgement cannot resubscribe through a detached socket after disconnect cleanup fails, tying the runtime contract to observable behavior instead of only internal state.
+- 2026-06-02: completed `packages/core/src/services/websocket-manager/websocket-position-mapping.utils.ts websocket manager runtime state utility boundary follow-up`.
+- 2026-06-02: completed `packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts websocket manager runtime state guardrail follow-up`.
+- 2026-06-02: completed `packages/core/src/__tests__/helpers/websocket-manager-test.utils.test.ts websocket manager runtime fixture guardrail follow-up`.
+- `websocket-position-mapping.utils.ts` now consumes the canonical websocket payload and runtime position types directly, centralizes finite numeric parsing, and keeps entry-price fallback/default stop-loss ownership inside one focused state boundary.
+- `websocket-manager-state.utils.test.ts` now proves the mapping boundary rejects `NaN`-shaped websocket values, falls back from blank `entryPrice` to `avgPrice`, and emits a stable runtime `Position` snapshot with shared timestamps.
+- `websocket-manager-test.utils.test.ts` now guards the managed harness boundary by proving standard and forced-testnet factories cannot leak across their respective config seams even when overrides disagree.
 
 ## Latest Verification
-- 2026-06-02: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.functional.test.ts` (3 suites, 40 tests)
+- 2026-06-02: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts packages/core/src/__tests__/helpers/websocket-manager-test.utils.test.ts packages/core/src/__tests__/services/websocket-manager.functional.test.ts` (3 suites, 19 tests)
 - 2026-06-02: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-02: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/websocket-manager/websocket-position-mapping.utils.ts websocket manager runtime state utility boundary follow-up`.
-- Keep the next batch on the websocket manager state/reconnect builder boundary stream.
+- Start with `packages/core/src/services/factories/builders/websocket-manager-service.builder.constants.ts websocket manager runtime builder constants boundary follow-up`.
+- Keep the next batch on the websocket manager reconnect builder/runtime adapter boundary stream.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

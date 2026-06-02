@@ -1,48 +1,64 @@
-import { Position, PositionData, PositionSide } from '../../types/legacy';
+import { PositionSide } from '../../types/enums';
+import type { PositionData } from '../../types/events/websocket.types';
+import type { Position } from '../../types/position/types';
 
-export function parseEntryPriceFromPositionData(posData: PositionData): number {
-  if (posData.entryPrice && posData.entryPrice.trim()) {
-    const price = parseFloat(posData.entryPrice);
-    if (!isNaN(price)) {
-      return price;
-    }
+export type WebSocketPositionMappingInput = Pick<
+  PositionData,
+  'avgPrice' | 'entryPrice' | 'leverage' | 'positionIM' | 'side' | 'size' | 'unrealisedPnl'
+>;
+
+export function parseWebSocketPositionNumber(
+  value: string | undefined,
+  fallback: number = 0,
+): number {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return fallback;
   }
 
-  if (posData.avgPrice && posData.avgPrice.trim()) {
-    const price = parseFloat(posData.avgPrice);
-    if (!isNaN(price)) {
-      return price;
-    }
-  }
+  const parsedValue = Number.parseFloat(value);
+  return Number.isFinite(parsedValue) ? parsedValue : fallback;
+}
 
-  return 0;
+export function parseEntryPriceFromPositionData(
+  posData: Pick<WebSocketPositionMappingInput, 'avgPrice' | 'entryPrice'>,
+): number {
+  return parseWebSocketPositionNumber(
+    posData.entryPrice,
+    parseWebSocketPositionNumber(posData.avgPrice),
+  );
+}
+
+function resolveWebSocketPositionSide(side: string | undefined): PositionSide {
+  return side === 'Buy' ? PositionSide.LONG : PositionSide.SHORT;
+}
+
+function createDefaultPositionStopLoss(now: number): Position['stopLoss'] {
+  return {
+    price: 0,
+    initialPrice: 0,
+    isBreakeven: false,
+    isTrailing: false,
+    updatedAt: now,
+  };
 }
 
 export function mapPositionFromWebSocketData(
   symbol: string,
-  posData: PositionData,
+  posData: WebSocketPositionMappingInput,
   now: number = Date.now(),
 ): Position {
-  const quantity = parseFloat(posData.size ?? '0');
-
   return {
     id: `${symbol}_${posData.side ?? 'unknown'}`,
     symbol,
-    side: posData.side === 'Buy' ? PositionSide.LONG : PositionSide.SHORT,
-    quantity,
+    side: resolveWebSocketPositionSide(posData.side),
+    quantity: parseWebSocketPositionNumber(posData.size),
     entryPrice: parseEntryPriceFromPositionData(posData),
-    leverage: parseFloat(posData.leverage ?? '1'),
-    marginUsed: parseFloat(posData.positionIM ?? '0'),
-    stopLoss: {
-      price: 0,
-      initialPrice: 0,
-      isBreakeven: false,
-      isTrailing: false,
-      updatedAt: now,
-    },
+    leverage: parseWebSocketPositionNumber(posData.leverage, 1),
+    marginUsed: parseWebSocketPositionNumber(posData.positionIM),
+    stopLoss: createDefaultPositionStopLoss(now),
     takeProfits: [],
     openedAt: now,
-    unrealizedPnL: parseFloat(posData.unrealisedPnl ?? '0'),
+    unrealizedPnL: parseWebSocketPositionNumber(posData.unrealisedPnl),
     orderId: '',
     reason: 'WebSocket position update',
     status: 'OPEN',

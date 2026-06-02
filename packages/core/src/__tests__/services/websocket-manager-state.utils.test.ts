@@ -18,6 +18,12 @@ import {
   resolvePrivateWebSocketMode,
   resolvePrivateWebSocketUrl,
 } from '../../services/websocket-manager/websocket-manager-connection.utils';
+import {
+  mapPositionFromWebSocketData,
+  parseEntryPriceFromPositionData,
+  parseWebSocketPositionNumber,
+} from '../../services/websocket-manager/websocket-position-mapping.utils';
+import { PositionSide } from '../../types/enums';
 
 describe('websocket-manager utils', () => {
   it('resolves private websocket url and mode from config', () => {
@@ -191,5 +197,64 @@ describe('websocket-manager utils', () => {
         orderData,
       ]),
     ).toEqual([orderData]);
+  });
+
+  it('parses websocket position numbers and entry price fallbacks without leaking NaN', () => {
+    expect(parseWebSocketPositionNumber('105.5')).toBe(105.5);
+    expect(parseWebSocketPositionNumber(undefined, 7)).toBe(7);
+    expect(parseWebSocketPositionNumber('invalid', 3)).toBe(3);
+
+    expect(
+      parseEntryPriceFromPositionData({
+        entryPrice: '  ',
+        avgPrice: '101.25',
+      }),
+    ).toBe(101.25);
+
+    expect(
+      parseEntryPriceFromPositionData({
+        entryPrice: 'invalid',
+        avgPrice: 'also-invalid',
+      }),
+    ).toBe(0);
+  });
+
+  it('maps websocket position payloads into runtime position state with stable defaults', () => {
+    expect(
+      mapPositionFromWebSocketData(
+        'APEXUSDT',
+        {
+          side: 'Buy',
+          size: '0.5',
+          entryPrice: '',
+          avgPrice: '100.25',
+          leverage: '5',
+          positionIM: '10',
+          unrealisedPnl: '12.5',
+        },
+        1700000000000,
+      ),
+    ).toEqual({
+      id: 'APEXUSDT_Buy',
+      symbol: 'APEXUSDT',
+      side: PositionSide.LONG,
+      quantity: 0.5,
+      entryPrice: 100.25,
+      leverage: 5,
+      marginUsed: 10,
+      stopLoss: {
+        price: 0,
+        initialPrice: 0,
+        isBreakeven: false,
+        isTrailing: false,
+        updatedAt: 1700000000000,
+      },
+      takeProfits: [],
+      openedAt: 1700000000000,
+      unrealizedPnL: 12.5,
+      orderId: '',
+      reason: 'WebSocket position update',
+      status: 'OPEN',
+    });
   });
 });
