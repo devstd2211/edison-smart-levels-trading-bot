@@ -42,10 +42,8 @@ export const createWebSocketManagerDependencies = (
 });
 
 export const createWebSocketManagerRuntimeServices = (
-  state: Pick<BotServiceState, 'logger' | 'errorHandler'>,
+  dependencies: WebSocketManagerDependencies,
 ): WebSocketManagerRuntimeServices => {
-  const dependencies = createWebSocketManagerDependencies(state);
-
   return {
     orderExecutionDetector: new OrderExecutionDetectorService(dependencies.logger),
     authService: new WebSocketAuthenticationService(),
@@ -62,15 +60,14 @@ export const createWebSocketManagerRuntimeServices = (
   };
 };
 
-export const initializeWebSocketManager = (
-  state: WebSocketManagerBuilderState,
+export const createWebSocketManagerService = (
   config: Pick<Config, 'exchange'>,
-): void => {
+  dependencies: WebSocketManagerDependencies,
+  runtimeServices: WebSocketManagerRuntimeServices,
+): WebSocketManagerService => {
   const webSocketManagerConfig = createWebSocketManagerConfig(config);
-  const dependencies = createWebSocketManagerDependencies(state);
-  const runtimeServices = createWebSocketManagerRuntimeServices(dependencies);
 
-  state.webSocketManager = new WebSocketManagerService(
+  return new WebSocketManagerService(
     webSocketManagerConfig.exchange,
     webSocketManagerConfig.exchange.symbol,
     dependencies.errorHandler,
@@ -78,5 +75,18 @@ export const initializeWebSocketManager = (
     runtimeServices.authService,
     runtimeServices.deduplicationService,
     runtimeServices.keepAliveService,
+  );
+};
+
+export const initializeWebSocketManager = (
+  state: WebSocketManagerBuilderState,
+  config: Pick<Config, 'exchange'>,
+): void => {
+  const dependencies = createWebSocketManagerDependencies(state);
+  const runtimeServices = createWebSocketManagerRuntimeServices(dependencies);
+  state.webSocketManager = createWebSocketManagerService(
+    config,
+    dependencies,
+    runtimeServices,
   );
 };

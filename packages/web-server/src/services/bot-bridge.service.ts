@@ -206,6 +206,147 @@ export class BotBridgeService extends EventEmitter {
     }
   }
 
+  private normalizeMarketData(data: unknown): WebApiMarketData {
+    const fallback = this.createEmptyMarketData();
+    if (!this.isRecord(data)) {
+      return fallback;
+    }
+
+    const marketData: WebApiMarketData = {
+      currentPrice: this.coerceNumber(data.currentPrice, fallback.currentPrice),
+      priceChangePercent: this.coerceNumber(data.priceChangePercent, fallback.priceChangePercent),
+    };
+
+    const optionalNumberFields: Array<keyof Omit<
+      WebApiMarketData,
+      'currentPrice' | 'priceChangePercent' | 'trend'
+    >> = [
+      'rsi',
+      'ema20',
+      'ema50',
+      'atr',
+      'btcCorrelation',
+      'nearestLevel',
+      'distanceToLevel',
+    ];
+
+    for (const field of optionalNumberFields) {
+      const value = this.getNumber(data[field]);
+      if (value !== null) {
+        marketData[field] = value;
+      }
+    }
+
+    if (typeof data.trend === 'string') {
+      marketData.trend = data.trend;
+    }
+
+    return marketData;
+  }
+
+  private normalizeOrderBookLevels(
+    levels: unknown,
+  ): WebApiOrderBookView['bids'] {
+    if (!Array.isArray(levels)) {
+      return [];
+    }
+
+    return levels.reduce<WebApiOrderBookView['bids']>((acc, level) => {
+      if (!this.isRecord(level)) {
+        return acc;
+      }
+
+      const price = this.getNumber(level.price);
+      const quantity = this.getNumber(level.quantity);
+      const cumulative = this.getNumber(level.cumulative);
+      if (price === null || quantity === null || cumulative === null) {
+        return acc;
+      }
+
+      acc.push({ price, quantity, cumulative });
+      return acc;
+    }, []);
+  }
+
+  private normalizeOrderBook(symbol: string, data: unknown): WebApiOrderBookView {
+    const fallback = this.createEmptyOrderBook(symbol);
+    if (!this.isRecord(data)) {
+      return fallback;
+    }
+
+    return {
+      symbol: this.coerceString(data.symbol, symbol),
+      bids: this.normalizeOrderBookLevels(data.bids),
+      asks: this.normalizeOrderBookLevels(data.asks),
+      timestamp: this.coerceNumber(data.timestamp, fallback.timestamp),
+    };
+  }
+
+  private normalizeWalls(symbol: string, data: unknown): WebApiWallsView {
+    const fallback = this.createEmptyWalls(symbol);
+    if (!this.isRecord(data)) {
+      return fallback;
+    }
+
+    const walls = Array.isArray(data.walls)
+      ? data.walls.reduce<WebApiWallsView['walls']>((acc, wall) => {
+        if (!this.isRecord(wall)) {
+          return acc;
+        }
+
+        const side = this.getString(wall.side);
+        const price = this.getNumber(wall.price);
+        const quantity = this.getNumber(wall.quantity);
+        const strength = this.getNumber(wall.strength);
+        const detected = typeof wall.detected === 'boolean' ? wall.detected : null;
+        if (!side || price === null || quantity === null || strength === null || detected === null) {
+          return acc;
+        }
+
+        acc.push({ side, price, quantity, strength, detected });
+        return acc;
+      }, [])
+      : fallback.walls;
+
+    return {
+      symbol: this.coerceString(data.symbol, symbol),
+      walls,
+    };
+  }
+
+  private normalizeFundingRate(symbol: string, data: unknown): WebApiFundingRateView {
+    const fallback = this.createEmptyFundingRate(symbol);
+    if (!this.isRecord(data)) {
+      return fallback;
+    }
+
+    return {
+      symbol: this.coerceString(data.symbol, symbol),
+      current: this.coerceNumber(data.current, fallback.current),
+      predicted: this.coerceNumber(data.predicted, fallback.predicted),
+      nextFundingTime: this.coerceNumber(data.nextFundingTime, fallback.nextFundingTime),
+      lastFundingTime: this.coerceNumber(data.lastFundingTime, fallback.lastFundingTime),
+    };
+  }
+
+  private normalizeVolumeProfile(symbol: string, data: unknown): WebApiVolumeProfileView {
+    const fallback = this.createEmptyVolumeProfile(symbol);
+    if (!this.isRecord(data)) {
+      return fallback;
+    }
+
+    return {
+      symbol: this.coerceString(data.symbol, symbol),
+      levels: Array.isArray(data.levels)
+        ? data.levels.filter((level): level is string => typeof level === 'string')
+        : fallback.levels,
+      volumes: Array.isArray(data.volumes)
+        ? data.volumes.filter((volume): volume is number => typeof volume === 'number' && Number.isFinite(volume))
+        : fallback.volumes,
+      maxVolume: this.coerceNumber(data.maxVolume, fallback.maxVolume),
+    };
+  }
+
   private logReadFallback(operation: keyof BotBridgeReadApi | 'getBalance', error: unknown): void {
     console.error('[BotBridge] Read fallback', createBridgeReadFallbackLogPayload({
       operation,
@@ -647,11 +788,11 @@ export class BotBridgeService extends EventEmitter {
    * Get market data (RSI, EMA, ATR, etc.)
    */
   async getMarketData(): Promise<WebApiMarketData> {
-    return this.readWebApi(
+    return this.normalizeMarketData(await this.readWebApi(
       'getMarketData',
       (webApi) => webApi.getMarketData(),
       this.createEmptyMarketData(),
-    );
+    ));
   }
 
   /**
@@ -686,44 +827,44 @@ export class BotBridgeService extends EventEmitter {
    * Get orderbook snapshot
    */
   async getOrderBook(symbol: string): Promise<WebApiOrderBookView> {
-    return this.readWebApi(
+    return this.normalizeOrderBook(symbol, await this.readWebApi(
       'getOrderBook',
       (webApi) => webApi.getOrderBook(symbol),
       this.createEmptyOrderBook(symbol),
-    );
+    ));
   }
 
   /**
    * Get detected walls
    */
   async getWalls(symbol: string): Promise<WebApiWallsView> {
-    return this.readWebApi(
+    return this.normalizeWalls(symbol, await this.readWebApi(
       'getWalls',
       (webApi) => webApi.getWalls(symbol),
       this.createEmptyWalls(symbol),
-    );
+    ));
   }
 
   /**
    * Get funding rate
    */
   async getFundingRate(symbol: string): Promise<WebApiFundingRateView> {
-    return this.readWebApi(
+    return this.normalizeFundingRate(symbol, await this.readWebApi(
       'getFundingRate',
       (webApi) => webApi.getFundingRate(symbol),
       this.createEmptyFundingRate(symbol),
-    );
+    ));
   }
 
   /**
    * Get volume profile
    */
   async getVolumeProfile(symbol: string, levels: number = 20): Promise<WebApiVolumeProfileView> {
-    return this.readWebApi(
+    return this.normalizeVolumeProfile(symbol, await this.readWebApi(
       'getVolumeProfile',
       (webApi) => webApi.getVolumeProfile(symbol, levels),
       this.createEmptyVolumeProfile(symbol),
-    );
+    ));
   }
 
   /**

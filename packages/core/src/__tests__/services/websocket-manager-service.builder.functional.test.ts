@@ -3,6 +3,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createWebSocketManagerConfig,
   createWebSocketManagerDependencies,
+  createWebSocketManagerService,
   createWebSocketManagerRuntimeServices,
   initializeWebSocketManager,
 } from '../../services/factories/builders/websocket-manager-service.builder';
@@ -42,7 +43,7 @@ describe('Websocket manager builder boundaries', () => {
     });
   });
 
-  test('creates websocket manager dependencies and runtime services outside the composition root body', () => {
+  test('creates websocket manager dependencies, runtime services, and service instance outside the composition root body', () => {
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -60,12 +61,19 @@ describe('Websocket manager builder boundaries', () => {
       errorHandler: state.errorHandler,
     });
 
-    expect(createWebSocketManagerRuntimeServices(state)).toEqual({
+    const dependencies = createWebSocketManagerDependencies(state);
+    const runtimeServices = createWebSocketManagerRuntimeServices(dependencies);
+
+    expect(runtimeServices).toEqual({
       authService: expect.anything(),
       deduplicationService: expect.anything(),
       keepAliveService: expect.anything(),
       orderExecutionDetector: expect.anything(),
     });
+
+    expect(
+      createWebSocketManagerService(config, dependencies, runtimeServices),
+    ).toEqual(expect.anything());
 
     initializeWebSocketManager(state, config);
 
@@ -93,7 +101,8 @@ describe('Websocket manager builder boundaries', () => {
       logger,
       errorHandler: new ErrorHandler(logger as never),
     } as unknown as BotServiceState;
-    const runtimeServices = createWebSocketManagerRuntimeServices(state);
+    const dependencies = createWebSocketManagerDependencies(state);
+    const runtimeServices = createWebSocketManagerRuntimeServices(dependencies);
     const context = createManagedWebSocketManagerContext();
 
     try {

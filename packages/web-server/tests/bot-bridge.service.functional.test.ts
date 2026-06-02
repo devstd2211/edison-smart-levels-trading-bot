@@ -59,6 +59,63 @@ describe('BotBridgeService functional boundary', () => {
     });
   });
 
+  test('normalizes malformed adapter read models back to stable web contracts', async () => {
+    const bridge = new BotBridgeService(new TestBot(), {
+      getMarketData: jest.fn().mockResolvedValue({
+        currentPrice: 67890,
+      }),
+      getCandles: jest.fn().mockResolvedValue([]),
+      getPositionHistory: jest.fn().mockResolvedValue([]),
+      getOrderBook: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        bids: null,
+        asks: [{ price: 1, quantity: 2, cumulative: 2 }],
+      }),
+      getWalls: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        walls: null,
+      }),
+      getFundingRate: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        current: 0.01,
+        predicted: Number.NaN,
+      }),
+      getVolumeProfile: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        levels: ['100'],
+        volumes: null,
+      }),
+    });
+
+    await expect(bridge.getMarketData()).resolves.toEqual<WebApiMarketData>({
+      currentPrice: 67890,
+      priceChangePercent: 0,
+    });
+    await expect(bridge.getOrderBook('BTCUSDT')).resolves.toEqual<WebApiOrderBookView>({
+      symbol: 'BTCUSDT',
+      bids: [],
+      asks: [{ price: 1, quantity: 2, cumulative: 2 }],
+      timestamp: expect.any(Number),
+    });
+    await expect(bridge.getWalls('BTCUSDT')).resolves.toEqual<WebApiWallsView>({
+      symbol: 'BTCUSDT',
+      walls: [],
+    });
+    await expect(bridge.getFundingRate('BTCUSDT')).resolves.toEqual<WebApiFundingRateView>({
+      symbol: 'BTCUSDT',
+      current: 0.01,
+      predicted: 0,
+      nextFundingTime: 0,
+      lastFundingTime: 0,
+    });
+    await expect(bridge.getVolumeProfile('BTCUSDT', 20)).resolves.toEqual<WebApiVolumeProfileView>({
+      symbol: 'BTCUSDT',
+      levels: ['100'],
+      volumes: [],
+      maxVolume: 0,
+    });
+  });
+
   test('forwards normalized bot events and caches recent signals', () => {
     const bot = new TestBot();
     const bridge = new BotBridgeService(bot);
@@ -220,8 +277,13 @@ describe('BotBridgeService functional boundary', () => {
       currentPrice: 0,
       priceChangePercent: 0,
     });
-    expect(consoleErrorSpy).toHaveBeenCalledWith('[BotBridgeService] getMarketData fallback', {
-      error: 'market down',
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[BotBridge] Read fallback', {
+      operation: 'getMarketData',
+      fallbackUsed: true,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'market down',
+      suggestion: 'Please try again or contact support',
     });
 
     consoleErrorSpy.mockRestore();
@@ -236,11 +298,21 @@ describe('BotBridgeService functional boundary', () => {
     await bridge.getStatus();
     await bridge.getBalance();
 
-    expect(consoleErrorSpy).toHaveBeenNthCalledWith(1, '[BotBridgeService] getBalance fallback', {
-      error: 'balance down',
+    expect(consoleErrorSpy).toHaveBeenNthCalledWith(1, '[BotBridge] Read fallback', {
+      operation: 'getBalance',
+      fallbackUsed: true,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'balance down',
+      suggestion: 'Please try again or contact support',
     });
-    expect(consoleErrorSpy).toHaveBeenNthCalledWith(2, '[BotBridgeService] getBalance fallback', {
-      error: 'balance down',
+    expect(consoleErrorSpy).toHaveBeenNthCalledWith(2, '[BotBridge] Read fallback', {
+      operation: 'getBalance',
+      fallbackUsed: true,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'balance down',
+      suggestion: 'Please try again or contact support',
     });
 
     consoleErrorSpy.mockRestore();
@@ -274,8 +346,13 @@ describe('BotBridgeService functional boundary', () => {
         },
       },
     ]);
-    expect(consoleErrorSpy).toHaveBeenCalledWith('[BotBridgeService] getBalance fallback', {
-      error: 'balance down',
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[BotBridge] Read fallback', {
+      operation: 'getBalance',
+      fallbackUsed: true,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'balance down',
+      suggestion: 'Please try again or contact support',
     });
 
     consoleErrorSpy.mockRestore();
