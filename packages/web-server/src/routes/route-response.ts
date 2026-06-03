@@ -14,6 +14,10 @@ export type SuccessResponseEnvelope<T> = {
   timestamp: number;
   requestId?: string;
 };
+type RouteResponseContext = {
+  requestId: unknown;
+  res: ApiJsonResponse;
+};
 type RouteErrorOptions = {
   fallbackMessage?: string;
   status?: number;
@@ -40,6 +44,13 @@ function getResponseRequestId(res: ApiJsonResponse): unknown {
   return res.req?.headers['x-request-id'];
 }
 
+export function createRouteResponseContext(res: ApiJsonResponse): RouteResponseContext {
+  return {
+    requestId: getResponseRequestId(res),
+    res,
+  };
+}
+
 export function createSuccessResponseEnvelope<T>(data: T, requestId?: unknown): SuccessResponseEnvelope<T> {
   const normalizedRequestId = resolveRequestId(requestId);
 
@@ -52,7 +63,8 @@ export function createSuccessResponseEnvelope<T>(data: T, requestId?: unknown): 
 }
 
 export function sendSuccess<T>(res: ApiJsonResponse, data: T, status: number = 200): void {
-  res.status(status).json(createSuccessResponseEnvelope(data, getResponseRequestId(res)));
+  const context = createRouteResponseContext(res);
+  context.res.status(status).json(createSuccessResponseEnvelope(data, context.requestId));
 }
 
 export function sendError<T>(
@@ -61,14 +73,15 @@ export function sendError<T>(
   error: string,
   options: { code?: string; details?: string; suggestion?: string; extra?: Record<string, unknown> } = {},
 ): void {
+  const context = createRouteResponseContext(res);
   const response = createStatusErrorResponse(status, error, {
     code: options.code ?? getDefaultErrorCode(status),
     details: options.details,
     suggestion: options.suggestion,
-    requestId: getResponseRequestId(res),
+    requestId: context.requestId,
   });
 
-  res.status(status).json(options.extra ? { ...response, ...options.extra } : response);
+  context.res.status(status).json(options.extra ? { ...response, ...options.extra } : response);
 }
 
 export function handleRouteError<T>(
@@ -79,8 +92,10 @@ export function handleRouteError<T>(
   options: Omit<RouteErrorOptions, 'fallbackMessage' | 'status'> = {},
 ): void {
   const statusCode = getErrorStatus(error) ?? status;
-  res.status(statusCode).json(createRouteErrorResponse(error, {
-    requestId: getResponseRequestId(res),
+  const context = createRouteResponseContext(res);
+
+  context.res.status(statusCode).json(createRouteErrorResponse(error, {
+    requestId: context.requestId,
     fallbackStatusCode: statusCode,
     fallbackMessage,
     code: options.code,
@@ -110,15 +125,17 @@ async function runRouteHandler<T>(
   execute: () => T | Promise<T>,
   options: RouteErrorOptions | RouteMutationOptions = {},
 ): Promise<void> {
+  const context = createRouteResponseContext(res);
+
   try {
     const result = await execute();
     sendSuccess(
-      res,
+      context.res,
       result,
       'successStatus' in options ? options.successStatus : undefined,
     );
   } catch (error) {
-    handleRouteExecutionError(res, error, options);
+    handleRouteExecutionError(context.res, error, options);
   }
 }
 

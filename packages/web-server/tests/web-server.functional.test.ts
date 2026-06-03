@@ -199,74 +199,89 @@ function createConfigRouteApiMock(): jest.Mocked<ConfigRouteApi> {
   };
 }
 
-function createAnalyticsRouteReadApiMock(): jest.Mocked<AnalyticsRouteReadApi> {
+type MockedAnalyticsRouteReadApi = {
+  journal: jest.Mocked<AnalyticsRouteReadApi['journal']>;
+  sessions: jest.Mocked<AnalyticsRouteReadApi['sessions']>;
+  strategy: jest.Mocked<AnalyticsRouteReadApi['strategy']>;
+  curves: jest.Mocked<AnalyticsRouteReadApi['curves']>;
+};
+
+function createAnalyticsRouteReadApiMock(): MockedAnalyticsRouteReadApi {
   return {
-    getJournalPaginated: jest.fn().mockResolvedValue({
-      entries: [],
-      total: 0,
-      page: 2,
-      limit: 20,
-      totalPages: 0,
-      hasNext: false,
-      hasPrev: false,
-    }),
-    getJournalFromLastHours: jest.fn().mockResolvedValue([]),
-    getJournalStats: jest.fn().mockResolvedValue({
-      totalTrades: 0,
-      winningTrades: 0,
-      losingTrades: 0,
-      winRate: 0,
-      totalPnL: 0,
-      averagePnL: 0,
-      bestTrade: 0,
-      worstTrade: 0,
-      currentStreak: 0,
-      longestWinStreak: 0,
-      longestLossStreak: 0,
-      averageWin: 0,
-      averageLoss: 0,
-      profitFactor: 0,
-    }),
-    readSessions: jest.fn().mockResolvedValue([]),
-    compareSessions: jest.fn().mockResolvedValue({
-      session1: { sessionId: 'a', totalPnL: 10, totalTrades: 1, winRate: 100, duration: 60 * 1000 },
-      session2: { sessionId: 'b', totalPnL: 5, totalTrades: 1, winRate: 0, duration: 60 * 1000 },
-      comparison: { pnlDiff: -5, tradeCountDiff: 0, winRateDiff: -100, durationDiff: 0 },
-    }),
-    getStrategyPerformance: jest.fn().mockResolvedValue([]),
-    getPnlHistory: jest.fn().mockResolvedValue([
-      {
-        time: new Date(1000).toISOString(),
-        timestamp: 1000,
-        pnl: 10,
-        cumulativePnL: 10,
-        tradeNumber: 1,
-      },
-    ]),
-    getEquityCurve: jest.fn().mockResolvedValue([
-      {
-        time: new Date(1000).toISOString(),
-        timestamp: 1000,
-        equity: 1010,
-        pnl: 10,
-        tradeNumber: 1,
-        drawdown: 1,
-      },
-    ]),
-    readJournal: jest.fn().mockResolvedValue([
-      {
-        id: 'trade-1',
-        timestamp: 1000,
-        direction: 'LONG',
-        entryPrice: 100,
-        exitPrice: 110,
-        quantity: 1,
-        pnl: 10,
-        pnlPercent: 10,
-        strategy: 'Breakout',
-        exitReason: 'TP1',
-      },
-    ]),
+    journal: {
+      getJournalPaginated: jest.fn().mockResolvedValue({
+        entries: [],
+        total: 0,
+        page: 2,
+        limit: 20,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      }),
+      getJournalFromLastHours: jest.fn().mockResolvedValue([]),
+      getJournalStats: jest.fn().mockResolvedValue({
+        totalTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        winRate: 0,
+        totalPnL: 0,
+        averagePnL: 0,
+        bestTrade: 0,
+        worstTrade: 0,
+        currentStreak: 0,
+        longestWinStreak: 0,
+        longestLossStreak: 0,
+        averageWin: 0,
+        averageLoss: 0,
+        profitFactor: 0,
+      }),
+      readJournal: jest.fn().mockResolvedValue([
+        {
+          id: 'trade-1',
+          timestamp: 1000,
+          direction: 'LONG',
+          entryPrice: 100,
+          exitPrice: 110,
+          quantity: 1,
+          pnl: 10,
+          pnlPercent: 10,
+          strategy: 'Breakout',
+          exitReason: 'TP1',
+        },
+      ]),
+    },
+    sessions: {
+      readSessions: jest.fn().mockResolvedValue([]),
+      compareSessions: jest.fn().mockResolvedValue({
+        session1: { sessionId: 'a', totalPnL: 10, totalTrades: 1, winRate: 100, duration: 60 * 1000 },
+        session2: { sessionId: 'b', totalPnL: 5, totalTrades: 1, winRate: 0, duration: 60 * 1000 },
+        comparison: { pnlDiff: -5, tradeCountDiff: 0, winRateDiff: -100, durationDiff: 0 },
+      }),
+    },
+    strategy: {
+      getStrategyPerformance: jest.fn().mockResolvedValue([]),
+    },
+    curves: {
+      getPnlHistory: jest.fn().mockResolvedValue([
+        {
+          time: new Date(1000).toISOString(),
+          timestamp: 1000,
+          pnl: 10,
+          cumulativePnL: 10,
+          tradeNumber: 1,
+        },
+      ]),
+      getEquityCurve: jest.fn().mockResolvedValue([
+        {
+          time: new Date(1000).toISOString(),
+          timestamp: 1000,
+          equity: 1010,
+          pnl: 10,
+          tradeNumber: 1,
+          drawdown: 1,
+        },
+      ]),
+    },
   };
 }
 
@@ -2029,7 +2044,7 @@ describe('WebServer functional', () => {
     const app = express();
     const analyticsApi = createAnalyticsRouteReadApiMock();
 
-    analyticsApi.getStrategyPerformance.mockRejectedValue({
+    analyticsApi.strategy.getStrategyPerformance.mockRejectedValue({
       status: '503',
       code: 'ANALYTICS_UNAVAILABLE',
       message: 'Analytics backend unavailable',
@@ -2060,7 +2075,7 @@ describe('WebServer functional', () => {
     const app = express();
     const analyticsApi = createAnalyticsRouteReadApiMock();
 
-    analyticsApi.getStrategyPerformance.mockRejectedValue({
+    analyticsApi.strategy.getStrategyPerformance.mockRejectedValue({
       status: '503',
       code: 'ANALYTICS_UNAVAILABLE',
       error: 'Analytics backend unavailable',
@@ -2091,7 +2106,7 @@ describe('WebServer functional', () => {
     const app = express();
     const analyticsApi = createAnalyticsRouteReadApiMock();
 
-    analyticsApi.getStrategyPerformance.mockRejectedValue({
+    analyticsApi.strategy.getStrategyPerformance.mockRejectedValue({
       status: '503',
     });
 
@@ -2136,7 +2151,7 @@ describe('WebServer functional', () => {
       timestamp: expect.any(Number),
       requestId: 'req-compare-missing',
     });
-    expect(analyticsApi.compareSessions).not.toHaveBeenCalled();
+    expect(analyticsApi.sessions.compareSessions).not.toHaveBeenCalled();
   });
 
   it('composes explicit lifecycle, analytics, and realtime adapters from the file watcher runtime bundle', async () => {
@@ -2171,14 +2186,14 @@ describe('WebServer functional', () => {
     await request(app)
       .get('/api/analytics/journal?page=2&limit=20')
       .expect(200);
-    expect(analyticsApi.getJournalPaginated).toHaveBeenCalledWith(2, 20);
-    expect(analyticsApi.readJournal).not.toHaveBeenCalled();
+    expect(analyticsApi.journal.getJournalPaginated).toHaveBeenCalledWith(2, 20);
+    expect(analyticsApi.journal.readJournal).not.toHaveBeenCalled();
 
     await request(app)
       .get('/api/analytics/sessions/compare?id1=session-a&id2=session-b')
       .expect(200);
-    expect(analyticsApi.compareSessions).toHaveBeenCalledWith('session-a', 'session-b');
-    expect(analyticsApi.readSessions).not.toHaveBeenCalled();
+    expect(analyticsApi.sessions.compareSessions).toHaveBeenCalledWith('session-a', 'session-b');
+    expect(analyticsApi.sessions.readSessions).not.toHaveBeenCalled();
 
     await request(app)
       .get('/api/analytics/pnl-history')
@@ -2187,9 +2202,9 @@ describe('WebServer functional', () => {
       .get('/api/analytics/equity-curve')
       .expect(200);
 
-    expect(analyticsApi.getPnlHistory).toHaveBeenCalledTimes(1);
-    expect(analyticsApi.getEquityCurve).toHaveBeenCalledTimes(1);
-    expect(analyticsApi.readJournal).not.toHaveBeenCalled();
-    expect(analyticsApi.getStrategyPerformance).not.toHaveBeenCalled();
+    expect(analyticsApi.curves.getPnlHistory).toHaveBeenCalledTimes(1);
+    expect(analyticsApi.curves.getEquityCurve).toHaveBeenCalledTimes(1);
+    expect(analyticsApi.journal.readJournal).not.toHaveBeenCalled();
+    expect(analyticsApi.strategy.getStrategyPerformance).not.toHaveBeenCalled();
   });
 });

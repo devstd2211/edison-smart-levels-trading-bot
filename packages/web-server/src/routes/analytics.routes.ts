@@ -25,14 +25,34 @@ import {
   requireNonEmptyParam,
   sendAsyncRouteRead,
 } from './route-response.js';
-import { DEFAULT_EQUITY_CURVE_STARTING_BALANCE } from './analytics.constants.js';
+import {
+  ANALYTICS_ROUTE_FALLBACK_MESSAGES,
+  DEFAULT_ANALYTICS_JOURNAL_LIMIT,
+  DEFAULT_ANALYTICS_JOURNAL_PAGE,
+  DEFAULT_ANALYTICS_RECENT_JOURNAL_HOURS,
+  DEFAULT_EQUITY_CURVE_STARTING_BALANCE,
+  MAX_ANALYTICS_JOURNAL_LIMIT,
+} from './analytics.constants.js';
 
 type AnalyticsRouteDerivedReadApi = {
   getPnlHistory(): Promise<PnlHistoryPoint[]>;
   getEquityCurve(): Promise<EquityCurvePoint[]>;
 };
 
-export type AnalyticsRouteReadApi = FileWatcherAnalyticsReadApi & AnalyticsRouteDerivedReadApi;
+type AnalyticsRouteJournalReadApi = Pick<
+  FileWatcherAnalyticsReadApi,
+  'getJournalPaginated' | 'getJournalFromLastHours' | 'getJournalStats' | 'readJournal'
+>;
+type AnalyticsRouteSessionReadApi = Pick<FileWatcherAnalyticsReadApi, 'readSessions' | 'compareSessions'>;
+type AnalyticsRouteStrategyReadApi = Pick<FileWatcherAnalyticsReadApi, 'getStrategyPerformance'>;
+type AnalyticsRouteCurveReadApi = AnalyticsRouteDerivedReadApi;
+
+export type AnalyticsRouteReadApi = {
+  journal: AnalyticsRouteJournalReadApi;
+  sessions: AnalyticsRouteSessionReadApi;
+  strategy: AnalyticsRouteStrategyReadApi;
+  curves: AnalyticsRouteCurveReadApi;
+};
 type SessionComparisonRouteQuery = { id1: string; id2: string };
 
 function createPnlHistory(journal: WebApiJournalEntry[]): PnlHistoryPoint[] {
@@ -68,16 +88,26 @@ function createEquityCurve(journal: WebApiJournalEntry[]): EquityCurvePoint[] {
 }
 
 export function createAnalyticsRouteReadApi(readApi: FileWatcherAnalyticsReadApi): AnalyticsRouteReadApi {
-  return {
-    getJournalPaginated: (page, limit) => readApi.getJournalPaginated(page, limit),
-    getJournalFromLastHours: (hours) => readApi.getJournalFromLastHours(hours),
+  const journal = {
+    getJournalPaginated: (page: number | undefined, limit: number | undefined) => readApi.getJournalPaginated(page, limit),
+    getJournalFromLastHours: (hours: number | undefined) => readApi.getJournalFromLastHours(hours),
     getJournalStats: () => readApi.getJournalStats(),
-    readSessions: () => readApi.readSessions(),
-    compareSessions: (id1, id2) => readApi.compareSessions(id1, id2),
-    getStrategyPerformance: () => readApi.getStrategyPerformance(),
-    getPnlHistory: async () => createPnlHistory(await readApi.readJournal()),
-    getEquityCurve: async () => createEquityCurve(await readApi.readJournal()),
     readJournal: () => readApi.readJournal(),
+  };
+
+  return {
+    journal,
+    sessions: {
+      readSessions: () => readApi.readSessions(),
+      compareSessions: (id1, id2) => readApi.compareSessions(id1, id2),
+    },
+    strategy: {
+      getStrategyPerformance: () => readApi.getStrategyPerformance(),
+    },
+    curves: {
+      getPnlHistory: async () => createPnlHistory(await journal.readJournal()),
+      getEquityCurve: async () => createEquityCurve(await journal.readJournal()),
+    },
   };
 }
 
@@ -95,7 +125,7 @@ function requireSessionComparisonQuery(
   return { id1, id2 };
 }
 
-export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Router {
+export function createAnalyticsRoutes(analyticsApi: AnalyticsRouteReadApi): Router {
   const router = Router();
 
   /**
@@ -104,18 +134,18 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
    */
   router.get('/journal', async (req: Request, res: Response<ApiResponse<JournalPagePayload>>) =>
     sendAsyncRouteRead(res, async () => {
-      const page = parsePageQuery(req.query.page);
-      const limit = parseLimitQuery(req.query.limit, 50, 500);
-      return fileWatcher.getJournalPaginated(page, limit);
-    }, { fallbackMessage: 'Failed to fetch journal' }));
+      const page = parsePageQuery(req.query.page, DEFAULT_ANALYTICS_JOURNAL_PAGE);
+      const limit = parseLimitQuery(req.query.limit, DEFAULT_ANALYTICS_JOURNAL_LIMIT, MAX_ANALYTICS_JOURNAL_LIMIT);
+      return analyticsApi.journal.getJournalPaginated(page, limit);
+    }, { fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.journal }));
 
   /**
    * GET /api/analytics/journal/last24h
    * Get trades from last 24 hours
    */
   router.get('/journal/last24h', async (_req: Request, res: Response<ApiResponse<WebApiJournalEntry[]>>) =>
-    sendAsyncRouteRead(res, () => fileWatcher.getJournalFromLastHours(24), {
-      fallbackMessage: 'Failed to fetch recent journal',
+    sendAsyncRouteRead(res, () => analyticsApi.journal.getJournalFromLastHours(DEFAULT_ANALYTICS_RECENT_JOURNAL_HOURS), {
+      fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.recentJournal,
     }));
 
   /**
@@ -123,8 +153,8 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
    * Get overall journal statistics
    */
   router.get('/journal/stats', async (_req: Request, res: Response<ApiResponse<JournalStatsPayload>>) =>
-    sendAsyncRouteRead(res, () => fileWatcher.getJournalStats(), {
-      fallbackMessage: 'Failed to fetch journal statistics',
+    sendAsyncRouteRead(res, () => analyticsApi.journal.getJournalStats(), {
+      fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.journalStats,
     }));
 
   /**
@@ -132,8 +162,8 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
    * Get all sessions
    */
   router.get('/sessions', async (_req: Request, res: Response<ApiResponse<WebApiSessionStats[]>>) =>
-    sendAsyncRouteRead(res, () => fileWatcher.readSessions(), {
-      fallbackMessage: 'Failed to fetch sessions',
+    sendAsyncRouteRead(res, () => analyticsApi.sessions.readSessions(), {
+      fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.sessions,
     }));
 
   /**
@@ -146,8 +176,8 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
       return;
     }
 
-    await sendAsyncRouteRead(res, () => fileWatcher.compareSessions(comparisonQuery.id1, comparisonQuery.id2), {
-      fallbackMessage: 'Failed to compare sessions',
+    await sendAsyncRouteRead(res, () => analyticsApi.sessions.compareSessions(comparisonQuery.id1, comparisonQuery.id2), {
+      fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.compareSessions,
     });
   });
 
@@ -156,8 +186,8 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
    * Get performance breakdown by strategy
    */
   router.get('/strategy-performance', async (_req: Request, res: Response<ApiResponse<StrategyPerformancePayload[]>>) =>
-    sendAsyncRouteRead(res, () => fileWatcher.getStrategyPerformance(), {
-      fallbackMessage: 'Failed to fetch strategy performance',
+    sendAsyncRouteRead(res, () => analyticsApi.strategy.getStrategyPerformance(), {
+      fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.strategyPerformance,
     }));
 
   /**
@@ -165,14 +195,18 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
    * Get PnL over time for charting
    */
   router.get('/pnl-history', async (_req: Request, res: Response<ApiResponse<PnlHistoryPoint[]>>) =>
-    sendAsyncRouteRead(res, () => fileWatcher.getPnlHistory(), { fallbackMessage: 'Failed to fetch PnL history' }));
+    sendAsyncRouteRead(res, () => analyticsApi.curves.getPnlHistory(), {
+      fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.pnlHistory,
+    }));
 
   /**
    * GET /api/analytics/equity-curve
    * Get equity curve data (cumulative balance over time)
    */
   router.get('/equity-curve', async (_req: Request, res: Response<ApiResponse<EquityCurvePoint[]>>) =>
-    sendAsyncRouteRead(res, () => fileWatcher.getEquityCurve(), { fallbackMessage: 'Failed to fetch equity curve' }));
+    sendAsyncRouteRead(res, () => analyticsApi.curves.getEquityCurve(), {
+      fallbackMessage: ANALYTICS_ROUTE_FALLBACK_MESSAGES.equityCurve,
+    }));
 
   return router;
 }
