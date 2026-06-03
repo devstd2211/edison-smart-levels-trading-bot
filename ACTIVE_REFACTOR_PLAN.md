@@ -41,23 +41,24 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-03: completed `packages/web-server/src/routes/config.routes.ts web server config route runtime adapter boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/routes/config-route-contracts.ts web server config route contract boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/index.ts web server route adapter composition boundary follow-up`.
-- `config-route-contracts.ts` now owns config-route request parsing, restore/toggle validation, and runtime server payload shaping through one `createConfigRouteHandlers(...)` seam instead of leaving those contracts split across Express handlers.
-- `config.routes.ts` now stays as a thin route adapter that delegates config reads and mutations to the contract-layer handlers and the shared `sendAsyncRoute*` helpers, removing duplicated try/catch and inline request parsing from the router body.
-- `index.ts` now configures Express through exported `configureWebServerApp(...)`, so route composition consumes one explicit dependency bundle instead of constructing route adapters inline inside `WebServer.setupRoutes()`.
-- `web-server.functional.test.ts` now proves the config contract helper owns both parse failures and runtime server payload shaping, and that the web-server app composition seam wires config and health endpoints from explicit route dependencies.
+- 2026-06-03: completed `packages/web-server/tests/web-server.functional.test.ts web server route adapter composition guardrail follow-up`.
+- 2026-06-03: completed `packages/web-server/src/websocket/ws-server.ts websocket bridge runtime adapter boundary follow-up`.
+- 2026-06-03: completed `packages/web-server/tests/ws-server.functional.test.ts websocket bridge runtime adapter functional guardrail follow-up`.
+- `ws-server.ts` now consumes an explicit `WebSocketBridgeApi` instead of the concrete `BotBridgeService`, so websocket reads and `bot-event` subscriptions cross one narrowed runtime adapter seam.
+- `index.ts` now composes route dependencies and websocket delegates through `createWebServerRuntimeDependencies(...)`, keeping runtime wiring in one place before `WebServer` starts sockets and file-watchers.
+- `web-server.functional.test.ts` now guards that the web-server runtime bundle carries both explicit route dependencies and the shared websocket delegate surface.
+- `ws-server.functional.test.ts` now proves the websocket bridge adapter preserves status reads, position reads, and `bot-event` unsubscribe behavior independent of the concrete bridge class.
 
 ## Latest Verification
-- 2026-06-03: `npm test -- --runInBand packages/web-server/tests/web-server.functional.test.ts` (1 suite, 52 tests)
+- 2026-06-03: `npm test -- --runInBand packages/web-server/tests/web-server.functional.test.ts` (1 suite, 53 tests)
+- 2026-06-03: `npm test -- --runInBand packages/web-server/tests/ws-server.functional.test.ts` (1 suite, 21 tests)
 - 2026-06-03: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-03: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/tests/web-server.functional.test.ts web server route adapter composition guardrail follow-up`.
-- Keep the next batch on the web-server websocket/runtime boundary stream before returning to the remaining docs guardrail items.
+- Start with `packages/web-server/src/routes/analytics.routes.ts analytics route runtime adapter boundary follow-up`.
+- Keep the next batch on the web-server runtime/error boundary stream before returning to the remaining docs guardrail items.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

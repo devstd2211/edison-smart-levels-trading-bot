@@ -29,6 +29,8 @@ import {
 type FileWatcherEventName = keyof FileWatcherRealtimeEventMap;
 type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherRealtimeEventMap[K]) => void;
 type FileWatcherBroadcastType = 'JOURNAL_UPDATE' | 'SESSION_UPDATE';
+type WebSocketBridgeEventName = 'bot-event';
+type WebSocketBridgeListener = (event: WebSocketMessage) => void;
 type ParsedIncomingMessage = {
   type: string;
   requestId?: string;
@@ -51,6 +53,26 @@ type ReadFailureOptions = {
   context?: 'new client' | 'status request';
 };
 
+export type WebSocketBridgeApi = {
+  createStatusChangeMessage(requestId?: string): Promise<WebSocketMessage<'BOT_STATUS_CHANGE'>>;
+  createPositionUpdateMessage(requestId?: string): WebSocketMessage<'POSITION_UPDATE'>;
+  on(event: WebSocketBridgeEventName, listener: WebSocketBridgeListener): void;
+  off(event: WebSocketBridgeEventName, listener: WebSocketBridgeListener): void;
+};
+
+export function createWebSocketBridgeApi(bridge: BotBridgeService): WebSocketBridgeApi {
+  return {
+    createStatusChangeMessage: (requestId) => bridge.createStatusChangeMessage(requestId),
+    createPositionUpdateMessage: (requestId) => bridge.createPositionUpdateMessage(requestId),
+    on: (event, listener) => {
+      bridge.on(event, listener);
+    },
+    off: (event, listener) => {
+      bridge.off(event, listener);
+    },
+  };
+}
+
 export class WebSocketService {
   private wss!: WebSocketServer;
   private clients: Set<WebSocket> = new Set();
@@ -59,7 +81,7 @@ export class WebSocketService {
   private bridgeEventListener: ((event: WebSocketMessage) => void) | null = null;
   private fileWatcherListeners = new Map<FileWatcherEventName, (...args: unknown[]) => void>();
 
-  constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherRealtimeApi) {
+  constructor(port: number, private bridge: WebSocketBridgeApi, private fileWatcher?: FileWatcherRealtimeApi) {
     this.currentPort = port;
     this.wss = this.createServerWithPortFallback(port);
     this.bindServerHandlers(this.wss);

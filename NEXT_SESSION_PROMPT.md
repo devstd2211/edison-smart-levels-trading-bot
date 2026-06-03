@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/web-server/tests/web-server.functional.test.ts web server route adapter composition guardrail follow-up`
-2. `packages/web-server/src/websocket/ws-server.ts websocket bridge runtime adapter boundary follow-up`
-3. `packages/web-server/tests/ws-server.functional.test.ts websocket bridge runtime adapter functional guardrail follow-up`
+1. `packages/web-server/src/routes/analytics.routes.ts analytics route runtime adapter boundary follow-up`
+2. `packages/web-server/src/routes/route-response.ts web server shared route response runtime boundary follow-up`
+3. `packages/web-server/src/routes/analytics.constants.ts analytics route runtime constants boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,15 +53,15 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-03: completed `packages/web-server/src/routes/config.routes.ts web server config route runtime adapter boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/routes/config-route-contracts.ts web server config route contract boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/index.ts web server route adapter composition boundary follow-up`.
-- `config-route-contracts.ts` now owns config-route request parsing, restore/toggle validation, and runtime server payload shaping through one `createConfigRouteHandlers(...)` seam instead of leaving those contracts split across Express handlers.
-- `config.routes.ts` now stays as a thin route adapter that delegates config reads and mutations to the contract-layer handlers and the shared `sendAsyncRoute*` helpers, removing duplicated try/catch and inline request parsing from the router body.
-- `index.ts` now configures Express through exported `configureWebServerApp(...)`, so route composition consumes one explicit dependency bundle instead of constructing route adapters inline inside `WebServer.setupRoutes()`.
-- `web-server.functional.test.ts` now proves the config contract helper owns both parse failures and runtime server payload shaping, and that the web-server app composition seam wires config and health endpoints from explicit route dependencies.
+- 2026-06-03: completed `packages/web-server/tests/web-server.functional.test.ts web server route adapter composition guardrail follow-up`.
+- 2026-06-03: completed `packages/web-server/src/websocket/ws-server.ts websocket bridge runtime adapter boundary follow-up`.
+- 2026-06-03: completed `packages/web-server/tests/ws-server.functional.test.ts websocket bridge runtime adapter functional guardrail follow-up`.
+- `ws-server.ts` now depends on an explicit `WebSocketBridgeApi` seam for status reads, position reads, and `bot-event` forwarding instead of binding directly to the concrete bridge service.
+- `index.ts` now composes route dependencies and websocket delegates through `createWebServerRuntimeDependencies(...)`, keeping runtime ownership explicit before startup.
+- `web-server.functional.test.ts` and `ws-server.functional.test.ts` now guard the shared websocket delegate seam, including unsubscribe behavior and runtime bundle wiring.
 
 ## Last Verification
 - `npm test -- --runInBand packages/web-server/tests/web-server.functional.test.ts`
+- `npm test -- --runInBand packages/web-server/tests/ws-server.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

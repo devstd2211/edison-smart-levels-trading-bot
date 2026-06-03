@@ -19,7 +19,7 @@ import {
   type FileWatcherRealtimeApi,
   FileWatcherService,
 } from '../src/services/file-watcher.service';
-import { WebSocketService } from '../src/websocket/ws-server';
+import { createWebSocketBridgeApi, WebSocketService } from '../src/websocket/ws-server';
 
 class TestBot extends EventEmitter implements IBotInstance {
   public isRunning = true;
@@ -901,5 +901,45 @@ describe('WebSocketService functional boundary', () => {
 
     onSpy.mockRestore();
     offSpy.mockRestore();
+  });
+
+  test('creates websocket bridge delegates that isolate status reads, position reads, and bot-event subscriptions', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    const websocketBridge = createWebSocketBridgeApi(bridge);
+    const listener = jest.fn();
+
+    websocketBridge.on('bot-event', listener);
+
+    const statusMessage = await websocketBridge.createStatusChangeMessage('req-status-bridge');
+    const positionMessage = websocketBridge.createPositionUpdateMessage('req-position-bridge');
+    const emittedMessage = bridge.createPositionUpdateMessage('req-event-bridge');
+    bridge.emit('bot-event', emittedMessage);
+    websocketBridge.off('bot-event', listener);
+    bridge.emit('bot-event', bridge.createPositionUpdateMessage('req-event-after-off'));
+
+    expect(statusMessage).toEqual({
+      type: 'BOT_STATUS_CHANGE',
+      payload: expect.objectContaining({
+        isRunning: true,
+        balance: 1000,
+      }),
+      requestId: 'req-status-bridge',
+      timestamp: expect.any(Number),
+    });
+    expect(positionMessage).toEqual({
+      type: 'POSITION_UPDATE',
+      payload: {
+        position: expect.objectContaining({
+          id: 'pos-1',
+          symbol: 'BTCUSDT',
+        }),
+      },
+      requestId: 'req-position-bridge',
+      timestamp: expect.any(Number),
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(emittedMessage);
+
+    bridge.destroy();
   });
 });

@@ -25,6 +25,7 @@ import type {
 } from '@edison/contracts/web-api';
 import {
   configureWebServerApp,
+  createWebServerRuntimeDependencies,
   createDocsHtml,
   createDocsInfoHtml,
   createDocsOpenApiLinkHtml,
@@ -793,6 +794,54 @@ describe('WebServer functional', () => {
       .get('/health')
       .expect(200);
     expect(healthResponse.body.botRunning).toBe(true);
+
+    bridge.destroy();
+  });
+
+  it('composes websocket runtime delegates from the shared web-server dependency bundle', async () => {
+    const bridge = new BotBridgeService(new TestBot(), createWebApiAdapter());
+    const configApi = createConfigRouteApiMock();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+    const getRuntimePorts = jest.fn<ServerRuntimePorts, []>(() => ({ apiPort: 5200, wsPort: 5201 }));
+    const runtime = createWebServerRuntimeDependencies({
+      bridge,
+      configApi,
+      analyticsApi,
+      getRuntimePorts,
+      webClientPath: path.resolve(process.cwd(), 'packages', 'web-client', 'dist'),
+    });
+    const websocketListener = jest.fn();
+
+    runtime.websocketBridge.on('bot-event', websocketListener);
+
+    const runtimeStatusMessage = await runtime.websocketBridge.createStatusChangeMessage('req-runtime-status');
+    const runtimePositionMessage = runtime.websocketBridge.createPositionUpdateMessage('req-runtime-position');
+    const emittedMessage = bridge.createPositionUpdateMessage('req-runtime-event');
+    bridge.emit('bot-event', emittedMessage);
+    runtime.websocketBridge.off('bot-event', websocketListener);
+    bridge.emit('bot-event', bridge.createPositionUpdateMessage('req-runtime-event-after-off'));
+
+    expect(runtime.routeDependencies.bridge).toBe(bridge);
+    expect(runtime.routeDependencies.configApi).toBe(configApi);
+    expect(runtime.routeDependencies.analyticsApi).toBe(analyticsApi);
+    expect(runtime.routeDependencies.getRuntimePorts).toBe(getRuntimePorts);
+    expect(runtimeStatusMessage).toEqual({
+      type: 'BOT_STATUS_CHANGE',
+      payload: expect.objectContaining({
+        isRunning: true,
+        balance: 1250,
+      }),
+      requestId: 'req-runtime-status',
+      timestamp: expect.any(Number),
+    });
+    expect(runtimePositionMessage).toEqual({
+      type: 'POSITION_UPDATE',
+      payload: { position: null },
+      requestId: 'req-runtime-position',
+      timestamp: expect.any(Number),
+    });
+    expect(websocketListener).toHaveBeenCalledTimes(1);
+    expect(websocketListener).toHaveBeenCalledWith(emittedMessage);
 
     bridge.destroy();
   });

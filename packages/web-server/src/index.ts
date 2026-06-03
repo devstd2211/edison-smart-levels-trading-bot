@@ -12,7 +12,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { BotBridgeService, type IBotInstance } from './services/bot-bridge.service.js';
 import type { IWebApiAdapter } from './services/web-api-adapter.types.js';
-import { WebSocketService } from './websocket/ws-server.js';
+import {
+  createWebSocketBridgeApi,
+  type WebSocketBridgeApi,
+  WebSocketService,
+} from './websocket/ws-server.js';
 import { createBotRouteApi, createBotRoutes } from './routes/bot.routes.js';
 import { createDataRouteReadApi, createDataRoutes } from './routes/data.routes.js';
 import {
@@ -83,6 +87,10 @@ export type WebServerRouteDependencies = {
   analyticsApi: AnalyticsRouteReadApi;
   getRuntimePorts: () => ServerRuntimePorts;
   webClientPath: string;
+};
+export type WebServerRuntimeDependencies = {
+  routeDependencies: WebServerRouteDependencies;
+  websocketBridge: WebSocketBridgeApi;
 };
 
 const DOCS_QUICK_REFERENCE_ENDPOINTS: DocsEndpointDefinition[] = [
@@ -366,6 +374,15 @@ export function configureWebServerApp(app: Express, dependencies: WebServerRoute
   app.use(createErrorHandlerMiddleware());
 }
 
+export function createWebServerRuntimeDependencies(
+  routeDependencies: WebServerRouteDependencies,
+): WebServerRuntimeDependencies {
+  return {
+    routeDependencies,
+    websocketBridge: createWebSocketBridgeApi(routeDependencies.bridge),
+  };
+}
+
 export class WebServer {
   private readonly app: Express;
   private readonly bridge: BotBridgeService;
@@ -373,6 +390,7 @@ export class WebServer {
   private wsService: WebSocketService | null = null;
   private fileWatcherRuntime: FileWatcherRuntimeAdapters | null = null;
   private fileWatcherPaths: FileWatcherPaths | null = null;
+  private runtimeDependencies: WebServerRuntimeDependencies | null = null;
   private shutdownHandler: (() => void) | null = null;
   private runtimeServicesStarted = false;
   private apiPort: number;
@@ -430,7 +448,7 @@ export class WebServer {
 
   private setupRoutes() {
     const configPath = path.resolve(process.cwd(), 'config.json');
-    configureWebServerApp(this.app, {
+    this.runtimeDependencies = createWebServerRuntimeDependencies({
       bridge: this.bridge,
       configApi: createConfigRouteApi(new ConfigManagementService(configPath)),
       analyticsApi: createAnalyticsRouteReadApi(this.fileWatcherRuntime!.analytics),
@@ -440,6 +458,7 @@ export class WebServer {
       }),
       webClientPath: resolveWebClientPath(),
     });
+    configureWebServerApp(this.app, this.runtimeDependencies.routeDependencies);
   }
 
   private setupWebSocket(port: number) {
@@ -448,7 +467,7 @@ export class WebServer {
     }
     this.wsService = new WebSocketService(
       port,
-      this.bridge,
+      this.runtimeDependencies?.websocketBridge ?? createWebSocketBridgeApi(this.bridge),
       this.fileWatcherRuntime?.realtime,
     );
     const websocketPort = this.wsService.getPort();
