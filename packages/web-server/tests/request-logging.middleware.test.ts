@@ -5,9 +5,29 @@ import { createHttpLogPayload, createHttpResponseErrorLogPayload } from '../src/
 import {
   createRequestLogEntry,
   createRequestLoggingMiddleware,
+  resolveLoggingConfig,
 } from '../src/middleware/request-logging.middleware';
 
 describe('request logging middleware', () => {
+  test('normalizes request logging config through a shared boundary', () => {
+    expect(resolveLoggingConfig()).toEqual({
+      logBody: false,
+      logHeaders: false,
+      excludePaths: ['/health'],
+      maxBodyLength: 500,
+    });
+
+    expect(resolveLoggingConfig({
+      logBody: true,
+      excludePaths: ['/health', '/metrics'],
+    })).toEqual({
+      logBody: true,
+      logHeaders: false,
+      excludePaths: ['/health', '/metrics'],
+      maxBodyLength: 500,
+    });
+  });
+
   test('logs structured error metadata from the response body with request id parity', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const app = express();

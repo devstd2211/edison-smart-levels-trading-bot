@@ -79,6 +79,19 @@ import {
   DEFAULT_RUNTIME_API_SERVER_DESCRIPTION,
   RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION,
 } from './runtime-discovery-guidance.js';
+import {
+  createConfigActionMessageSchema,
+  createConfigBackupCollectionSchema,
+  createConfigMutationPreviewPayloadSchema,
+  createConfigMutationRequestPayloadSchema,
+  createConfigValidationPayloadSchema,
+  createErrorResponse as createBaseErrorResponse,
+  createJsonRequestBody,
+  createSchemaAlias,
+  createSuccessEnvelopeSchema,
+  createSuccessResponse,
+  schemaRef,
+} from './swagger-contract-helpers.js';
 
 type SwaggerContractSchemas = {
   ApiMessageResponse: ApiMessageResponse;
@@ -210,46 +223,8 @@ const SCHEMAS = {
   WebApiWallsView: 'WebApiWallsView',
 } satisfies Record<keyof SwaggerContractSchemas, string>;
 
-const schemaRef = (name: string) => ({
-  $ref: `#/components/schemas/${name}`,
-});
-
-const createSuccessEnvelopeSchema = (dataSchema: Record<string, unknown>) => ({
-  type: 'object',
-  required: ['success', 'data', 'timestamp'],
-  properties: {
-    success: { type: 'boolean', enum: [true] },
-    data: dataSchema,
-    timestamp: { type: 'number' },
-  },
-});
-
-const createSuccessResponse = (description: string, schemaName: string) => ({
-  description,
-  content: {
-    'application/json': {
-      schema: createSuccessEnvelopeSchema(schemaRef(schemaName)),
-    },
-  },
-});
-
 const createErrorResponse = (description: string) => ({
-  description,
-  content: {
-    'application/json': {
-      schema: schemaRef(SCHEMAS.StructuredApiErrorResponse),
-      example: DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE,
-    },
-  },
-});
-
-const createJsonRequestBody = (schemaName: string, required: boolean = true) => ({
-  required,
-  content: {
-    'application/json': {
-      schema: schemaRef(schemaName),
-    },
-  },
+  ...createBaseErrorResponse(description, DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE),
 });
 
 const createConfigRouteSuccessResponse = (description: string, schemaName: string) =>
@@ -267,74 +242,8 @@ const createAnalyticsRouteSuccessResponse = (description: string, schemaName: st
 const createAnalyticsRouteErrorResponse = (description: string) =>
   createErrorResponse(description);
 
-const createConfigBackupCollectionSchema = () => ({
-  type: 'object',
-  required: ['backups', 'count'],
-  properties: {
-    backups: {
-      type: 'array',
-      items: schemaRef(SCHEMAS.ConfigBackupPayload),
-    },
-    count: { type: 'number' },
-  },
-});
-
-const createConfigActionMessageSchema = (
-  properties: Record<string, unknown>,
-  required: string[],
-) => ({
-  type: 'object',
-  required: ['message', ...required],
-  properties: {
-    message: { type: 'string' },
-    ...properties,
-  },
-});
-
-const createConfigValidationPayloadSchema = () => ({
-  type: 'object',
-  required: ['valid', 'errors', 'warnings', 'summary'],
-  properties: {
-    valid: { type: 'boolean' },
-    errors: {
-      type: 'array',
-      items: schemaRef(SCHEMAS.ConfigValidationIssuePayload),
-    },
-    warnings: {
-      type: 'array',
-      items: schemaRef(SCHEMAS.ConfigValidationIssuePayload),
-    },
-    summary: schemaRef(SCHEMAS.ConfigValidationSummaryPayload),
-  },
-});
-
-const createConfigMutationPreviewPayloadSchema = () => ({
-  type: 'object',
-  required: ['changes', 'summary', 'validation'],
-  properties: {
-    changes: {
-      type: 'array',
-      items: schemaRef(SCHEMAS.ConfigMutationPreviewEntryPayload),
-    },
-    summary: schemaRef(SCHEMAS.ConfigMutationPreviewSummaryPayload),
-    validation: schemaRef(SCHEMAS.ConfigValidationResponsePayload),
-  },
-});
-
-const createConfigMutationRequestPayloadSchema = () => ({
-  type: 'object',
-  required: ['config'],
-  properties: {
-    config: schemaRef(SCHEMAS.BotConfigPayload),
-  },
-});
-
 const createConfigMutationRequestAliasSchema = () => ({
   allOf: [schemaRef(SCHEMAS.ConfigMutationRequestPayload)],
-});
-
-const createSchemaAlias = (schemaName: string) => ({
-  allOf: [schemaRef(schemaName)],
 });
 
 const DEFAULT_RUNTIME_CONFIG_EXAMPLE = createServerRuntimeConfigPayload(

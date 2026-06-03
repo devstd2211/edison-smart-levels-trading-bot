@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/web-server/src/swagger.config.ts web server OpenAPI contract surface boundary follow-up`
-2. `packages/web-server/src/runtime-discovery-guidance.ts web server runtime discovery guidance boundary follow-up`
-3. `packages/web-server/src/middleware/request-logging.middleware.ts web server runtime logging boundary follow-up`
+1. `packages/web-server/src/services/config-management.service.ts web server config lifecycle boundary follow-up`
+2. `packages/web-server/src/services/file-watcher.service.ts web server analytics watcher runtime boundary follow-up`
+3. `packages/web-server/src/middleware/error-handler.middleware.ts web server structured error middleware boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,15 +53,15 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-03: completed `packages/web-server/src/routes/analytics.routes.ts analytics route runtime adapter boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/routes/route-response.ts web server shared route response runtime boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/routes/analytics.constants.ts analytics route runtime constants boundary follow-up`.
-- `analytics.routes.ts` now depends on a nested analytics route bundle (`journal`, `sessions`, `strategy`, `curves`) instead of a flat file-watcher-shaped read surface.
-- `analytics.constants.ts` now owns route defaults and fallback strings for analytics paging, recent-history reads, and curve endpoints.
-- `route-response.ts` now creates an explicit route response context before writing shared success/error envelopes, and `route-response.test.ts` directly guards request-id normalization plus fallback error behavior.
+- 2026-06-03: completed `packages/web-server/src/swagger.config.ts web server OpenAPI contract surface boundary follow-up`.
+- 2026-06-03: completed `packages/web-server/src/runtime-discovery-guidance.ts web server runtime discovery guidance boundary follow-up`.
+- 2026-06-03: completed `packages/web-server/src/middleware/request-logging.middleware.ts web server runtime logging boundary follow-up`.
+- `runtime-discovery-guidance.ts` now owns the runtime discovery paragraph set, docs HTML section, OpenAPI description assembly, and default runtime server description instead of leaving those strings split across `index.ts` and `swagger.config.ts`.
+- `request-logging.middleware.ts` now resolves logging config through one shared boundary and delegates finish/error event logging through focused helpers over the existing request-scoped payload builders.
+- `swagger.config.ts` now consumes `swagger-contract-helpers.ts` for shared OpenAPI envelope, schema-alias, and request-body builders so the file stays focused on the exported contract map.
 
 ## Last Verification
-- `npm test -- --runInBand packages/web-server/tests/route-response.test.ts`
+- `npm test -- --runInBand packages/web-server/tests/request-logging.middleware.test.ts`
 - `npm test -- --runInBand packages/web-server/tests/web-server.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

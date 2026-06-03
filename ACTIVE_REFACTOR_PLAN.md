@@ -41,23 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-03: completed `packages/web-server/src/routes/analytics.routes.ts analytics route runtime adapter boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/routes/route-response.ts web server shared route response runtime boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/routes/analytics.constants.ts analytics route runtime constants boundary follow-up`.
-- `analytics.routes.ts` now consumes an explicit route dependency bundle split into `journal`, `sessions`, `strategy`, and `curves`, so the HTTP layer no longer depends on one flat file-watcher-shaped read surface.
-- `analytics.constants.ts` now owns analytics route paging, recent-window, and fallback-message constants instead of leaving route magic numbers and fallback strings inline.
-- `route-response.ts` now builds an explicit route response context before writing success or error envelopes, keeping request-id normalization and shared route execution behavior on one runtime seam.
-- `route-response.test.ts` now guards the shared response helper directly, while `web-server.functional.test.ts` proves the analytics route bundle stays on the narrowed delegates.
+- 2026-06-03: completed `packages/web-server/src/swagger.config.ts web server OpenAPI contract surface boundary follow-up`.
+- 2026-06-03: completed `packages/web-server/src/runtime-discovery-guidance.ts web server runtime discovery guidance boundary follow-up`.
+- 2026-06-03: completed `packages/web-server/src/middleware/request-logging.middleware.ts web server runtime logging boundary follow-up`.
+- `runtime-discovery-guidance.ts` now owns the runtime discovery paragraphs, OpenAPI description assembly, server description copy, and shared docs HTML section so the docs and OpenAPI layers consume one runtime-copy boundary.
+- `request-logging.middleware.ts` now resolves logging config once and delegates finish/error lifecycle logging through focused helpers while still emitting the same shared HTTP log payloads.
+- `swagger.config.ts` now relies on `swagger-contract-helpers.ts` for shared schema, request-body, and envelope builders so the file stays focused on the exported OpenAPI contract surface.
+- `request-logging.middleware.test.ts` now guards config normalization directly, and `web-server.functional.test.ts` continues to prove the runtime discovery and OpenAPI surfaces stay behaviorally stable.
 
 ## Latest Verification
-- 2026-06-03: `npm test -- --runInBand packages/web-server/tests/route-response.test.ts` (1 suite, 4 tests)
+- 2026-06-03: `npm test -- --runInBand packages/web-server/tests/request-logging.middleware.test.ts` (1 suite, 8 tests)
 - 2026-06-03: `npm test -- --runInBand packages/web-server/tests/web-server.functional.test.ts` (1 suite, 53 tests)
 - 2026-06-03: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-03: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/swagger.config.ts web server OpenAPI contract surface boundary follow-up`.
+- Start with `packages/web-server/src/services/config-management.service.ts web server config lifecycle boundary follow-up`.
 - Keep the next batch on the web-server runtime/error boundary stream before returning to the remaining core docs guardrail items.
 
 ## Archive

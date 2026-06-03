@@ -49,9 +49,9 @@ import {
 import { createRuntimeServiceLogPayload } from './logging/request-scoped-error-log.js';
 import {
   API_DOCS_PATH,
+  createDocsRuntimeDiscoverySectionHtml,
   OPENAPI_DOCUMENT_PATH,
   RUNTIME_CONFIG_PATH,
-  RUNTIME_DISCOVERY_GUIDANCE_LINES,
 } from './runtime-discovery-guidance.js';
 import type { ServerRuntimePorts } from './routes/config-route-contracts.js';
 
@@ -67,6 +67,7 @@ export interface WebServerConfig {
 
 export type { IBotInstance } from './services/bot-bridge.service.js';
 export type { IWebApiAdapter } from './services/web-api-adapter.types.js';
+export { createDocsRuntimeDiscoverySectionHtml } from './runtime-discovery-guidance.js';
 
 type WebServerRuntimeConfig = Required<WebServerConfig>;
 type ShutdownProcess = Pick<NodeJS.Process, 'on' | 'off' | 'exit'>;
@@ -143,16 +144,6 @@ export function createDocsInfoHtml(): string {
 
 export function createDocsQuickReferenceHtml(): string {
   return DOCS_QUICK_REFERENCE_ENDPOINTS.map((endpoint) => createDocsEndpointCardHtml(endpoint)).join('');
-}
-
-export function createDocsRuntimeDiscoverySectionHtml(): string {
-  return `
-            <div class="endpoint" style="margin-top: 20px;">
-              <h3>Browser Runtime Discovery</h3>
-              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin}</p>
-              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback}</p>
-              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry}</p>
-            </div>`;
 }
 
 export function createDocsOpenApiLinkHtml(): string {
