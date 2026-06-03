@@ -23,14 +23,21 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts/web-api';
-import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
 import {
+  configureWebServerApp,
   createDocsHtml,
   createDocsInfoHtml,
   createDocsOpenApiLinkHtml,
   createDocsQuickReferenceHtml,
   createDocsRuntimeDiscoverySectionHtml,
+  WebServer,
+  type IBotInstance,
+  type IWebApiAdapter,
 } from '../src/index';
+import {
+  createConfigRouteHandlers,
+  type ServerRuntimePorts,
+} from '../src/routes/config-route-contracts';
 import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
 import { createRateLimitMiddleware } from '../src/middleware/rate-limit.middleware';
 import {
@@ -719,6 +726,75 @@ describe('WebServer functional', () => {
       .expect(200);
     expect(configApi.validate).toHaveBeenCalledTimes(1);
     expect(configApi.write).not.toHaveBeenCalled();
+  });
+
+  it('keeps config request parsing and runtime server payload shaping in the config contract helper layer', async () => {
+    const configApi = createConfigRouteApiMock();
+    const getRuntimePorts = jest.fn<ServerRuntimePorts, []>(() => ({ apiPort: 4900, wsPort: 4901 }));
+    const handlers = createConfigRouteHandlers(configApi, getRuntimePorts);
+
+    await expect(handlers.updateConfig({ config: [] })).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'Invalid configuration payload',
+    });
+    await expect(handlers.previewConfig({ config: [] })).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'No config provided for preview',
+    });
+    expect(() => handlers.updateStrategyToggle({ id: 'breakout' }, {})).toThrow('Missing enabled flag');
+    expect(() => handlers.restoreConfig({ backupId: '  ' })).toThrow('Backup id is required');
+
+    await expect(handlers.updateStrategyToggle({ id: 'breakout' }, { enabled: false })).resolves.toEqual({
+      strategy: 'breakout',
+      enabled: false,
+      message: 'Strategy breakout disabled',
+    });
+    expect(configApi.updateStrategyToggle).toHaveBeenCalledWith('breakout', false);
+
+    expect(handlers.readServerRuntimeConfig()).toEqual({
+      api: { port: 4900, url: 'http://localhost:4900' },
+      websocket: { port: 4901, url: 'ws://localhost:4901' },
+    });
+    expect(getRuntimePorts).toHaveBeenCalledTimes(1);
+  });
+
+  it('configures the web-server app from an explicit route dependency bundle', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+    const runtimePorts = jest.fn<ServerRuntimePorts, []>(() => ({ apiPort: 5200, wsPort: 5201 }));
+    const bridge = new BotBridgeService(new TestBot(), createWebApiAdapter());
+
+    app.use(express.json());
+    configureWebServerApp(app, {
+      bridge,
+      configApi,
+      analyticsApi,
+      getRuntimePorts: runtimePorts,
+      webClientPath: path.resolve(process.cwd(), 'packages', 'web-client', 'dist'),
+    });
+
+    const configResponse = await request(app)
+      .get('/api/config')
+      .expect(200);
+    expect(configResponse.body.data.exchange.symbol).toBe('BTCUSDT');
+    expect(configApi.read).toHaveBeenCalledTimes(1);
+
+    const runtimeResponse = await request(app)
+      .get('/api/config/server')
+      .expect(200);
+    expect(runtimeResponse.body.data).toEqual({
+      api: { port: 5200, url: 'http://localhost:5200' },
+      websocket: { port: 5201, url: 'ws://localhost:5201' },
+    });
+    expect(runtimePorts).toHaveBeenCalledTimes(1);
+
+    const healthResponse = await request(app)
+      .get('/health')
+      .expect(200);
+    expect(healthResponse.body.botRunning).toBe(true);
+
+    bridge.destroy();
   });
 
   it('rolls back websocket and file-watcher runtime services when api startup fails after runtime boot', async () => {

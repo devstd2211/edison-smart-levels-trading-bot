@@ -16,9 +16,6 @@ Legend:
 
 ## Active Components
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/web-server/src/routes/config.routes.ts web server config route runtime adapter boundary follow-up`
-- [ ] `packages/web-server/src/routes/config-route-contracts.ts web server config route contract boundary follow-up`
-- [ ] `packages/web-server/src/index.ts web server route adapter composition boundary follow-up`
 - [ ] `packages/web-server/tests/web-server.functional.test.ts web server route adapter composition guardrail follow-up`
 - [ ] `packages/web-server/src/websocket/ws-server.ts websocket bridge runtime adapter boundary follow-up`
 - [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket bridge runtime adapter functional guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
+- [ ] `packages/web-server/src/services/config-management.service.ts web server config lifecycle boundary follow-up`
+- [ ] `packages/web-server/src/services/file-watcher.service.ts web server analytics watcher runtime boundary follow-up`
+- [ ] `packages/web-server/src/middleware/request-logging.middleware.ts web server runtime logging boundary follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/config.routes.ts web server config route runtime adapter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config-route-contracts.ts web server config route contract boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts web server route adapter composition boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/bot.routes.ts web server route runtime adapter boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/tests/bot.routes.functional.test.ts web server route runtime adapter functional guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/data.routes.ts web server data route runtime adapter boundary follow-up` | prod: yes | tests: yes | func: yes

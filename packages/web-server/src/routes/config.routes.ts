@@ -31,28 +31,18 @@ import type {
   StrategiesResponsePayload,
 } from '@edison/contracts/runtime-api';
 import {
+  createConfigRouteHandlers,
   createConfigRouteApi,
-  createConfigMutationPreviewResponse,
-  createConfigUpdateResponse,
-  createConfigValidationResponse,
   type ConfigRouteApi,
   type ConfigRestoreRequestParams,
   type ServerRuntimePorts,
-  parseCleanupKeepCount,
-  createServerRuntimeConfigPayload,
-  requireConfigMutationRequest,
-  requireRestoreBackupId,
-  requireValidationConfigRequest,
   type StrategyToggleRequestParams,
 } from './config-route-contracts.js';
 import {
   sendAsyncRouteMutation,
-  handleRouteError,
-  requireNonEmptyParam,
   sendAsyncRouteRead,
-  sendError,
-  sendRouteMutation,
   sendRouteRead,
+  sendRouteMutation,
 } from './route-response.js';
 
 // Load environment variables
@@ -61,30 +51,19 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 export { createConfigRouteApi };
 export type { ConfigRouteApi };
 
-function requireStrategyToggleEnabled(
-  res: Response<ApiResponse<StrategyToggleResponsePayload>>,
-  enabled: unknown,
-): enabled is boolean {
-  if (typeof enabled === 'boolean') {
-    return true;
-  }
-
-  sendError(res, 400, 'Missing enabled flag');
-  return false;
-}
-
 export function createConfigRoutes(
   configApi: ConfigRouteApi,
   getRuntimePorts?: () => ServerRuntimePorts,
 ): Router {
   const router = Router();
+  const handlers = createConfigRouteHandlers(configApi, getRuntimePorts);
 
   /**
    * GET /api/config
    * Get full configuration
    */
   router.get('/', async (req: Request, res: Response<ApiResponse<ConfigReadResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configApi.read(), {
+    await sendAsyncRouteRead(res, () => handlers.readConfig(), {
       fallbackMessage: 'Failed to read configuration',
     });
   });
@@ -99,9 +78,7 @@ export function createConfigRoutes(
       req: Request<Record<string, never>, ApiResponse<ConfigUpdateResponsePayload>, ConfigUpdateRequestPayload>,
       res: Response<ApiResponse<ConfigUpdateResponsePayload>>,
     ) =>
-      sendAsyncRouteMutation(res, async () => createConfigUpdateResponse(await configApi.write(
-        requireConfigMutationRequest(req.body),
-      )), {
+      sendAsyncRouteMutation(res, () => handlers.updateConfig(req.body), {
         fallbackMessage: 'Failed to update configuration',
         status: 400,
       }),
@@ -112,7 +89,7 @@ export function createConfigRoutes(
    * Get all available strategies with their enabled status
    */
   router.get('/strategies', async (req: Request, res: Response<ApiResponse<StrategiesResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configApi.getStrategySummaries(), {
+    await sendAsyncRouteRead(res, () => handlers.getStrategySummaries(), {
       fallbackMessage: 'Failed to fetch strategies',
     });
   });
@@ -126,26 +103,11 @@ export function createConfigRoutes(
     async (
       req: Request<StrategyToggleRequestParams, ApiResponse<StrategyToggleResponsePayload>, StrategyToggleRequestPayload>,
       res: Response<ApiResponse<StrategyToggleResponsePayload>>,
-    ) => {
-    try {
-      const { id } = req.params;
-      const { enabled } = req.body;
-
-      if (!requireNonEmptyParam(res, id, 'Strategy id')) {
-        return;
-      }
-      if (!requireStrategyToggleEnabled(res, enabled)) {
-        return;
-      }
-
-      await sendAsyncRouteMutation(res, () => configApi.updateStrategyToggle(id, enabled), {
+    ) =>
+      sendAsyncRouteMutation(res, () => handlers.updateStrategyToggle(req.params, req.body), {
         fallbackMessage: 'Failed to update strategy configuration',
         status: 404,
-      });
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to update strategy configuration', 404);
-    }
-    },
+      }),
   );
 
   /**
@@ -157,7 +119,7 @@ export function createConfigRoutes(
     async (
       req: Request<Record<string, never>, ApiResponse<RiskUpdateResponsePayload>, RiskSettingsPayload>,
       res: Response<ApiResponse<RiskUpdateResponsePayload>>,
-    ) => sendAsyncRouteMutation(res, () => configApi.updateRiskSettings(req.body), {
+    ) => sendAsyncRouteMutation(res, () => handlers.updateRiskSettings(req.body), {
       fallbackMessage: 'Failed to update risk settings',
     }),
   );
@@ -172,9 +134,7 @@ export function createConfigRoutes(
       req: Request<Record<string, never>, ApiResponse<ConfigMutationPreviewPayload>, ConfigMutationPreviewRequestPayload>,
       res: Response<ApiResponse<ConfigMutationPreviewPayload>>,
     ) =>
-      sendAsyncRouteMutation(res, async () => createConfigMutationPreviewResponse(await configApi.preview(
-        requireConfigMutationRequest(req.body, 'No config provided for preview'),
-      )), {
+      sendAsyncRouteMutation(res, () => handlers.previewConfig(req.body), {
           fallbackMessage: 'Failed to preview configuration',
         }),
   );
@@ -189,9 +149,7 @@ export function createConfigRoutes(
       req: Request<Record<string, never>, ApiResponse<ConfigValidationResponsePayload>, ConfigValidationRequestPayload>,
       res: Response<ApiResponse<ConfigValidationResponsePayload>>,
     ) =>
-      sendRouteMutation(res, () => createConfigValidationResponse(configApi.validate(
-        requireValidationConfigRequest(req.body),
-      )), {
+      sendRouteMutation(res, () => handlers.validateConfig(req.body), {
         fallbackMessage: 'Failed to validate configuration',
       }),
   );
@@ -201,7 +159,7 @@ export function createConfigRoutes(
    * List all configuration backups
    */
   router.get('/backups', async (req: Request, res: Response<ApiResponse<ConfigBackupsResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configApi.getBackupCollection(), {
+    await sendAsyncRouteRead(res, () => handlers.getBackupCollection(), {
       fallbackMessage: 'Failed to retrieve backups',
     });
   });
@@ -216,7 +174,7 @@ export function createConfigRoutes(
       req: Request<ConfigRestoreRequestParams, ApiResponse<ConfigRestoreResponsePayload>>,
       res: Response<ApiResponse<ConfigRestoreResponsePayload>>,
     ) =>
-      sendAsyncRouteMutation(res, () => configApi.restore(requireRestoreBackupId(req.params)), {
+      sendAsyncRouteMutation(res, () => handlers.restoreConfig(req.params), {
         fallbackMessage: 'Failed to restore configuration',
         status: 400,
       }),
@@ -231,16 +189,10 @@ export function createConfigRoutes(
     async (
       req: Request<Record<string, never>, ApiResponse<ConfigCleanupResponsePayload>, ConfigCleanupRequestPayload>,
       res: Response<ApiResponse<ConfigCleanupResponsePayload>>,
-    ) => {
-    try {
-      const keepCount = parseCleanupKeepCount(req.body);
-      await sendAsyncRouteMutation(res, () => configApi.cleanupOldBackups(keepCount), {
+    ) =>
+      sendAsyncRouteMutation(res, () => handlers.cleanupBackups(req.body), {
         fallbackMessage: 'Failed to cleanup backups',
-      });
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to cleanup backups');
-    }
-    },
+      }),
   );
 
   /**
@@ -248,7 +200,7 @@ export function createConfigRoutes(
    * Get configuration schema for UI hints
    */
   router.get('/schema', (req: Request, res: Response<ApiResponse<ConfigSchemaPayload>>) => {
-    sendRouteRead(res, () => configApi.getSchema());
+    sendRouteRead(res, () => handlers.getSchema());
   });
 
   /**
@@ -256,7 +208,7 @@ export function createConfigRoutes(
    * Get configuration change history (deprecated - use /backups instead)
    */
   router.get('/history', async (req: Request, res: Response<ApiResponse<ConfigHistoryResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configApi.getHistory(), {
+    await sendAsyncRouteRead(res, () => handlers.getHistory(), {
       fallbackMessage: 'Failed to retrieve configuration history',
     });
   });
@@ -267,7 +219,7 @@ export function createConfigRoutes(
    * Uses actual runtime ports if provided (handles port conflicts)
    */
   router.get('/server', (req: Request, res: Response<ApiResponse<ConfigServerRuntimeResponsePayload>>) => {
-    sendRouteRead(res, () => createServerRuntimeConfigPayload(getRuntimePorts?.()));
+    sendRouteRead(res, () => handlers.readServerRuntimeConfig());
   });
 
   return router;

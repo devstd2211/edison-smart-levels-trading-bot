@@ -55,6 +55,27 @@ export type ConfigRouteMutationApi = {
 };
 
 export type ConfigRouteApi = ConfigRouteReadApi & ConfigRouteMutationApi;
+export type StrategyToggleRequestBody = {
+  enabled?: unknown;
+};
+export type ConfigRouteHandlers = {
+  readConfig(): Promise<BotConfigPayload>;
+  updateConfig(body: unknown): Promise<ConfigUpdateResponsePayload>;
+  getStrategySummaries(): Promise<StrategiesResponsePayload>;
+  updateStrategyToggle(
+    params: StrategyToggleRequestParams,
+    body: StrategyToggleRequestBody,
+  ): Promise<StrategyToggleResponsePayload>;
+  updateRiskSettings(riskPatch: RiskSettingsPayload): Promise<RiskUpdateResponsePayload>;
+  previewConfig(body: unknown): Promise<ConfigMutationPreviewPayload>;
+  validateConfig(body: unknown): ConfigValidationResponsePayload;
+  getBackupCollection(): Promise<ConfigBackupCollectionPayload>;
+  restoreConfig(params: ConfigRestoreRequestParams): Promise<ConfigRestoreResponsePayload>;
+  cleanupBackups(body: unknown): Promise<ConfigCleanupResponsePayload>;
+  getSchema(): ConfigSchemaPayload;
+  getHistory(): Promise<ConfigHistoryResponsePayload>;
+  readServerRuntimeConfig(): ConfigServerRuntimeResponsePayload;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -99,6 +120,34 @@ export function requireConfigMutationRequest(
     {
       details: 'Request body must contain a config object or be a config object',
       suggestion: 'Provide a JSON object in the request body',
+    },
+  );
+}
+
+export function requireStrategyToggleEnabled(enabled: unknown): boolean {
+  if (typeof enabled === 'boolean') {
+    return enabled;
+  }
+
+  throw createStatusApiError(
+    400,
+    'Missing enabled flag',
+    {
+      suggestion: 'Check your request parameters and try again',
+    },
+  );
+}
+
+function requireNonEmptyRouteParam(value: string | null | undefined, fieldName: string): string {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value;
+  }
+
+  throw createStatusApiError(
+    400,
+    `${fieldName} is required`,
+    {
+      suggestion: `Provide a non-empty ${fieldName} value`,
     },
   );
 }
@@ -203,6 +252,38 @@ export function createServerRuntimeConfigPayload(
 ): ConfigServerRuntimeResponsePayload {
   const { apiPort, wsPort } = resolveServerRuntimePorts(runtimePorts);
   return createSharedServerRuntimeConfigPayload(apiPort, wsPort);
+}
+
+export function createConfigRouteHandlers(
+  configApi: ConfigRouteApi,
+  getRuntimePorts?: () => ServerRuntimePorts,
+): ConfigRouteHandlers {
+  return {
+    readConfig: () => configApi.read(),
+    updateConfig: async (body) => createConfigUpdateResponse(
+      await configApi.write(requireConfigMutationRequest(body)),
+    ),
+    getStrategySummaries: () => configApi.getStrategySummaries(),
+    updateStrategyToggle: (params, body) => configApi.updateStrategyToggle(
+      requireNonEmptyRouteParam(params.id, 'Strategy id'),
+      requireStrategyToggleEnabled(body.enabled),
+    ),
+    updateRiskSettings: (riskPatch) => configApi.updateRiskSettings(riskPatch),
+    previewConfig: async (body) => createConfigMutationPreviewResponse(
+      await configApi.preview(
+        requireConfigMutationRequest(body, 'No config provided for preview'),
+      ),
+    ),
+    validateConfig: (body) => createConfigValidationResponse(
+      configApi.validate(requireValidationConfigRequest(body)),
+    ),
+    getBackupCollection: () => configApi.getBackupCollection(),
+    restoreConfig: (params) => configApi.restore(requireRestoreBackupId(params)),
+    cleanupBackups: (body) => configApi.cleanupOldBackups(parseCleanupKeepCount(body)),
+    getSchema: () => configApi.getSchema(),
+    getHistory: () => configApi.getHistory(),
+    readServerRuntimeConfig: () => createServerRuntimeConfigPayload(getRuntimePorts?.()),
+  };
 }
 
 export function createConfigRouteApi(service: ConfigRouteApi): ConfigRouteApi {

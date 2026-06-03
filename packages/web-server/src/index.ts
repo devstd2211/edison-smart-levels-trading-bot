@@ -15,7 +15,11 @@ import type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 import { WebSocketService } from './websocket/ws-server.js';
 import { createBotRouteApi, createBotRoutes } from './routes/bot.routes.js';
 import { createDataRouteReadApi, createDataRoutes } from './routes/data.routes.js';
-import { createAnalyticsRouteReadApi, createAnalyticsRoutes } from './routes/analytics.routes.js';
+import {
+  createAnalyticsRouteReadApi,
+  createAnalyticsRoutes,
+  type AnalyticsRouteReadApi,
+} from './routes/analytics.routes.js';
 import {
   createFileWatcherRuntimeAdapters,
   FileWatcherService,
@@ -26,7 +30,11 @@ import { createRateLimitMiddleware } from './middleware/rate-limit.middleware.js
 import { createErrorHandlerMiddleware } from './middleware/error-handler.middleware.js';
 import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
-import { createConfigRouteApi, createConfigRoutes } from './routes/config.routes.js';
+import {
+  createConfigRouteApi,
+  createConfigRoutes,
+  type ConfigRouteApi,
+} from './routes/config.routes.js';
 import { ConfigManagementService } from './services/config-management.service.js';
 import {
   createStatusErrorResponse,
@@ -41,6 +49,7 @@ import {
   RUNTIME_CONFIG_PATH,
   RUNTIME_DISCOVERY_GUIDANCE_LINES,
 } from './runtime-discovery-guidance.js';
+import type { ServerRuntimePorts } from './routes/config-route-contracts.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -67,6 +76,13 @@ type DocsEndpointDefinition = {
   methodLabel: 'GET' | 'POST' | 'PUT' | 'DELETE';
   path: string;
   description: string;
+};
+export type WebServerRouteDependencies = {
+  bridge: BotBridgeService;
+  configApi: ConfigRouteApi;
+  analyticsApi: AnalyticsRouteReadApi;
+  getRuntimePorts: () => ServerRuntimePorts;
+  webClientPath: string;
 };
 
 const DOCS_QUICK_REFERENCE_ENDPOINTS: DocsEndpointDefinition[] = [
@@ -310,6 +326,46 @@ function sendStructuredNotFound(res: Response, requestId?: unknown): void {
   res.status(404).json(createStatusErrorResponse(404, 'Not found', { requestId }));
 }
 
+export function configureWebServerApp(app: Express, dependencies: WebServerRouteDependencies): void {
+  const botRoutes = createBotRoutes(createBotRouteApi(dependencies.bridge));
+  const dataRoutes = createDataRoutes(createDataRouteReadApi(dependencies.bridge));
+  const configRoutes = createConfigRoutes(dependencies.configApi, dependencies.getRuntimePorts);
+  const analyticsRoutes = createAnalyticsRoutes(dependencies.analyticsApi);
+
+  app.use(express.static(dependencies.webClientPath));
+  app.use('/api/bot', botRoutes);
+  app.use('/api/data', dataRoutes);
+  app.use('/api/config', configRoutes);
+  app.use('/api/analytics', analyticsRoutes);
+
+  app.get('/health', (_req, res) => {
+    res.json({
+      status: 'ok',
+      timestamp: Date.now(),
+      botRunning: dependencies.bridge.isRunning(),
+    });
+  });
+
+  app.get(OPENAPI_DOCUMENT_PATH, (_req, res) => {
+    res.json(swaggerConfig);
+  });
+
+  app.get(API_DOCS_PATH, (_req, res) => {
+    res.send(createDocsHtml());
+  });
+
+  app.get('*', (req, res) => {
+    const indexPath = path.join(dependencies.webClientPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        sendStructuredNotFound(res, resolveRequestId(req.headers['x-request-id']));
+      }
+    });
+  });
+
+  app.use(createErrorHandlerMiddleware());
+}
+
 export class WebServer {
   private readonly app: Express;
   private readonly bridge: BotBridgeService;
@@ -373,50 +429,17 @@ export class WebServer {
   }
 
   private setupRoutes() {
-    const botRoutes = createBotRoutes(createBotRouteApi(this.bridge));
-    const dataRoutes = createDataRoutes(createDataRouteReadApi(this.bridge));
     const configPath = path.resolve(process.cwd(), 'config.json');
-    const configRoutes = createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath)), () => ({
-      apiPort: this.getApiPort(),
-      wsPort: this.getWebSocketPort(),
-    }));
-    const analyticsRoutes = createAnalyticsRoutes(
-      createAnalyticsRouteReadApi(this.fileWatcherRuntime!.analytics),
-    );
-    const webClientPath = resolveWebClientPath();
-
-    this.app.use(express.static(webClientPath));
-    this.app.use('/api/bot', botRoutes);
-    this.app.use('/api/data', dataRoutes);
-    this.app.use('/api/config', configRoutes);
-    this.app.use('/api/analytics', analyticsRoutes);
-
-    this.app.get('/health', (_req, res) => {
-      res.json({
-        status: 'ok',
-        timestamp: Date.now(),
-        botRunning: this.bridge.isRunning(),
-      });
+    configureWebServerApp(this.app, {
+      bridge: this.bridge,
+      configApi: createConfigRouteApi(new ConfigManagementService(configPath)),
+      analyticsApi: createAnalyticsRouteReadApi(this.fileWatcherRuntime!.analytics),
+      getRuntimePorts: () => ({
+        apiPort: this.getApiPort(),
+        wsPort: this.getWebSocketPort(),
+      }),
+      webClientPath: resolveWebClientPath(),
     });
-
-    this.app.get(OPENAPI_DOCUMENT_PATH, (_req, res) => {
-      res.json(swaggerConfig);
-    });
-
-    this.app.get(API_DOCS_PATH, (_req, res) => {
-      res.send(createDocsHtml());
-    });
-
-    this.app.get('*', (req, res) => {
-      const indexPath = path.join(webClientPath, 'index.html');
-      res.sendFile(indexPath, (err) => {
-        if (err) {
-          sendStructuredNotFound(res, resolveRequestId(req.headers['x-request-id']));
-        }
-      });
-    });
-
-    this.app.use(createErrorHandlerMiddleware());
   }
 
   private setupWebSocket(port: number) {
