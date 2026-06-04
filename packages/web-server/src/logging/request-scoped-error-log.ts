@@ -1,5 +1,6 @@
 import {
   createErrorLogPayload,
+  createStructuredErrorContext,
   createStatusApiError,
   getErrorStatus,
   getStructuredErrorDetail,
@@ -16,6 +17,11 @@ type RequestScopedErrorLogOptions = {
   suggestion?: string;
   context?: string;
   requestType?: string;
+};
+type RequestScopedErrorEventPayloadOptions = RequestScopedErrorLogOptions & {
+  event: string;
+  error: unknown;
+  eventData?: Record<string, unknown>;
 };
 
 type WebSocketRequestValidationLogOptions = {
@@ -254,18 +260,37 @@ export function createRequestScopedErrorLogPayload(
   error: unknown,
   options: RequestScopedErrorLogOptions = {},
 ): Record<string, unknown> {
-  const payload = createErrorLogPayload(error, options);
+  const context = createStructuredErrorContext(error, options);
 
   return {
     ...(options.context ? { context: options.context } : {}),
-    ...(resolveRequestId(payload.requestId) ? { requestId: payload.requestId } : {}),
+    ...(resolveRequestId(context.requestId) ? { requestId: context.requestId } : {}),
     ...(options.requestType ? { requestType: options.requestType } : {}),
-    statusCode: payload.statusCode,
-    code: payload.code,
-    message: payload.message,
-    ...(payload.details ? { details: payload.details } : {}),
-    ...(payload.suggestion ? { suggestion: payload.suggestion } : {}),
-    ...(payload.stack ? { stack: payload.stack } : {}),
+    statusCode: context.statusCode,
+    code: context.detail.code,
+    message: context.detail.message,
+    ...(context.detail.details ? { details: context.detail.details } : {}),
+    ...(context.detail.suggestion ? { suggestion: context.detail.suggestion } : {}),
+    ...(context.stack ? { stack: context.stack } : {}),
+  };
+}
+
+export function createRequestScopedErrorEventPayload(
+  options: RequestScopedErrorEventPayloadOptions,
+): Record<string, unknown> {
+  return {
+    event: options.event,
+    ...createRequestScopedErrorLogPayload(options.error, {
+      requestId: options.requestId,
+      fallbackStatusCode: options.fallbackStatusCode ?? 500,
+      stackSource: options.stackSource ?? options.error,
+      code: options.code,
+      details: options.details,
+      suggestion: options.suggestion,
+      context: options.context,
+      requestType: options.requestType,
+    }),
+    ...(options.eventData ?? {}),
   };
 }
 
@@ -312,15 +337,18 @@ export function createWebSocketServerErrorLogPayload(
   options: WebSocketServerErrorLogOptions,
 ): Record<string, unknown> {
   return {
-    event: options.event,
     ...createWebSocketLogScope(options),
     ...(typeof options.port === 'number' ? { port: options.port } : {}),
     ...(typeof options.clientCount === 'number' ? { clientCount: options.clientCount } : {}),
-    ...createRequestScopedErrorLogPayload(options.error, {
+    ...createRequestScopedErrorEventPayload({
+      event: options.event,
+      error: options.error,
       fallbackStatusCode: 500,
       code: options.code,
       details: options.details,
       stackSource: options.error,
+      context: options.context,
+      requestType: options.requestType,
     }),
   };
 }
@@ -348,12 +376,15 @@ export function createFileWatcherLogPayload(
     ...(typeof options.entryCount === 'number' ? { entryCount: options.entryCount } : {}),
     ...(typeof options.sessionCount === 'number' ? { sessionCount: options.sessionCount } : {}),
     ...(options.error
-      ? createRequestScopedErrorLogPayload(options.error, {
+      ? createRequestScopedErrorEventPayload({
+        event: options.event,
+        error: options.error,
         fallbackStatusCode: 500,
         stackSource: options.error,
+        eventData: options.details,
       })
       : {}),
-    ...(options.details ?? {}),
+    ...(options.error ? {} : (options.details ?? {})),
   };
 }
 
@@ -371,12 +402,15 @@ export function createConfigLifecycleLogPayload(
     ...(typeof options.totalBackups === 'number' ? { totalBackups: options.totalBackups } : {}),
     ...(typeof options.keepCount === 'number' ? { keepCount: options.keepCount } : {}),
     ...(options.error
-      ? createRequestScopedErrorLogPayload(options.error, {
+      ? createRequestScopedErrorEventPayload({
+        event: options.event,
+        error: options.error,
         fallbackStatusCode: 500,
         stackSource: options.error,
+        eventData: options.details,
       })
       : {}),
-    ...(options.details ?? {}),
+    ...(options.error ? {} : (options.details ?? {})),
   };
 }
 

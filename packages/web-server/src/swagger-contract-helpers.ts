@@ -21,6 +21,25 @@ export const createSuccessResponse = (description: string, schemaName: string) =
   },
 });
 
+export const createSuccessResponseWithExample = (
+  description: string,
+  schemaName: string,
+  dataExample: unknown,
+  timestamp: number = 1700000000000,
+) => ({
+  description,
+  content: {
+    'application/json': {
+      schema: createSuccessEnvelopeSchema(schemaRef(schemaName)),
+      example: {
+        success: true,
+        data: dataExample,
+        timestamp,
+      },
+    },
+  },
+});
+
 export const createErrorResponse = (
   description: string,
   example: unknown,
@@ -33,6 +52,17 @@ export const createErrorResponse = (
     },
   },
 });
+
+export const createErrorResponses = (
+  descriptions: Record<string, string>,
+  example: unknown,
+) =>
+  Object.fromEntries(
+    Object.entries(descriptions).map(([statusCode, description]) => [
+      statusCode,
+      createErrorResponse(description, example),
+    ]),
+  );
 
 export const createJsonRequestBody = (schemaName: string, required: boolean = true) => ({
   required,

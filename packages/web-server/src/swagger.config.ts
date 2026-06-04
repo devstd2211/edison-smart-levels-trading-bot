@@ -86,10 +86,12 @@ import {
   createConfigMutationRequestPayloadSchema,
   createConfigValidationPayloadSchema,
   createErrorResponse as createBaseErrorResponse,
+  createErrorResponses,
   createJsonRequestBody,
   createSchemaAlias,
   createSuccessEnvelopeSchema,
   createSuccessResponse,
+  createSuccessResponseWithExample,
   schemaRef,
 } from './swagger-contract-helpers.js';
 
@@ -252,17 +254,11 @@ const DEFAULT_RUNTIME_CONFIG_EXAMPLE = createServerRuntimeConfigPayload(
 );
 
 const createServerRuntimeSuccessResponse = (description: string) => ({
-  description,
-  content: {
-    'application/json': {
-      schema: createSuccessEnvelopeSchema(schemaRef(SCHEMAS.ConfigServerRuntimeResponsePayload)),
-      example: {
-        success: true,
-        data: DEFAULT_RUNTIME_CONFIG_EXAMPLE,
-        timestamp: 1700000000000,
-      },
-    },
-  },
+  ...createSuccessResponseWithExample(
+    description,
+    SCHEMAS.ConfigServerRuntimeResponsePayload,
+    DEFAULT_RUNTIME_CONFIG_EXAMPLE,
+  ),
 });
 
 export const swaggerConfig = {
@@ -297,8 +293,10 @@ export const swaggerConfig = {
         summary: 'Start trading bot',
         responses: {
           '200': createSuccessResponse('Bot started successfully', SCHEMAS.ApiMessageResponse),
-          '400': createErrorResponse('Bot could not be started'),
-          '500': createErrorResponse('Unexpected server error'),
+          ...createErrorResponses({
+            '400': 'Bot could not be started',
+            '500': 'Unexpected server error',
+          }, DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE),
         },
       },
     },
@@ -308,8 +306,10 @@ export const swaggerConfig = {
         summary: 'Stop trading bot',
         responses: {
           '200': createSuccessResponse('Bot stopped successfully', SCHEMAS.ApiMessageResponse),
-          '400': createErrorResponse('Bot could not be stopped'),
-          '500': createErrorResponse('Unexpected server error'),
+          ...createErrorResponses({
+            '400': 'Bot could not be stopped',
+            '500': 'Unexpected server error',
+          }, DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE),
         },
       },
     },
@@ -423,8 +423,10 @@ export const swaggerConfig = {
         ],
         responses: {
           '200': createSuccessResponse('Orderbook snapshot', SCHEMAS.WebApiOrderBookView),
-          '400': createErrorResponse('Missing or invalid symbol'),
-          '500': createErrorResponse('Unexpected server error'),
+          ...createErrorResponses({
+            '400': 'Missing or invalid symbol',
+            '500': 'Unexpected server error',
+          }, DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE),
         },
       },
     },

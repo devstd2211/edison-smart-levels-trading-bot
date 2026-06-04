@@ -41,23 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-04: completed `packages/web-server/src/services/config-management.service.ts web server config lifecycle boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/src/services/file-watcher.service.ts web server analytics watcher runtime boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/src/middleware/error-handler.middleware.ts web server structured error middleware boundary follow-up`.
-- `config-management.service.ts` now captures one config snapshot per write lifecycle so preview/validation and backup creation stay aligned, and it shares timestamped config-path helpers across write and restore flows.
-- `file-watcher.service.ts` now resolves debounced change handlers from the configured watcher target names instead of hard-coded filenames, so custom journal/session paths use the same realtime boundary safely.
-- `error-handler.middleware.ts` now yields to downstream Express error handling after `headersSent` while preserving the same structured error log and response path when the middleware still owns the response.
-- `config-management.service.test.ts`, `file-watcher.service.test.ts`, `error-handler.middleware.test.ts`, `web-server.functional.test.ts`, and `ws-server.functional.test.ts` now guard the new lifecycle and ownership boundaries directly.
+- 2026-06-04: completed `packages/web-server/src/errors/api-error-response.ts web server structured error contract boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/src/logging/request-scoped-error-log.ts web server request-scoped logging contract boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/src/swagger-contract-helpers.ts web server OpenAPI shared builder boundary follow-up`.
+- `api-error-response.ts` now exports one shared structured error context so route responses and request-scoped logs consume the same normalized status/detail/request-id contract.
+- `request-scoped-error-log.ts` now builds event-scoped error payloads through a single helper, so websocket, file-watcher, and config lifecycle logs share one ownership boundary for normalized error metadata.
+- `swagger-contract-helpers.ts` now owns reusable success-with-example and multi-status error response builders, reducing duplicated OpenAPI response assembly inside `swagger.config.ts`.
+- `api-error-response.test.ts`, `request-scoped-error-log.test.ts`, `swagger-contract-helpers.test.ts`, `request-logging.middleware.test.ts`, `error-handler.middleware.test.ts`, `web-server.functional.test.ts`, and `ws-server.functional.test.ts` now guard the shared context and helper contracts directly.
 
 ## Latest Verification
-- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/ws-server.functional.test.ts tests/error-handler.middleware.test.ts tests/config-management.service.test.ts tests/file-watcher.service.test.ts` (5 suites, 80 tests)
+- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/api-error-response.test.ts tests/request-scoped-error-log.test.ts tests/swagger-contract-helpers.test.ts tests/request-logging.middleware.test.ts tests/error-handler.middleware.test.ts tests/ws-server.functional.test.ts tests/web-server.functional.test.ts` (7 suites, 109 tests)
 - 2026-06-04: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-04: `npm run build`
 
 ## Next Step
-- Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with the structured error and shared logging stream in `packages/web-server`.
-- Keep the next batch on the web-server runtime/error/OpenAPI boundary before returning to the remaining core docs guardrail items.
+- Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start with `packages/web-server/src/index.ts` and its paired runtime/docs guardrails before returning to the remaining core web/docs boundary tests.
+- Keep the next batch on the web-server docs/runtime/realtime boundary and only then resume the remaining core entrypoint guardrail stream.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

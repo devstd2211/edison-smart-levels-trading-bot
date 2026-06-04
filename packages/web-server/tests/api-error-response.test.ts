@@ -1,6 +1,7 @@
 import {
   ApiError,
   createErrorDetail,
+  createStructuredErrorContext,
   createErrorLogPayload,
   createErrorResponseFromDetail,
   createErrorResponse,
@@ -272,5 +273,24 @@ describe('api-error-response structured normalization', () => {
   test('uses the first request id value when multiple headers are present', () => {
     expect(resolveRequestId(['req-a', 'req-b'])).toBe('req-a');
     expect(resolveRequestId('req-single')).toBe('req-single');
+  });
+
+  test('creates a shared structured error context for route responses and request-scoped logs', () => {
+    expect(createStructuredErrorContext(JSON.stringify(createStatusErrorResponse(404, 'Not found', {
+      requestId: 'req-404',
+      details: 'route missing',
+    })), {
+      fallbackStatusCode: 404,
+    })).toEqual({
+      statusCode: 404,
+      detail: {
+        code: 'NOT_FOUND',
+        message: 'Not found',
+        details: 'route missing',
+        suggestion: 'Check that the requested resource or route exists',
+      },
+      requestId: 'req-404',
+      stack: undefined,
+    });
   });
 });

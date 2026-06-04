@@ -40,6 +40,13 @@ type ErrorContextOptions = {
   details?: string;
   suggestion?: string;
 };
+export type StructuredErrorContextOptions = ErrorContextOptions;
+export type StructuredErrorContext = {
+  statusCode: number;
+  detail: ApiErrorDetail;
+  requestId?: string;
+  stack?: string;
+};
 
 type WebSocketStatusErrorOptions = {
   code: WebSocketErrorCode;
@@ -332,7 +339,10 @@ export function createErrorDetail(
   };
 }
 
-function createErrorContext(error: unknown, options: ErrorContextOptions = {}) {
+export function createStructuredErrorContext(
+  error: unknown,
+  options: StructuredErrorContextOptions = {},
+): StructuredErrorContext {
   const statusCode = getErrorStatus(error) ?? options.fallbackStatusCode ?? 500;
   const detail = createErrorDetail(error, statusCode, {
     fallbackMessage: options.fallbackMessage,
@@ -356,7 +366,7 @@ export function createErrorLogPayload(
   error: unknown,
   options: string | ErrorContextOptions = {},
 ) {
-  const context = createErrorContext(
+  const context = createStructuredErrorContext(
     error,
     typeof options === 'string' ? { requestId: options } : options,
   );
@@ -403,7 +413,7 @@ export function createErrorResponse(
   error: unknown,
   requestId?: string,
 ): StructuredApiErrorResponse {
-  const context = createErrorContext(error, { requestId });
+  const context = createStructuredErrorContext(error, { requestId });
   return createErrorResponseFromDetail(context.detail, { requestId: context.requestId });
 }
 
@@ -411,7 +421,7 @@ export function createRouteErrorResponse(
   error: unknown,
   options: RouteErrorResponseOptions = {},
 ): StructuredApiErrorResponse {
-  const context = createErrorContext(error, options);
+  const context = createStructuredErrorContext(error, options);
   return createErrorResponseFromDetail(context.detail, { requestId: context.requestId });
 }
 
