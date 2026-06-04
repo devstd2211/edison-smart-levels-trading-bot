@@ -30,6 +30,11 @@ export function createErrorHandlerMiddleware() {
     res: Response,
     _next: NextFunction
   ) => {
+    if (res.headersSent) {
+      _next(err);
+      return;
+    }
+
     const requestId = resolveRequestId(_req.headers['x-request-id']);
 
     // Determine status code

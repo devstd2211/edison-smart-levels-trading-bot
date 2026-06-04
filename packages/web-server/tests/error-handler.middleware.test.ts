@@ -89,4 +89,32 @@ describe('error handler middleware', () => {
       }),
     );
   });
+
+  test('delegates to the next error handler when headers were already sent', () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const middleware = createErrorHandlerMiddleware();
+    const status = jest.fn().mockReturnThis();
+    const json = jest.fn();
+    const next = jest.fn();
+    const error = new Error('late failure');
+    const res = {
+      headersSent: true,
+      status,
+      json,
+    } as unknown as express.Response;
+    const req = {
+      headers: {
+        'x-request-id': 'req-late',
+      },
+    } as unknown as express.Request;
+
+    middleware(error, req, res, next);
+
+    expect(next).toHaveBeenCalledWith(error);
+    expect(status).not.toHaveBeenCalled();
+    expect(json).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
+  });
 });

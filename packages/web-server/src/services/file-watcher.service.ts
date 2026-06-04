@@ -66,6 +66,8 @@ export type FileWatcherRuntimeAdapters = {
   realtime: FileWatcherRealtimeApi;
 };
 
+type FileWatcherTargetKind = 'journal' | 'sessions';
+
 export function createFileWatcherAnalyticsReadApi(
   readApi: FileWatcherAnalyticsReadApi,
 ): FileWatcherAnalyticsReadApi {
@@ -141,10 +143,25 @@ export class FileWatcherService extends EventEmitter {
   }
 
   private getWatcherTargets(): string[] {
-    return [
-      this.getTargetName(this.journalPath),
-      this.getTargetName(this.sessionsPath),
-    ];
+    return this.getWatcherTargetNames();
+  }
+
+  private getWatcherTargetNames(): string[] {
+    return [this.journalPath, this.sessionsPath].map((targetPath) => this.getTargetName(targetPath));
+  }
+
+  private resolveWatcherTarget(filePath: string): FileWatcherTargetKind | null {
+    const targetName = this.getTargetName(filePath);
+
+    if (targetName === this.getTargetName(this.journalPath)) {
+      return 'journal';
+    }
+
+    if (targetName === this.getTargetName(this.sessionsPath)) {
+      return 'sessions';
+    }
+
+    return null;
   }
 
   private readJsonArrayFile<TItem>(
@@ -251,10 +268,15 @@ export class FileWatcherService extends EventEmitter {
 
     this.debounceTimer = setTimeout(async () => {
       try {
-        if (filePath.includes('trade-journal')) {
-          await this.handleJournalChange();
-        } else if (filePath.includes('session-stats')) {
-          await this.handleSessionChange();
+        switch (this.resolveWatcherTarget(filePath)) {
+          case 'journal':
+            await this.handleJournalChange();
+            break;
+          case 'sessions':
+            await this.handleSessionChange();
+            break;
+          default:
+            break;
         }
       } catch (error) {
         console.error('[FileWatcher] Failed to handle file change', createFileWatcherLogPayload({

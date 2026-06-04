@@ -47,6 +47,11 @@ export interface ValidationResult {
 export type ConfigWriteResult = ConfigUpdateResponsePayload;
 export type ConfigPreviewResult = ConfigMutationPreviewPayload;
 
+type ConfigDocumentSnapshot = {
+  config: BotConfigPayload;
+  raw: string;
+};
+
 export class ConfigManagementService {
   constructor(private configPath: string) {}
 
@@ -103,6 +108,40 @@ export class ConfigManagementService {
 
   private ensureConfigPayload(value: unknown, message: string): BotConfigPayload {
     return this.ensureRecord(value, message) as BotConfigPayload;
+  }
+
+  private parseConfigDocument(data: string, invalidShapeMessage: string): BotConfigPayload {
+    return this.ensureConfigPayload(
+      JSON.parse(data),
+      invalidShapeMessage,
+    );
+  }
+
+  private async readConfigDocument(): Promise<ConfigDocumentSnapshot> {
+    try {
+      const raw = await fs.readFile(this.configPath, 'utf-8');
+      return {
+        raw,
+        config: this.parseConfigDocument(
+          raw,
+          'Configuration file must contain a JSON object',
+        ),
+      };
+    } catch (error) {
+      if (this.getErrorCode(error) === 'ENOENT') {
+        throw new Error('Configuration file not found');
+      }
+      throw new Error(`Failed to read configuration: ${(error as Error).message}`);
+    }
+  }
+
+  private createTimestampedConfigPath(label: 'backup' | 'pre-restore'): string {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    return `${this.configPath}.${label}.${timestamp}.json`;
+  }
+
+  private async writeConfigFile(config: BotConfigPayload): Promise<void> {
+    await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
   }
 
   private formatValidationIssues(issues: ConfigValidationIssuePayload[]): string {
@@ -278,18 +317,8 @@ export class ConfigManagementService {
    * Read current configuration
    */
   async read(): Promise<BotConfigPayload> {
-    try {
-      const data = await fs.readFile(this.configPath, 'utf-8');
-      return this.ensureConfigPayload(
-        JSON.parse(data),
-        'Configuration file must contain a JSON object',
-      );
-    } catch (error) {
-      if (this.getErrorCode(error) === 'ENOENT') {
-        throw new Error('Configuration file not found');
-      }
-      throw new Error(`Failed to read configuration: ${(error as Error).message}`);
-    }
+    const document = await this.readConfigDocument();
+    return document.config;
   }
 
   /**
@@ -298,7 +327,8 @@ export class ConfigManagementService {
   async write(
     config: BotConfigPayload
   ): Promise<ConfigWriteResult> {
-    const currentConfig = await this.read();
+    const currentDocument = await this.readConfigDocument();
+    const currentConfig = currentDocument.config;
 
     // Validate before writing
     const validation = this.validate(config);
@@ -313,12 +343,10 @@ export class ConfigManagementService {
 
     try {
       // Create backup of current config
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupPath = `${this.configPath}.backup.${timestamp}.json`;
+      const backupPath = this.createTimestampedConfigPath('backup');
 
       try {
-        const currentData = await fs.readFile(this.configPath, 'utf-8');
-        await fs.writeFile(backupPath, currentData);
+        await fs.writeFile(backupPath, currentDocument.raw);
         this.logConfigInfo('[Config] Backup created', createConfigLifecycleLogPayload({
           event: 'backup-created',
           backupPath,
@@ -335,7 +363,7 @@ export class ConfigManagementService {
       }
 
       // Write new configuration
-      await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
+      await this.writeConfigFile(config);
       this.logConfigInfo('[Config] Configuration updated successfully', createConfigLifecycleLogPayload({
         event: 'config-updated',
         backupPath,
@@ -512,13 +540,12 @@ export class ConfigManagementService {
       }
 
       // Create backup of current config before restoring
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const preRestoreBackupPath = `${this.configPath}.pre-restore.${timestamp}.json`;
+      const preRestoreBackupPath = this.createTimestampedConfigPath('pre-restore');
       let savedPreRestoreBackupPath: string | null = null;
 
       try {
-        const currentData = await fs.readFile(this.configPath, 'utf-8');
-        await fs.writeFile(preRestoreBackupPath, currentData);
+        const currentDocument = await this.readConfigDocument();
+        await fs.writeFile(preRestoreBackupPath, currentDocument.raw);
         savedPreRestoreBackupPath = preRestoreBackupPath;
       } catch (error) {
         this.logConfigWarn('[Config] Failed to create pre-restore backup', createConfigLifecycleLogPayload({
@@ -529,7 +556,7 @@ export class ConfigManagementService {
       }
 
       // Restore configuration
-      await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
+      await this.writeConfigFile(config);
       this.logConfigInfo('[Config] Configuration restored from backup', createConfigLifecycleLogPayload({
         event: 'config-restored',
         backupId,

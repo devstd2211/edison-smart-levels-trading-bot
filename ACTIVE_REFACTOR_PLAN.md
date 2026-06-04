@@ -41,24 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-03: completed `packages/web-server/src/swagger.config.ts web server OpenAPI contract surface boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/runtime-discovery-guidance.ts web server runtime discovery guidance boundary follow-up`.
-- 2026-06-03: completed `packages/web-server/src/middleware/request-logging.middleware.ts web server runtime logging boundary follow-up`.
-- `runtime-discovery-guidance.ts` now owns the runtime discovery paragraphs, OpenAPI description assembly, server description copy, and shared docs HTML section so the docs and OpenAPI layers consume one runtime-copy boundary.
-- `request-logging.middleware.ts` now resolves logging config once and delegates finish/error lifecycle logging through focused helpers while still emitting the same shared HTTP log payloads.
-- `swagger.config.ts` now relies on `swagger-contract-helpers.ts` for shared schema, request-body, and envelope builders so the file stays focused on the exported OpenAPI contract surface.
-- `request-logging.middleware.test.ts` now guards config normalization directly, and `web-server.functional.test.ts` continues to prove the runtime discovery and OpenAPI surfaces stay behaviorally stable.
+- 2026-06-04: completed `packages/web-server/src/services/config-management.service.ts web server config lifecycle boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/src/services/file-watcher.service.ts web server analytics watcher runtime boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/src/middleware/error-handler.middleware.ts web server structured error middleware boundary follow-up`.
+- `config-management.service.ts` now captures one config snapshot per write lifecycle so preview/validation and backup creation stay aligned, and it shares timestamped config-path helpers across write and restore flows.
+- `file-watcher.service.ts` now resolves debounced change handlers from the configured watcher target names instead of hard-coded filenames, so custom journal/session paths use the same realtime boundary safely.
+- `error-handler.middleware.ts` now yields to downstream Express error handling after `headersSent` while preserving the same structured error log and response path when the middleware still owns the response.
+- `config-management.service.test.ts`, `file-watcher.service.test.ts`, `error-handler.middleware.test.ts`, `web-server.functional.test.ts`, and `ws-server.functional.test.ts` now guard the new lifecycle and ownership boundaries directly.
 
 ## Latest Verification
-- 2026-06-03: `npm test -- --runInBand packages/web-server/tests/request-logging.middleware.test.ts` (1 suite, 8 tests)
-- 2026-06-03: `npm test -- --runInBand packages/web-server/tests/web-server.functional.test.ts` (1 suite, 53 tests)
-- 2026-06-03: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
-- 2026-06-03: `npm run build`
+- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/ws-server.functional.test.ts tests/error-handler.middleware.test.ts tests/config-management.service.test.ts tests/file-watcher.service.test.ts` (5 suites, 80 tests)
+- 2026-06-04: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-04: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/services/config-management.service.ts web server config lifecycle boundary follow-up`.
-- Keep the next batch on the web-server runtime/error boundary stream before returning to the remaining core docs guardrail items.
+- Start with the structured error and shared logging stream in `packages/web-server`.
+- Keep the next batch on the web-server runtime/error/OpenAPI boundary before returning to the remaining core docs guardrail items.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
