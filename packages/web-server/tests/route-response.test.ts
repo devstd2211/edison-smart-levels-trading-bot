@@ -32,7 +32,7 @@ describe('route-response runtime boundary', () => {
     const { res, status, json } = createResponseDouble({ 'x-request-id': ['req-a', 'req-b'] });
 
     expect(createRouteResponseContext(res)).toEqual({
-      requestId: ['req-a', 'req-b'],
+      requestId: 'req-a',
       res,
     });
 
@@ -44,6 +44,32 @@ describe('route-response runtime boundary', () => {
       data: { ok: true },
       timestamp: expect.any(Number),
       requestId: 'req-a',
+    });
+  });
+
+  test('drops invalid request ids before shared route error envelopes are created', async () => {
+    const { res, status, json } = createResponseDouble({ 'x-request-id': [42, 'req-ignored'] });
+
+    await sendAsyncRouteRead(res, async () => {
+      throw { status: 503 };
+    }, {
+      fallbackMessage: 'Failed to fetch strategy performance',
+    });
+
+    expect(createRouteResponseContext(res)).toEqual({
+      requestId: undefined,
+      res,
+    });
+    expect(status).toHaveBeenCalledWith(503);
+    expect(json).toHaveBeenCalledWith({
+      success: false,
+      error: {
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'Failed to fetch strategy performance',
+        details: undefined,
+        suggestion: 'Please try again or contact support',
+      },
+      timestamp: expect.any(Number),
     });
   });
 

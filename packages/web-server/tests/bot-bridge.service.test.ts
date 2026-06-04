@@ -147,4 +147,23 @@ describe('BotBridgeService', () => {
       error: 'balance failed',
     });
   });
+
+  test('falls back when the balance read resolves to a non-finite number', async () => {
+    const bot = new TestBot();
+    bot.isRunning = true;
+    jest.spyOn(bot, 'getBalance').mockResolvedValue(Number.NaN);
+
+    const bridge = new BotBridgeService(bot);
+
+    await expect(bridge.getStatus()).resolves.toEqual({
+      isRunning: true,
+      currentPosition: null,
+      balance: 0,
+      unrealizedPnL: 0,
+      timestamp: expect.any(Number),
+      error: 'Bot balance read returned an invalid number',
+    });
+
+    await expect(bridge.getBalance()).resolves.toBe(0);
+  });
 });

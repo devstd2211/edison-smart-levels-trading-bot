@@ -404,7 +404,12 @@ export class BotBridgeService extends EventEmitter {
 
   private async readBalanceWithFallback(): Promise<{ balance: number; error?: string }> {
     try {
-      return { balance: await this.bot.getBalance() };
+      const balance = await this.bot.getBalance();
+      if (Number.isFinite(balance)) {
+        return { balance };
+      }
+
+      throw new Error('Bot balance read returned an invalid number');
     } catch (error) {
       this.logReadFallback('getBalance', error);
       return {

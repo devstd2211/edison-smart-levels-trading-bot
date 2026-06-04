@@ -797,6 +797,21 @@ describe('WebServer functional', () => {
     expect(getRuntimePorts).toHaveBeenCalledTimes(1);
   });
 
+  it('falls back to default runtime ports when the runtime port provider returns invalid values', async () => {
+    const configApi = createConfigRouteApiMock();
+    const getRuntimePorts = jest.fn<ServerRuntimePorts, []>(() => ({
+      apiPort: 0,
+      wsPort: Number.NaN,
+    }));
+    const handlers = createConfigRouteHandlers(configApi, getRuntimePorts);
+
+    expect(handlers.readServerRuntimeConfig()).toEqual({
+      api: { port: 4000, url: 'http://localhost:4000' },
+      websocket: { port: 4001, url: 'ws://localhost:4001' },
+    });
+    expect(getRuntimePorts).toHaveBeenCalledTimes(1);
+  });
+
   it('configures the web-server app from an explicit route dependency bundle', async () => {
     const app = express();
     const configApi = createConfigRouteApiMock();

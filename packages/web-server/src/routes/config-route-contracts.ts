@@ -77,6 +77,9 @@ export type ConfigRouteHandlers = {
   readServerRuntimeConfig(): ConfigServerRuntimeResponsePayload;
 };
 
+const MIN_SERVER_RUNTIME_PORT = 1;
+const MAX_SERVER_RUNTIME_PORT = 65_535;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -238,13 +241,37 @@ export function createConfigValidationResponse(
 export function resolveServerRuntimePorts(
   runtimePorts?: ServerRuntimePorts,
 ): ServerRuntimePorts {
-  const apiPort = runtimePorts?.apiPort ?? Number.parseInt(process.env.API_PORT || '', 10);
-  const wsPort = runtimePorts?.wsPort ?? Number.parseInt(process.env.WS_PORT || '', 10);
+  const apiPort = normalizeServerRuntimePort(
+    runtimePorts?.apiPort,
+    Number.parseInt(process.env.API_PORT || '', 10),
+    DEFAULT_SERVER_RUNTIME_PORTS.api,
+  );
+  const wsPort = normalizeServerRuntimePort(
+    runtimePorts?.wsPort,
+    Number.parseInt(process.env.WS_PORT || '', 10),
+    DEFAULT_SERVER_RUNTIME_PORTS.websocket,
+  );
 
   return {
-    apiPort: Number.isFinite(apiPort) ? apiPort : DEFAULT_SERVER_RUNTIME_PORTS.api,
-    wsPort: Number.isFinite(wsPort) ? wsPort : DEFAULT_SERVER_RUNTIME_PORTS.websocket,
+    apiPort,
+    wsPort,
   };
+}
+
+function normalizeServerRuntimePort(
+  preferredPort: number | undefined,
+  envPort: number,
+  fallbackPort: number,
+): number {
+  const port = isValidServerRuntimePort(preferredPort) ? preferredPort : envPort;
+  return isValidServerRuntimePort(port) ? port : fallbackPort;
+}
+
+function isValidServerRuntimePort(value: unknown): value is number {
+  return typeof value === 'number'
+    && Number.isInteger(value)
+    && value >= MIN_SERVER_RUNTIME_PORT
+    && value <= MAX_SERVER_RUNTIME_PORT;
 }
 
 export function createServerRuntimeConfigPayload(

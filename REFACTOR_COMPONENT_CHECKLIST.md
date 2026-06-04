@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/routes/config-route-contracts.ts web server runtime port contract guardrail follow-up`
-- [ ] `packages/web-server/tests/route-response.test.ts web server shared route response guardrail follow-up`
-- [ ] `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter read fallback guardrail follow-up`
 - [ ] `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up`
 - [ ] `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up`
 - [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/web/index.ts web runtime compatibility guardrail follow-up`
 - [ ] `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection guardrail follow-up`
 - [ ] `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runtime export guardrail follow-up`
+- [ ] `packages/core/src/index.ts legacy runtime compatibility wrapper guardrail follow-up`
+- [ ] `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`
+- [ ] `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract projection guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/config-route-contracts.ts web server runtime port contract guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/route-response.test.ts web server shared route response guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter read fallback guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/tests/request-scoped-error-log.test.ts web server request-scoped logging helper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/tests/swagger-contract-helpers.test.ts web server OpenAPI helper contract guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/swagger.config.ts web server OpenAPI response map helper adoption follow-up` | prod: yes | tests: yes | func: yes

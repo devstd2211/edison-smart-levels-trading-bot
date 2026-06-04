@@ -15,7 +15,7 @@ export type SuccessResponseEnvelope<T> = {
   requestId?: string;
 };
 type RouteResponseContext = {
-  requestId: unknown;
+  requestId?: string;
   res: ApiJsonResponse;
 };
 type RouteErrorOptions = {
@@ -46,7 +46,7 @@ function getResponseRequestId(res: ApiJsonResponse): unknown {
 
 export function createRouteResponseContext(res: ApiJsonResponse): RouteResponseContext {
   return {
-    requestId: getResponseRequestId(res),
+    requestId: resolveRequestId(getResponseRequestId(res)),
     res,
   };
 }
