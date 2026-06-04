@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/index.ts web server docs helper delegate boundary follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts web server runtime docs and logging guardrail follow-up`
-- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket realtime delegation guardrail follow-up`
 - [ ] `packages/web-server/tests/request-logging.middleware.test.ts web server runtime logging guardrail follow-up`
 - [ ] `packages/web-server/tests/error-handler.middleware.test.ts web server structured error middleware guardrail follow-up`
 - [ ] `packages/web-server/tests/api-error-response.test.ts web server structured error contract guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/web-server/tests/request-scoped-error-log.test.ts web server request-scoped logging helper guardrail follow-up`
 - [ ] `packages/web-server/tests/swagger-contract-helpers.test.ts web server OpenAPI helper contract guardrail follow-up`
 - [ ] `packages/web-server/src/swagger.config.ts web server OpenAPI response map helper adoption follow-up`
+- [ ] `packages/web-server/src/routes/config-route-contracts.ts web server runtime port contract guardrail follow-up`
+- [ ] `packages/web-server/tests/route-response.test.ts web server shared route response guardrail follow-up`
+- [ ] `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter read fallback guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/index.ts web server docs helper delegate boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts web server runtime docs and logging guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket realtime delegation guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/errors/api-error-response.ts web server structured error contract boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/logging/request-scoped-error-log.ts web server request-scoped logging contract boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/swagger-contract-helpers.ts web server OpenAPI shared builder boundary follow-up` | prod: yes | tests: yes | func: yes

@@ -19,7 +19,7 @@ import {
   type FileWatcherRealtimeApi,
   FileWatcherService,
 } from '../src/services/file-watcher.service';
-import { createWebSocketBridgeApi, WebSocketService } from '../src/websocket/ws-server';
+import { createWebSocketBridgeApi, createWebSocketRealtimeDelegates as createRealtimeDelegates, WebSocketService } from '../src/websocket/ws-server';
 
 class TestBot extends EventEmitter implements IBotInstance {
   public isRunning = true;
@@ -901,6 +901,63 @@ describe('WebSocketService functional boundary', () => {
 
     onSpy.mockRestore();
     offSpy.mockRestore();
+  });
+
+  test('builds websocket realtime delegates that isolate subscribe, unsubscribe, and broadcast ownership', () => {
+    const fileWatcher = new FileWatcherService();
+    const watcherApi = createFileWatcherRealtimeApi(fileWatcher);
+    const broadcast = jest.fn();
+    const onSpy = jest.spyOn(fileWatcher, 'on');
+    const offSpy = jest.spyOn(fileWatcher, 'off');
+    const realtime = createRealtimeDelegates(watcherApi, broadcast);
+    const journal: WebApiJournalEntry[] = [
+      {
+        id: 'trade-1',
+        timestamp: 1000,
+        direction: 'LONG',
+        entryPrice: 100,
+        exitPrice: 103,
+        quantity: 1,
+        pnl: 3,
+        pnlPercent: 3,
+        strategy: 'breakout',
+        exitReason: 'tp',
+      },
+    ];
+    const sessions: WebApiSessionStats[] = [
+      {
+        sessionId: 'session-1',
+        startTime: 900,
+        trades: journal,
+        totalPnL: 3,
+        winRate: 100,
+        winCount: 1,
+        lossCount: 0,
+        totalTrades: 1,
+      },
+    ];
+
+    realtime.subscribe();
+    fileWatcher.emit('journal:updated', journal);
+    fileWatcher.emit('session:updated', sessions);
+    realtime.unsubscribe();
+    fileWatcher.emit('journal:updated', []);
+
+    expect(onSpy).toHaveBeenCalledWith('journal:updated', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('session:updated', expect.any(Function));
+    expect(broadcast).toHaveBeenNthCalledWith(1, {
+      type: 'JOURNAL_UPDATE',
+      payload: { journal },
+      timestamp: expect.any(Number),
+    });
+    expect(broadcast).toHaveBeenNthCalledWith(2, {
+      type: 'SESSION_UPDATE',
+      payload: { sessions },
+      timestamp: expect.any(Number),
+    });
+    expect(broadcast).toHaveBeenCalledTimes(2);
+    expect(offSpy).toHaveBeenCalledWith('journal:updated', expect.any(Function));
+    expect(offSpy).toHaveBeenCalledWith('session:updated', expect.any(Function));
   });
 
   test('creates websocket bridge delegates that isolate status reads, position reads, and bot-event subscriptions', async () => {

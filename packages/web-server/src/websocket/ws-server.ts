@@ -52,6 +52,11 @@ type ReadFailureOptions = {
   requestType?: WebSocketRequestType | string;
   context?: 'new client' | 'status request';
 };
+type WebSocketRealtimeBroadcast = (message: WebSocketMessage<'JOURNAL_UPDATE' | 'SESSION_UPDATE'>) => void;
+type WebSocketRealtimeDelegates = {
+  subscribe(): void;
+  unsubscribe(): void;
+};
 
 export type WebSocketBridgeApi = {
   createStatusChangeMessage(requestId?: string): Promise<WebSocketMessage<'BOT_STATUS_CHANGE'>>;
@@ -73,13 +78,53 @@ export function createWebSocketBridgeApi(bridge: BotBridgeService): WebSocketBri
   };
 }
 
+export function createWebSocketRealtimeDelegates(
+  fileWatcher: FileWatcherRealtimeApi,
+  broadcast: WebSocketRealtimeBroadcast,
+): WebSocketRealtimeDelegates {
+  const listeners = new Map<FileWatcherEventName, (...args: unknown[]) => void>();
+  const createMessage = <TType extends FileWatcherBroadcastType>(
+    type: TType,
+    payload: WebSocketPayloadMap[TType],
+  ): WebSocketMessage<TType> => ({
+    type,
+    payload,
+    timestamp: Date.now(),
+  });
+
+  return {
+    subscribe(): void {
+      if (listeners.size > 0) {
+        return;
+      }
+
+      const journalListener: FileWatcherListener<'journal:updated'> = (journal) =>
+        broadcast(createMessage('JOURNAL_UPDATE', { journal }));
+      const sessionListener: FileWatcherListener<'session:updated'> = (sessions) =>
+        broadcast(createMessage('SESSION_UPDATE', { sessions }));
+
+      listeners.set('journal:updated', journalListener as (...args: unknown[]) => void);
+      listeners.set('session:updated', sessionListener as (...args: unknown[]) => void);
+
+      fileWatcher.on('journal:updated', journalListener);
+      fileWatcher.on('session:updated', sessionListener);
+    },
+    unsubscribe(): void {
+      for (const [eventName, listener] of listeners.entries()) {
+        fileWatcher.off(eventName, listener);
+      }
+      listeners.clear();
+    },
+  };
+}
+
 export class WebSocketService {
   private wss!: WebSocketServer;
   private clients: Set<WebSocket> = new Set();
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private currentPort: number;
   private bridgeEventListener: ((event: WebSocketMessage) => void) | null = null;
-  private fileWatcherListeners = new Map<FileWatcherEventName, (...args: unknown[]) => void>();
+  private realtimeDelegates: WebSocketRealtimeDelegates | null = null;
 
   constructor(port: number, private bridge: WebSocketBridgeApi, private fileWatcher?: FileWatcherRealtimeApi) {
     this.currentPort = port;
@@ -205,17 +250,11 @@ export class WebSocketService {
 
     // Forward file watcher events (journal and session updates)
     if (this.fileWatcher) {
-      const journalListener: FileWatcherListener<'journal:updated'> = (journal) =>
-        this.broadcast(this.createFileWatcherBroadcastMessage('JOURNAL_UPDATE', { journal }));
-
-      const sessionListener: FileWatcherListener<'session:updated'> = (sessions) =>
-        this.broadcast(this.createFileWatcherBroadcastMessage('SESSION_UPDATE', { sessions }));
-
-      this.fileWatcherListeners.set('journal:updated', journalListener as (...args: unknown[]) => void);
-      this.fileWatcherListeners.set('session:updated', sessionListener as (...args: unknown[]) => void);
-
-      this.fileWatcher.on('journal:updated', journalListener);
-      this.fileWatcher.on('session:updated', sessionListener);
+      this.realtimeDelegates = createWebSocketRealtimeDelegates(
+        this.fileWatcher,
+        (message) => this.broadcast(message),
+      );
+      this.realtimeDelegates.subscribe();
     }
   }
 
@@ -371,13 +410,6 @@ export class WebSocketService {
 
   private createPongMessage(requestId?: string): WebSocketMessage<'PONG'> {
     return this.createMessage('PONG', {}, requestId);
-  }
-
-  private createFileWatcherBroadcastMessage<TType extends FileWatcherBroadcastType>(
-    type: TType,
-    payload: WebSocketPayloadMap[TType],
-  ): WebSocketMessage<TType> {
-    return this.createMessage(type, payload);
   }
 
   private createErrorMessage(
@@ -590,13 +622,8 @@ export class WebSocketService {
     if (this.bridgeEventListener) {
       this.bridge.off('bot-event', this.bridgeEventListener);
     }
-    // Cleanup file watcher listeners
-    if (this.fileWatcher) {
-      for (const [eventName, listener] of this.fileWatcherListeners.entries()) {
-        this.fileWatcher.off(eventName, listener);
-      }
-      this.fileWatcherListeners.clear();
-    }
+    this.realtimeDelegates?.unsubscribe();
+    this.realtimeDelegates = null;
     this.clients.forEach((client) => client.close());
     this.wss.close();
     this.logServerEvent('[WS] Server closed', {

@@ -41,23 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-04: completed `packages/web-server/src/errors/api-error-response.ts web server structured error contract boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/src/logging/request-scoped-error-log.ts web server request-scoped logging contract boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/src/swagger-contract-helpers.ts web server OpenAPI shared builder boundary follow-up`.
-- `api-error-response.ts` now exports one shared structured error context so route responses and request-scoped logs consume the same normalized status/detail/request-id contract.
-- `request-scoped-error-log.ts` now builds event-scoped error payloads through a single helper, so websocket, file-watcher, and config lifecycle logs share one ownership boundary for normalized error metadata.
-- `swagger-contract-helpers.ts` now owns reusable success-with-example and multi-status error response builders, reducing duplicated OpenAPI response assembly inside `swagger.config.ts`.
-- `api-error-response.test.ts`, `request-scoped-error-log.test.ts`, `swagger-contract-helpers.test.ts`, `request-logging.middleware.test.ts`, `error-handler.middleware.test.ts`, `web-server.functional.test.ts`, and `ws-server.functional.test.ts` now guard the shared context and helper contracts directly.
+- 2026-06-04: completed `packages/web-server/src/index.ts web server docs helper delegate boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/web-server.functional.test.ts web server runtime docs and logging guardrail follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/ws-server.functional.test.ts websocket realtime delegation guardrail follow-up`.
+- `index.ts` now builds docs HTML from one explicit docs-page section delegate, so info, quick-reference, runtime discovery, and OpenAPI link ownership no longer live as inline page assembly.
+- `ws-server.ts` now routes file-watcher journal/session broadcasts through one explicit realtime delegate with subscribe/unsubscribe ownership instead of scattering listener registration across the service lifecycle.
+- `web-server.functional.test.ts` and `ws-server.functional.test.ts` now guard those docs/runtime/realtime boundaries directly while preserving the existing startup, logging, and websocket behavior checks.
 
 ## Latest Verification
-- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/api-error-response.test.ts tests/request-scoped-error-log.test.ts tests/swagger-contract-helpers.test.ts tests/request-logging.middleware.test.ts tests/error-handler.middleware.test.ts tests/ws-server.functional.test.ts tests/web-server.functional.test.ts` (7 suites, 109 tests)
+- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/ws-server.functional.test.ts` (2 suites, 76 tests)
 - 2026-06-04: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-04: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/index.ts` and its paired runtime/docs guardrails before returning to the remaining core web/docs boundary tests.
-- Keep the next batch on the web-server docs/runtime/realtime boundary and only then resume the remaining core entrypoint guardrail stream.
+- Start with `packages/web-server/tests/request-logging.middleware.test.ts`, `packages/web-server/tests/error-handler.middleware.test.ts`, and `packages/web-server/tests/api-error-response.test.ts`.
+- Keep the next batch on the shared request/error contract guardrails before returning to the remaining config/web entrypoint boundary stream.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

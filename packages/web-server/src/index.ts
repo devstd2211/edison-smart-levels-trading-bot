@@ -82,6 +82,11 @@ type DocsEndpointDefinition = {
   path: string;
   description: string;
 };
+export type DocsPageSection = {
+  id: 'info' | 'quick-reference' | 'runtime-discovery' | 'openapi-link';
+  html: string;
+  title?: string;
+};
 export type WebServerRouteDependencies = {
   bridge: BotBridgeService;
   configApi: ConfigRouteApi;
@@ -154,7 +159,43 @@ export function createDocsOpenApiLinkHtml(): string {
             </div>`;
 }
 
+export function createDocsPageSections(): DocsPageSection[] {
+  return [
+    {
+      id: 'info',
+      html: createDocsInfoHtml(),
+    },
+    {
+      id: 'quick-reference',
+      title: 'Quick Reference',
+      html: createDocsQuickReferenceHtml(),
+    },
+    {
+      id: 'runtime-discovery',
+      html: createDocsRuntimeDiscoverySectionHtml(),
+    },
+    {
+      id: 'openapi-link',
+      html: createDocsOpenApiLinkHtml(),
+    },
+  ];
+}
+
+function renderDocsPageSection(section: DocsPageSection): string {
+  if (section.id === 'quick-reference') {
+    return `
+            <h2>${section.title}</h2>
+            <div class="endpoints">
+              ${section.html}
+            </div>`;
+  }
+
+  return section.html;
+}
+
 export function createDocsHtml(): string {
+  const sections = createDocsPageSections();
+
   return `
         <!DOCTYPE html>
         <html>
@@ -244,13 +285,7 @@ export function createDocsHtml(): string {
         <body>
           <div class="container">
             <h1>Trading Bot API</h1>
-            ${createDocsInfoHtml()}
-            <h2>Quick Reference</h2>
-            <div class="endpoints">
-              ${createDocsQuickReferenceHtml()}
-            </div>
-            ${createDocsRuntimeDiscoverySectionHtml()}
-            ${createDocsOpenApiLinkHtml()}
+            ${sections.map((section) => renderDocsPageSection(section)).join('\n')}
           </div>
         </body>
         </html>

@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/web-server/src/index.ts web server docs helper delegate boundary follow-up`
-2. `packages/web-server/tests/web-server.functional.test.ts web server runtime docs and logging guardrail follow-up`
-3. `packages/web-server/tests/ws-server.functional.test.ts websocket realtime delegation guardrail follow-up`
+1. `packages/web-server/tests/request-logging.middleware.test.ts web server runtime logging guardrail follow-up`
+2. `packages/web-server/tests/error-handler.middleware.test.ts web server structured error middleware guardrail follow-up`
+3. `packages/web-server/tests/api-error-response.test.ts web server structured error contract guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-04: completed `packages/web-server/src/errors/api-error-response.ts web server structured error contract boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/src/logging/request-scoped-error-log.ts web server request-scoped logging contract boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/src/swagger-contract-helpers.ts web server OpenAPI shared builder boundary follow-up`.
-- `api-error-response.ts` now exports one shared structured error context so route responses and request-scoped logs share the same normalized status/detail/request-id ownership boundary.
-- `request-scoped-error-log.ts` now funnels event-scoped websocket/file-watcher/config error payloads through one helper instead of repeating per-surface assembly.
-- `swagger-contract-helpers.ts` now owns reusable success-with-example and multi-status error response builders, and `swagger.config.ts` has started consuming those shared contracts directly.
+- 2026-06-04: completed `packages/web-server/src/index.ts web server docs helper delegate boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/web-server.functional.test.ts web server runtime docs and logging guardrail follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/ws-server.functional.test.ts websocket realtime delegation guardrail follow-up`.
+- `index.ts` now builds docs HTML from an explicit docs-page section delegate instead of composing the page inline.
+- `ws-server.ts` now owns journal/session realtime subscription lifecycle through one subscribe/unsubscribe delegate boundary.
+- `web-server.functional.test.ts` and `ws-server.functional.test.ts` now assert those docs/runtime/realtime contracts directly alongside the existing startup and logging guardrails.
 
 ## Last Verification
-- `npm --prefix packages/web-server run test -- --runInBand tests/api-error-response.test.ts tests/request-scoped-error-log.test.ts tests/swagger-contract-helpers.test.ts tests/request-logging.middleware.test.ts tests/error-handler.middleware.test.ts tests/ws-server.functional.test.ts tests/web-server.functional.test.ts`
+- `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/ws-server.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

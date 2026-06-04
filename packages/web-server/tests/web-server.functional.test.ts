@@ -29,6 +29,7 @@ import {
   createDocsHtml,
   createDocsInfoHtml,
   createDocsOpenApiLinkHtml,
+  createDocsPageSections,
   createDocsQuickReferenceHtml,
   createDocsRuntimeDiscoverySectionHtml,
   WebServer,
@@ -461,6 +462,28 @@ describe('WebServer functional', () => {
     expect(createDocsRuntimeDiscoverySectionHtml()).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback);
     expect(createDocsRuntimeDiscoverySectionHtml()).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry);
     expect(createDocsOpenApiLinkHtml()).toContain(`<a href="${OPENAPI_DOCUMENT_PATH}">OpenAPI JSON</a>`);
+  });
+
+  it('builds docs page sections through an explicit docs delegate boundary', () => {
+    expect(createDocsPageSections()).toEqual([
+      {
+        id: 'info',
+        html: createDocsInfoHtml(),
+      },
+      {
+        id: 'quick-reference',
+        title: 'Quick Reference',
+        html: createDocsQuickReferenceHtml(),
+      },
+      {
+        id: 'runtime-discovery',
+        html: createDocsRuntimeDiscoverySectionHtml(),
+      },
+      {
+        id: 'openapi-link',
+        html: createDocsOpenApiLinkHtml(),
+      },
+    ]);
   });
 
   it('builds runtime startup log payloads through the shared helper boundary', () => {
