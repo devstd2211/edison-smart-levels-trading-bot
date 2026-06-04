@@ -4,6 +4,7 @@ import {
   createStructuredErrorContext,
   createErrorLogPayload,
   createErrorResponseFromDetail,
+  createStructuredErrorResponse,
   createErrorResponse,
   createRateLimitErrorResponse,
   createRouteErrorResponse,
@@ -161,6 +162,29 @@ describe('api-error-response structured normalization', () => {
       },
       timestamp: expect.any(Number),
       requestId: 'req-route',
+    });
+  });
+
+  test('builds shared structured error responses from normalized context with request id precedence', () => {
+    expect(createStructuredErrorResponse(
+      JSON.stringify(createStatusErrorResponse(404, 'Not found', {
+        requestId: 'req-body',
+        details: 'route missing',
+      })),
+      {
+        requestId: ['req-header', 'req-ignored'],
+        fallbackStatusCode: 404,
+      },
+    )).toEqual({
+      success: false,
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Not found',
+        details: 'route missing',
+        suggestion: 'Check that the requested resource or route exists',
+      },
+      timestamp: expect.any(Number),
+      requestId: 'req-header',
     });
   });
 

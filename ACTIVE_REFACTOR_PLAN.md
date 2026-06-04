@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-04: completed `packages/web-server/src/index.ts web server docs helper delegate boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/web-server.functional.test.ts web server runtime docs and logging guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/ws-server.functional.test.ts websocket realtime delegation guardrail follow-up`.
-- `index.ts` now builds docs HTML from one explicit docs-page section delegate, so info, quick-reference, runtime discovery, and OpenAPI link ownership no longer live as inline page assembly.
-- `ws-server.ts` now routes file-watcher journal/session broadcasts through one explicit realtime delegate with subscribe/unsubscribe ownership instead of scattering listener registration across the service lifecycle.
-- `web-server.functional.test.ts` and `ws-server.functional.test.ts` now guard those docs/runtime/realtime boundaries directly while preserving the existing startup, logging, and websocket behavior checks.
+- 2026-06-04: completed `packages/web-server/tests/request-logging.middleware.test.ts web server runtime logging guardrail follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/error-handler.middleware.test.ts web server structured error middleware guardrail follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/api-error-response.test.ts web server structured error contract guardrail follow-up`.
+- `request-logging.middleware.ts` now builds finish/error log labels and payloads through explicit shared result helpers instead of recomputing runtime logging state inline.
+- `error-handler.middleware.ts` now derives status code, structured response body, and log payload from one shared middleware result helper so response/log parity stays on one code path.
+- `api-error-response.ts` now exposes one shared structured error response builder that route and middleware consumers can reuse without duplicating context-to-response assembly.
 
 ## Latest Verification
-- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/ws-server.functional.test.ts` (2 suites, 76 tests)
+- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/request-logging.middleware.test.ts tests/error-handler.middleware.test.ts tests/api-error-response.test.ts` (3 suites, 34 tests)
 - 2026-06-04: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-04: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/tests/request-logging.middleware.test.ts`, `packages/web-server/tests/error-handler.middleware.test.ts`, and `packages/web-server/tests/api-error-response.test.ts`.
-- Keep the next batch on the shared request/error contract guardrails before returning to the remaining config/web entrypoint boundary stream.
+- Start with `packages/web-server/tests/config-management.service.test.ts`, `packages/web-server/tests/file-watcher.service.test.ts`, and `packages/core/src/__tests__/web/web-boundary.test.ts`.
+- Keep the next batch on the remaining config/runtime web-server boundary stream before resuming the broader core entrypoint handoff follow-ups.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

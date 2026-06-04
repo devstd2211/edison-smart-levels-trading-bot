@@ -2,11 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 import {
   ApiError,
   createStatusApiError,
-  createErrorResponse,
+  createStructuredErrorResponse,
   getErrorStatus,
   resolveRequestId,
 } from '../errors/api-error-response.js';
 import { createErrorHandlerLogPayload as createSharedErrorHandlerLogPayload } from '../logging/request-scoped-error-log.js';
+
+type ErrorHandlerResult = {
+  statusCode: number;
+  responseBody: ReturnType<typeof createStructuredErrorResponse>;
+  logPayload: Record<string, unknown>;
+};
 
 export function createErrorHandlerLogPayload(
   error: unknown,
@@ -17,6 +23,23 @@ export function createErrorHandlerLogPayload(
     requestId,
     fallbackStatusCode: getErrorStatus(error) || fallbackStatusCode || 500,
   });
+}
+
+export function createErrorHandlerResult(
+  error: unknown,
+  requestId?: unknown,
+): ErrorHandlerResult {
+  const statusCode = getErrorStatus(error) || 500;
+  const normalizedRequestId = resolveRequestId(requestId);
+
+  return {
+    statusCode,
+    responseBody: createStructuredErrorResponse(error, {
+      requestId: normalizedRequestId,
+      fallbackStatusCode: statusCode,
+    }),
+    logPayload: createErrorHandlerLogPayload(error, normalizedRequestId, statusCode),
+  };
 }
 
 /**
@@ -35,17 +58,11 @@ export function createErrorHandlerMiddleware() {
       return;
     }
 
-    const requestId = resolveRequestId(_req.headers['x-request-id']);
-
-    // Determine status code
-    const statusCode = getErrorStatus(err) || 500;
-
-    // Create response
-    const errorResponse = createErrorResponse(err, requestId);
+    const result = createErrorHandlerResult(err, _req.headers['x-request-id']);
 
     // Log the same normalized detail and request id that the client receives
-    console.error('[ERROR]', createErrorHandlerLogPayload(err, requestId, statusCode));
-    res.status(statusCode).json(errorResponse);
+    console.error('[ERROR]', result.logPayload);
+    res.status(result.statusCode).json(result.responseBody);
   };
 }
 

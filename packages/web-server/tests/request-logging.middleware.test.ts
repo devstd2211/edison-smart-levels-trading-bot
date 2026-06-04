@@ -4,7 +4,9 @@ import { createRateLimitErrorResponse, createStatusErrorResponse } from '../src/
 import { createHttpLogPayload, createHttpResponseErrorLogPayload } from '../src/logging/request-scoped-error-log';
 import {
   createRequestLogEntry,
+  createRequestLogResult,
   createRequestLoggingMiddleware,
+  createResponseErrorLogResult,
   resolveLoggingConfig,
 } from '../src/middleware/request-logging.middleware';
 
@@ -163,6 +165,82 @@ describe('request logging middleware', () => {
       errorMessage: 'Config conflict',
       errorDetails: 'strategy override overlaps with runtime config',
       errorSuggestion: 'Remove the conflicting override and retry',
+    });
+  });
+
+  test('builds shared request log results with normalized labels, levels, and payload ownership', () => {
+    const req = {
+      method: 'POST',
+      path: '/api/config',
+      query: { preview: 'true' },
+      body: { config: { exchange: { symbol: 'BTCUSDT' } } },
+      headers: {
+        'x-request-id': ['req-a', 'req-b'],
+      },
+      get: jest.fn((header: string) => {
+        if (header === 'content-type') {
+          return 'application/json';
+        }
+
+        if (header === 'user-agent') {
+          return 'jest';
+        }
+
+        return undefined;
+      }),
+    } as unknown as express.Request;
+    const res = {
+      statusCode: 409,
+      get: jest.fn(() => '321'),
+    } as unknown as express.Response;
+    const responseBody = createStatusErrorResponse(409, 'Config conflict', {
+      details: 'strategy override overlaps with runtime config',
+      suggestion: 'Remove the conflicting override and retry',
+    });
+
+    expect(createRequestLogResult(req, res, 12.345, {
+      logBody: true,
+      logHeaders: true,
+      maxBodyLength: 500,
+    }, responseBody)).toEqual({
+      level: 'error',
+      message: '[HTTP] 409 POST /api/config',
+      payload: {
+        timestamp: expect.any(String),
+        method: 'POST',
+        path: '/api/config',
+        query: { preview: 'true' },
+        statusCode: 409,
+        duration: '12.35ms',
+        responseSize: '321',
+        requestBody: { config: { exchange: { symbol: 'BTCUSDT' } } },
+        headers: {
+          'content-type': 'application/json',
+          'user-agent': 'jest',
+        },
+        requestId: 'req-a',
+        errorCode: 'CONFLICT',
+        errorMessage: 'Config conflict',
+        errorDetails: 'strategy override overlaps with runtime config',
+        errorSuggestion: 'Remove the conflicting override and retry',
+      },
+    });
+
+    expect(createResponseErrorLogResult(req, res, 7, new Error('socket hang up'), responseBody)).toEqual({
+      message: '[HTTP_ERROR] POST /api/config',
+      payload: {
+        timestamp: expect.any(String),
+        method: 'POST',
+        path: '/api/config',
+        statusCode: 409,
+        duration: '7.00ms',
+        error: 'socket hang up',
+        requestId: 'req-a',
+        errorCode: 'CONFLICT',
+        errorMessage: 'Config conflict',
+        errorDetails: 'strategy override overlaps with runtime config',
+        errorSuggestion: 'Remove the conflicting override and retry',
+      },
     });
   });
 

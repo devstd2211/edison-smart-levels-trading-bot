@@ -3,6 +3,7 @@ import { ApiError } from '../src/errors/api-error-response';
 import { createErrorHandlerLogPayload as createSharedErrorHandlerLogPayload } from '../src/logging/request-scoped-error-log';
 import {
   createErrorHandlerLogPayload,
+  createErrorHandlerResult,
   createErrorHandlerMiddleware,
 } from '../src/middleware/error-handler.middleware';
 
@@ -70,6 +71,37 @@ describe('error handler middleware', () => {
       message: 'Config conflict',
       details: 'risk.maxLeverage overlaps with strategy override',
       suggestion: 'Remove the conflicting override and retry',
+    });
+  });
+
+  test('creates one shared middleware result with status, response body, and log payload parity', () => {
+    expect(createErrorHandlerResult(new ApiError(
+      409,
+      'CONFIG_CONFLICT',
+      'Config conflict',
+      'risk.maxLeverage overlaps with strategy override',
+      'Remove the conflicting override and retry',
+    ), ['req-a', 'req-b'])).toEqual({
+      statusCode: 409,
+      responseBody: {
+        success: false,
+        error: {
+          code: 'CONFIG_CONFLICT',
+          message: 'Config conflict',
+          details: 'risk.maxLeverage overlaps with strategy override',
+          suggestion: 'Remove the conflicting override and retry',
+        },
+        timestamp: expect.any(Number),
+        requestId: 'req-a',
+      },
+      logPayload: {
+        requestId: 'req-a',
+        statusCode: 409,
+        code: 'CONFIG_CONFLICT',
+        message: 'Config conflict',
+        details: 'risk.maxLeverage overlaps with strategy override',
+        suggestion: 'Remove the conflicting override and retry',
+      },
     });
   });
 

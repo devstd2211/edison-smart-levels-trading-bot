@@ -24,6 +24,17 @@ export interface LoggingConfig {
   maxBodyLength?: number;
 }
 
+type RequestLogResult = {
+  level: 'log' | 'error';
+  message: string;
+  payload: Record<string, unknown>;
+};
+
+type ResponseErrorLogResult = {
+  message: string;
+  payload: Record<string, unknown>;
+};
+
 export const DEFAULT_LOGGING_CONFIG: Required<LoggingConfig> = {
   logBody: false,
   logHeaders: false,
@@ -82,9 +93,44 @@ export function createRequestLogEntry(
     responseSize: res.get('content-length') || 'unknown',
     requestBody: getRequestBodyLogData(req, resolvedConfig),
     headers: getHeaderLogData(req, resolvedConfig),
-    requestId: resolveRequestId(req.headers['x-request-id']),
+    requestId: req.headers['x-request-id'],
     responseBody,
   });
+}
+
+export function createRequestLogResult(
+  req: Request,
+  res: Response,
+  durationMs: number,
+  config: LoggingConfig,
+  responseBody: unknown,
+): RequestLogResult {
+  return {
+    level: res.statusCode >= 400 ? 'error' : 'log',
+    message: `[HTTP] ${res.statusCode} ${req.method} ${req.path}`,
+    payload: createRequestLogEntry(req, res, durationMs, config, responseBody),
+  };
+}
+
+export function createResponseErrorLogResult(
+  req: Request,
+  res: Response,
+  durationMs: number,
+  error: unknown,
+  responseBody: unknown,
+): ResponseErrorLogResult {
+  return {
+    message: `[HTTP_ERROR] ${req.method} ${req.path}`,
+    payload: createHttpResponseErrorLogPayload({
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      durationMs,
+      requestId: req.headers['x-request-id'],
+      error,
+      responseBody,
+    }),
+  };
 }
 
 function shouldSkipRequestLogging(req: Request, config: Required<LoggingConfig>): boolean {
@@ -101,14 +147,14 @@ function createResponseFinishLogger(
   return () => {
     const [seconds, nanoseconds] = process.hrtime(startHrTime);
     const durationMs = seconds * 1000 + nanoseconds / 1000000;
-    const logData = createRequestLogEntry(req, res, durationMs, config, getResponseBody());
+    const result = createRequestLogResult(req, res, durationMs, config, getResponseBody());
 
-    if (res.statusCode >= 400) {
-      console.error(`[HTTP] ${res.statusCode} ${req.method} ${req.path}`, logData);
+    if (result.level === 'error') {
+      console.error(result.message, result.payload);
       return;
     }
 
-    console.log(`[HTTP] ${res.statusCode} ${req.method} ${req.path}`, logData);
+    console.log(result.message, result.payload);
   };
 }
 
@@ -120,16 +166,8 @@ function createResponseErrorLogger(
 ): (error: unknown) => void {
   return (error: unknown) => {
     const duration = Date.now() - startTime;
-    const logData = createHttpResponseErrorLogPayload({
-      method: req.method,
-      path: req.path,
-      statusCode: res.statusCode,
-      durationMs: duration,
-      requestId: resolveRequestId(req.headers['x-request-id']),
-      error,
-      responseBody: getResponseBody(),
-    });
-    console.error(`[HTTP_ERROR] ${req.method} ${req.path}`, logData);
+    const result = createResponseErrorLogResult(req, res, duration, error, getResponseBody());
+    console.error(result.message, result.payload);
   };
 }
 

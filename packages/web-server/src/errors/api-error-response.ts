@@ -47,6 +47,9 @@ export type StructuredErrorContext = {
   requestId?: string;
   stack?: string;
 };
+export type StructuredErrorResponseOptions = StructuredErrorContextOptions & {
+  timestamp?: number;
+};
 
 type WebSocketStatusErrorOptions = {
   code: WebSocketErrorCode;
@@ -413,16 +416,25 @@ export function createErrorResponse(
   error: unknown,
   requestId?: string,
 ): StructuredApiErrorResponse {
-  const context = createStructuredErrorContext(error, { requestId });
-  return createErrorResponseFromDetail(context.detail, { requestId: context.requestId });
+  return createStructuredErrorResponse(error, { requestId });
 }
 
 export function createRouteErrorResponse(
   error: unknown,
   options: RouteErrorResponseOptions = {},
 ): StructuredApiErrorResponse {
+  return createStructuredErrorResponse(error, options);
+}
+
+export function createStructuredErrorResponse(
+  error: unknown,
+  options: StructuredErrorResponseOptions = {},
+): StructuredApiErrorResponse {
   const context = createStructuredErrorContext(error, options);
-  return createErrorResponseFromDetail(context.detail, { requestId: context.requestId });
+  return createErrorResponseFromDetail(context.detail, {
+    requestId: context.requestId,
+    timestamp: options.timestamp,
+  });
 }
 
 export function createErrorResponseFromDetail(
