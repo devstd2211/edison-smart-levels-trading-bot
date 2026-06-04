@@ -15,23 +15,26 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/tests/config-management.service.test.ts web server config lifecycle guardrail follow-up`
-- [ ] `packages/web-server/tests/file-watcher.service.test.ts web server analytics watcher runtime guardrail follow-up`
-- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/web-server/tests/request-scoped-error-log.test.ts web server request-scoped logging helper guardrail follow-up`
 - [ ] `packages/web-server/tests/swagger-contract-helpers.test.ts web server OpenAPI helper contract guardrail follow-up`
 - [ ] `packages/web-server/src/swagger.config.ts web server OpenAPI response map helper adoption follow-up`
 - [ ] `packages/web-server/src/routes/config-route-contracts.ts web server runtime port contract guardrail follow-up`
 - [ ] `packages/web-server/tests/route-response.test.ts web server shared route response guardrail follow-up`
 - [ ] `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter read fallback guardrail follow-up`
+- [ ] `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up`
+- [ ] `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up`
 - [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up`
+- [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up`
 - [ ] `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/tests/config-management.service.test.ts web server config lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/file-watcher.service.test.ts web server analytics watcher runtime guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/tests/request-logging.middleware.test.ts web server runtime logging guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/tests/error-handler.middleware.test.ts web server structured error middleware guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/tests/api-error-response.test.ts web server structured error contract guardrail follow-up` | prod: yes | tests: yes | func: yes

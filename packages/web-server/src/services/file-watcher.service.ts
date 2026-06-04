@@ -114,7 +114,7 @@ export class FileWatcherService extends EventEmitter {
   private watcher: FSWatcher | null = null;
   private journalPath: string;
   private sessionsPath: string;
-  private debounceTimer: NodeJS.Timeout | null = null;
+  private debounceTimers = new Map<FileWatcherTargetKind, NodeJS.Timeout>();
   private debounceDelay = DEFAULT_FILE_WATCHER_DEBOUNCE_DELAY_MS;
 
   private isRecord(value: unknown): value is Record<string, unknown> {
@@ -148,6 +148,22 @@ export class FileWatcherService extends EventEmitter {
 
   private getWatcherTargetNames(): string[] {
     return [this.journalPath, this.sessionsPath].map((targetPath) => this.getTargetName(targetPath));
+  }
+
+  private clearDebounceTimer(target: FileWatcherTargetKind): void {
+    const timer = this.debounceTimers.get(target);
+    if (!timer) {
+      return;
+    }
+
+    clearTimeout(timer);
+    this.debounceTimers.delete(target);
+  }
+
+  private clearAllDebounceTimers(): void {
+    for (const target of this.debounceTimers.keys()) {
+      this.clearDebounceTimer(target);
+    }
   }
 
   private resolveWatcherTarget(filePath: string): FileWatcherTargetKind | null {
@@ -245,10 +261,7 @@ export class FileWatcherService extends EventEmitter {
       this.watcher = null;
     }
 
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = null;
-    }
+    this.clearAllDebounceTimers();
 
     console.log('[FileWatcher] Watcher stopped', createFileWatcherLogPayload({
       event: 'watcher-stopped',
@@ -262,13 +275,18 @@ export class FileWatcherService extends EventEmitter {
    * Handle file change with debounce
    */
   private handleFileChange(filePath: string) {
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
+    const target = this.resolveWatcherTarget(filePath);
+    if (!target) {
+      return;
     }
 
-    this.debounceTimer = setTimeout(async () => {
+    this.clearDebounceTimer(target);
+
+    const timer = setTimeout(async () => {
       try {
-        switch (this.resolveWatcherTarget(filePath)) {
+        this.debounceTimers.delete(target);
+
+        switch (target) {
           case 'journal':
             await this.handleJournalChange();
             break;
@@ -287,6 +305,8 @@ export class FileWatcherService extends EventEmitter {
         this.emit('error', error);
       }
     }, this.debounceDelay);
+
+    this.debounceTimers.set(target, timer);
   }
 
   /**

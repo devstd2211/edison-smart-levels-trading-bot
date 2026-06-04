@@ -40,6 +40,6 @@ export interface BotRuntimeEventBusLike {
   on(event: string, listener: (data?: unknown) => void): void;
   off<K extends BotRuntimeEventName>(event: K, listener: BotRuntimeEventListener<K>): void;
   off(event: string, listener: (data?: unknown) => void): void;
-  emit<K extends BotRuntimeEventName>(event: K, data: BotRuntimeEventMap[K]): void;
-  emit(event: string, data?: unknown): void;
+  emit<K extends BotRuntimeEventName>(event: K, data: BotRuntimeEventMap[K]): boolean;
+  emit(event: string, data?: unknown): boolean;
 }

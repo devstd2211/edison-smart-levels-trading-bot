@@ -159,6 +159,30 @@ describe('core web boundary', () => {
     expect(bot.stop).toHaveBeenCalledTimes(1);
   });
 
+  test('createWebServerBotInstance preserves event emitter return semantics at the web boundary', () => {
+    const eventBus = new EventEmitter();
+    const bot = {
+      eventBus,
+      isRunning: true,
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: false,
+        position: null,
+      }),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    };
+    const botInstance = createWebServerBotInstance(bot);
+
+    expect(botInstance.emit('bot-started', true)).toBe(false);
+
+    botInstance.on('bot-started', jest.fn());
+
+    expect(botInstance.emit('bot-started', true)).toBe(true);
+  });
+
   test('createWebServerBotInstance maps runtime positions to the web-server contract shape', () => {
     const eventBus = new EventEmitter();
     const position: Position = {

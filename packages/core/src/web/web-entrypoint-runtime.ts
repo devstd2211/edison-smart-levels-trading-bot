@@ -84,8 +84,7 @@ class WebServerBotInstanceAdapter extends EventEmitter implements WebServerBotPo
   }
 
   override emit(event: string, data?: unknown): boolean {
-    this.bot.eventBus.emit(event, data);
-    return true;
+    return this.bot.eventBus.emit(event, data);
   }
 }
 

@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/web-server/tests/config-management.service.test.ts web server config lifecycle guardrail follow-up`
-2. `packages/web-server/tests/file-watcher.service.test.ts web server analytics watcher runtime guardrail follow-up`
-3. `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
+1. `packages/web-server/tests/request-scoped-error-log.test.ts web server request-scoped logging helper guardrail follow-up`
+2. `packages/web-server/tests/swagger-contract-helpers.test.ts web server OpenAPI helper contract guardrail follow-up`
+3. `packages/web-server/src/swagger.config.ts web server OpenAPI response map helper adoption follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,15 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-04: completed `packages/web-server/tests/request-logging.middleware.test.ts web server runtime logging guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/error-handler.middleware.test.ts web server structured error middleware guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/api-error-response.test.ts web server structured error contract guardrail follow-up`.
-- `request-logging.middleware.ts` now routes finish/error HTTP logging through shared result helpers so label selection and payload ownership stay aligned on one boundary.
-- `error-handler.middleware.ts` now resolves status code, structured response body, and error log payload from one shared middleware result helper.
-- `api-error-response.ts` now exposes one shared structured error response builder that preserves request-id precedence while reusing the normalized error context path.
+- 2026-06-04: completed `packages/web-server/tests/config-management.service.test.ts web server config lifecycle guardrail follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/file-watcher.service.test.ts web server analytics watcher runtime guardrail follow-up`.
+- 2026-06-04: completed `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`.
+- `config-management.service.ts` now generates unique timestamped backup and pre-restore file paths so same-timestamp writes keep distinct lifecycle snapshots.
+- `file-watcher.service.ts` now keeps per-target debounce timers so journal and session updates cannot cancel each other.
+- `web-entrypoint-runtime.ts` now forwards `eventBus.emit(...)` boolean results directly, and `BotRuntimeEventBusLike` matches that boundary contract.
 
 ## Last Verification
-- `npm --prefix packages/web-server run test -- --runInBand tests/request-logging.middleware.test.ts tests/error-handler.middleware.test.ts tests/api-error-response.test.ts`
+- `npm --prefix packages/web-server run test -- --runInBand tests/config-management.service.test.ts tests/file-watcher.service.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/web/web-boundary.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

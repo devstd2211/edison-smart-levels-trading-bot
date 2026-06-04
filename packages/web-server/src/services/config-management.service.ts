@@ -140,6 +140,28 @@ export class ConfigManagementService {
     return `${this.configPath}.${label}.${timestamp}.json`;
   }
 
+  private async createUniqueTimestampedConfigPath(
+    label: 'backup' | 'pre-restore',
+  ): Promise<string> {
+    const initialPath = this.createTimestampedConfigPath(label);
+    let candidatePath = initialPath;
+    let sequence = 1;
+
+    while (true) {
+      try {
+        await fs.access(candidatePath);
+        sequence += 1;
+        candidatePath = initialPath.replace(/\.json$/, `-${sequence}.json`);
+      } catch (error) {
+        if (this.getErrorCode(error) === 'ENOENT') {
+          return candidatePath;
+        }
+
+        throw error;
+      }
+    }
+  }
+
   private async writeConfigFile(config: BotConfigPayload): Promise<void> {
     await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
   }
@@ -343,7 +365,7 @@ export class ConfigManagementService {
 
     try {
       // Create backup of current config
-      const backupPath = this.createTimestampedConfigPath('backup');
+      const backupPath = await this.createUniqueTimestampedConfigPath('backup');
 
       try {
         await fs.writeFile(backupPath, currentDocument.raw);
@@ -540,7 +562,7 @@ export class ConfigManagementService {
       }
 
       // Create backup of current config before restoring
-      const preRestoreBackupPath = this.createTimestampedConfigPath('pre-restore');
+      const preRestoreBackupPath = await this.createUniqueTimestampedConfigPath('pre-restore');
       let savedPreRestoreBackupPath: string | null = null;
 
       try {

@@ -33,4 +33,29 @@ describe('FileWatcherService', () => {
 
     expect(sessionListener).toHaveBeenCalledWith([{ sessionId: 'session-1' }]);
   });
+
+  test('debounces journal and session changes independently', async () => {
+    jest.useFakeTimers();
+
+    const fileWatcher = new FileWatcherService(
+      './data/custom-journal.json',
+      './data/custom-sessions.json',
+    );
+    const journalListener = jest.fn();
+    const sessionListener = jest.fn();
+
+    jest.spyOn(fileWatcher, 'readJournal').mockResolvedValue([{ id: 'trade-1' }] as never);
+    jest.spyOn(fileWatcher, 'readSessions').mockResolvedValue([{ sessionId: 'session-1' }] as never);
+    fileWatcher.on('journal:updated', journalListener);
+    fileWatcher.on('session:updated', sessionListener);
+
+    (fileWatcher as unknown as { handleFileChange: (filePath: string) => void })
+      .handleFileChange('/tmp/runtime/custom-journal.json');
+    (fileWatcher as unknown as { handleFileChange: (filePath: string) => void })
+      .handleFileChange('/tmp/runtime/custom-sessions.json');
+    await jest.runOnlyPendingTimersAsync();
+
+    expect(journalListener).toHaveBeenCalledWith([{ id: 'trade-1' }]);
+    expect(sessionListener).toHaveBeenCalledWith([{ sessionId: 'session-1' }]);
+  });
 });
