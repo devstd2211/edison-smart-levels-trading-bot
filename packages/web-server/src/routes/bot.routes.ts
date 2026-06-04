@@ -14,7 +14,12 @@ import { createStatusApiError } from '../errors/api-error-response.js';
 import { sendAsyncRouteMutation, sendAsyncRouteRead } from './route-response.js';
 
 type BotRouteReadApi = Pick<BotBridgeService, 'getStatus'>;
-type BotRouteControlApi = Pick<BotBridgeService, 'startBot' | 'stopBot'>;
+type BotLifecycleResult = { success: boolean; error?: string };
+type MaybePromise<T> = T | Promise<T>;
+type BotRouteControlApi = {
+  startBot(): MaybePromise<BotLifecycleResult>;
+  stopBot(): MaybePromise<BotLifecycleResult>;
+};
 type BotRouteBridgeApi = BotRouteReadApi & BotRouteControlApi;
 
 export type BotRouteApi = {
@@ -23,28 +28,28 @@ export type BotRouteApi = {
   stopBot(): Promise<ApiMessageResponse>;
 };
 
-type BotLifecycleResult = Awaited<ReturnType<BotRouteControlApi['startBot']>> | ReturnType<BotRouteControlApi['stopBot']>;
 type BotLifecycleRouteOptions = { successMessage: string; failureMessage: string };
 
-function resolveBotLifecycleRouteMutation(
-  result: BotLifecycleResult,
+async function resolveBotLifecycleRouteMutation(
+  result: MaybePromise<BotLifecycleResult>,
   options: BotLifecycleRouteOptions,
-): ApiMessageResponse {
-  if (result.success) {
+): Promise<ApiMessageResponse> {
+  const resolvedResult = await result;
+  if (resolvedResult.success) {
     return { message: options.successMessage };
   }
 
-  throw createStatusApiError(400, result.error || options.failureMessage);
+  throw createStatusApiError(400, resolvedResult.error || options.failureMessage);
 }
 
 export function createBotRouteApi(bridge: BotRouteBridgeApi): BotRouteApi {
   return {
     getStatus: () => bridge.getStatus(),
-    startBot: async () => resolveBotLifecycleRouteMutation(await bridge.startBot(), {
+    startBot: () => resolveBotLifecycleRouteMutation(bridge.startBot(), {
       successMessage: 'Bot started successfully',
       failureMessage: 'Failed to start bot',
     }),
-    stopBot: async () => resolveBotLifecycleRouteMutation(bridge.stopBot(), {
+    stopBot: () => resolveBotLifecycleRouteMutation(bridge.stopBot(), {
       successMessage: 'Bot stopped successfully',
       failureMessage: 'Failed to stop bot',
     }),

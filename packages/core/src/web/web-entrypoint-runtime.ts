@@ -49,6 +49,11 @@ export type WebServerFactory = new (
 ) => WebServerInstance & { start(): Promise<void> };
 
 class WebServerBotInstanceAdapter extends EventEmitter implements WebServerBotPort {
+  private readonly eventBusListeners = new Map<string, Array<{
+    original: (data?: unknown) => void;
+    wrapped: (data?: unknown) => void;
+  }>>();
+
   constructor(private readonly bot: TradingBotWebServerBridge) {
     super();
   }
@@ -73,13 +78,86 @@ class WebServerBotInstanceAdapter extends EventEmitter implements WebServerBotPo
     void this.bot.stop();
   }
 
-  override on(event: string, listener: (data?: unknown) => void): this {
-    this.bot.eventBus.on(event, listener);
+  private registerEventBusListener(
+    event: string,
+    listener: (data?: unknown) => void,
+    wrapped: (data?: unknown) => void = listener,
+  ): this {
+    const listeners = this.eventBusListeners.get(event) ?? [];
+    listeners.push({ original: listener, wrapped });
+    this.eventBusListeners.set(event, listeners);
+    this.bot.eventBus.on(event, wrapped);
     return this;
   }
 
+  private removeTrackedEventBusListener(
+    event: string,
+    listener?: (data?: unknown) => void,
+  ): this {
+    const listeners = this.eventBusListeners.get(event);
+    if (!listeners || listeners.length === 0) {
+      return this;
+    }
+
+    if (!listener) {
+      for (const entry of listeners) {
+        this.bot.eventBus.off(event, entry.wrapped);
+      }
+      this.eventBusListeners.delete(event);
+      return this;
+    }
+
+    const nextListeners = listeners.filter((entry) => {
+      const matches = entry.original === listener || entry.wrapped === listener;
+      if (matches) {
+        this.bot.eventBus.off(event, entry.wrapped);
+      }
+      return !matches;
+    });
+
+    if (nextListeners.length === 0) {
+      this.eventBusListeners.delete(event);
+    } else {
+      this.eventBusListeners.set(event, nextListeners);
+    }
+
+    return this;
+  }
+
+  override on(event: string, listener: (data?: unknown) => void): this {
+    return this.registerEventBusListener(event, listener);
+  }
+
+  override addListener(event: string, listener: (data?: unknown) => void): this {
+    return this.on(event, listener);
+  }
+
+  override once(event: string, listener: (data?: unknown) => void): this {
+    const wrapped = (data?: unknown) => {
+      this.removeTrackedEventBusListener(event, wrapped);
+      listener(data);
+    };
+
+    return this.registerEventBusListener(event, listener, wrapped);
+  }
+
   override off(event: string, listener: (data?: unknown) => void): this {
-    this.bot.eventBus.off(event, listener);
+    return this.removeTrackedEventBusListener(event, listener);
+  }
+
+  override removeListener(event: string, listener: (data?: unknown) => void): this {
+    return this.off(event, listener);
+  }
+
+  override removeAllListeners(event?: string): this {
+    if (event) {
+      return this.removeTrackedEventBusListener(event);
+    }
+
+    for (const eventName of [...this.eventBusListeners.keys()]) {
+      this.removeTrackedEventBusListener(eventName);
+    }
+
     return this;
   }
 

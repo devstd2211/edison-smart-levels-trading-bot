@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up`
-2. `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up`
-3. `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up`
+1. `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up`
+2. `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up`
+3. `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,15 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-04: completed `packages/web-server/src/routes/config-route-contracts.ts web server runtime port contract guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/route-response.test.ts web server shared route response guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter read fallback guardrail follow-up`.
-- `config-route-contracts.ts` now rejects invalid runtime port values before the shared runtime config payload is built, so config discovery falls back to canonical defaults instead of leaking `0` or `NaN`.
-- `route-response.ts` now resolves `x-request-id` inside the shared route response context, keeping success and structured error envelopes on the same narrowed request-id contract.
-- `bot-bridge.service.ts` now treats non-finite balance reads as bridge fallbacks, preserving normalized status payloads instead of returning `NaN` balances.
+- 2026-06-04: completed `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up`.
+- 2026-06-04: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up`.
+- `config.routes.ts` now defers `.env` loading until runtime server discovery is requested, so importing the route transport no longer performs startup side effects.
+- `bot.routes.ts` now accepts sync or async lifecycle delegates behind one normalized route-mutation adapter, preserving the same control-route envelope when bridge implementations become asynchronous.
+- `web-entrypoint-runtime.ts` now tracks adapter-owned event-bus listeners and removes only those listeners during cleanup, preventing leaked runtime subscriptions when the web boundary clears handlers.
 
 ## Last Verification
-- `npm --prefix packages/web-server run test -- --runInBand tests/route-response.test.ts tests/bot-bridge.service.test.ts tests/web-server.functional.test.ts`
+- `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/config.routes.test.ts tests/bot.routes.functional.test.ts`
+- `npm --prefix packages/core run test -- --runInBand src/__tests__/web/web-boundary.test.ts src/__tests__/web/web-entrypoint.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

@@ -18,6 +18,8 @@ import {
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
   DEFAULT_SERVER_RUNTIME_PORTS,
 } from '@edison/contracts/runtime-api';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import { createStatusApiError } from '../errors/api-error-response.js';
 
 export type StrategyToggleRequestParams = {
@@ -79,6 +81,7 @@ export type ConfigRouteHandlers = {
 
 const MIN_SERVER_RUNTIME_PORT = 1;
 const MAX_SERVER_RUNTIME_PORT = 65_535;
+let configRouteEnvironmentLoaded = false;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -241,6 +244,7 @@ export function createConfigValidationResponse(
 export function resolveServerRuntimePorts(
   runtimePorts?: ServerRuntimePorts,
 ): ServerRuntimePorts {
+  loadConfigRouteEnvironment();
   const apiPort = normalizeServerRuntimePort(
     runtimePorts?.apiPort,
     Number.parseInt(process.env.API_PORT || '', 10),
@@ -256,6 +260,15 @@ export function resolveServerRuntimePorts(
     apiPort,
     wsPort,
   };
+}
+
+export function loadConfigRouteEnvironment(): void {
+  if (configRouteEnvironmentLoaded) {
+    return;
+  }
+
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+  configRouteEnvironmentLoaded = true;
 }
 
 function normalizeServerRuntimePort(

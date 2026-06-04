@@ -41,22 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-04: completed `packages/web-server/src/routes/config-route-contracts.ts web server runtime port contract guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/route-response.test.ts web server shared route response guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter read fallback guardrail follow-up`.
-- `config-route-contracts.ts` now validates runtime port values before building the shared config payload, so invalid injected ports fall back to canonical defaults instead of leaking `0`/`NaN` transport values.
-- `route-response.ts` now normalizes `x-request-id` at the shared route context boundary, so success and structured error envelopes consume the same narrowed request-id contract.
-- `bot-bridge.service.ts` now treats non-finite balance reads as fallback scenarios, preserving the normalized status payload and bridge-read error path instead of emitting `NaN`.
+- 2026-06-04: completed `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up`.
+- 2026-06-04: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up`.
+- `config.routes.ts` no longer loads `.env` at import time; runtime config discovery now defers that side effect until the `/api/config/server` payload is actually resolved.
+- `bot.routes.ts` now treats lifecycle controls as sync-or-async route delegates, so start/stop transport mapping stays stable even when the bridge implementation becomes asynchronous.
+- `web-entrypoint-runtime.ts` now tracks adapter-owned event-bus subscriptions and clears only those listeners, preventing leaked runtime bus handlers when the web adapter removes listeners.
 
 ## Latest Verification
-- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/route-response.test.ts tests/bot-bridge.service.test.ts tests/web-server.functional.test.ts` (3 suites, 64 tests)
+- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/config.routes.test.ts tests/bot.routes.functional.test.ts` (3 suites, 61 tests)
+- 2026-06-04: `npm --prefix packages/core run test -- --runInBand src/__tests__/web/web-boundary.test.ts src/__tests__/web/web-entrypoint.functional.test.ts` (2 suites, 16 tests)
 - 2026-06-04: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-04: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/routes/config.routes.ts`, `packages/web-server/tests/bot.routes.functional.test.ts`, and `packages/core/src/web/web-entrypoint-runtime.ts`.
-- Finish the remaining web-server config/runtime transport handoff before continuing down the core runtime entrypoint queue.
+- Start with `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts`, `packages/core/src/core/index.ts`, and `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts`.
+- Continue down the core entrypoint/runtime queue before expanding into the config entrypoint follow-up tasks.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

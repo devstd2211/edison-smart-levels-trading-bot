@@ -129,4 +129,23 @@ describe('bot routes functional boundary', () => {
       requestId: 'req-bot-start',
     });
   });
+
+  test('normalizes async stop lifecycle results through the same route mutation adapter', async () => {
+    const routeApi = createBotRouteApi({
+      getStatus: async () => ({
+        isRunning: true,
+        currentPosition: null,
+        balance: 750,
+        unrealizedPnL: 0,
+        timestamp: 1,
+      }),
+      startBot: async () => ({ success: true }),
+      stopBot: async () => ({ success: false, error: 'Bot shutdown timed out' }),
+    });
+
+    await expect(routeApi.stopBot()).rejects.toMatchObject({
+      statusCode: 400,
+      message: 'Bot shutdown timed out',
+    });
+  });
 });

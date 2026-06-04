@@ -6,8 +6,6 @@
  */
 
 import { Router, Request, Response } from 'express';
-import * as path from 'path';
-import * as dotenv from 'dotenv';
 import type {
   ApiResponse,
   ConfigBackupsResponsePayload,
@@ -44,9 +42,6 @@ import {
   sendRouteRead,
   sendRouteMutation,
 } from './route-response.js';
-
-// Load environment variables
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 export { createConfigRouteApi };
 export type { ConfigRouteApi };

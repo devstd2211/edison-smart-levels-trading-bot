@@ -183,6 +183,31 @@ describe('core web boundary', () => {
     expect(botInstance.emit('bot-started', true)).toBe(true);
   });
 
+  test('createWebServerBotInstance removes runtime bus listeners when adapter listeners are cleared', () => {
+    const eventBus = new EventEmitter();
+    const listener = jest.fn();
+    const bot = {
+      eventBus,
+      isRunning: true,
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: false,
+        position: null,
+      }),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    };
+    const botInstance = createWebServerBotInstance(bot);
+
+    botInstance.on('bot-started', listener);
+    botInstance.removeAllListeners('bot-started');
+    eventBus.emit('bot-started', true);
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   test('createWebServerBotInstance maps runtime positions to the web-server contract shape', () => {
     const eventBus = new EventEmitter();
     const position: Position = {
