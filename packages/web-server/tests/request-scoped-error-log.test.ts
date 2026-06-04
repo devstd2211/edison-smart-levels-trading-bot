@@ -41,4 +41,27 @@ describe('request-scoped error log helpers', () => {
       suggestion: 'Check that the requested resource or route exists',
     });
   });
+
+  test('normalizes websocket-scoped request ids before event payloads reuse the shared boundary', () => {
+    expect(createRequestScopedErrorEventPayload({
+      event: 'message-handler-error',
+      error: {
+        message: 'status unavailable',
+        details: 'bridge status snapshot unavailable',
+      },
+      requestId: ['req-status', 'req-shadow'],
+      requestType: 'GET_STATUS',
+      context: 'status request',
+    })).toEqual({
+      event: 'message-handler-error',
+      context: 'status request',
+      requestId: 'req-status',
+      requestType: 'GET_STATUS',
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'status unavailable',
+      details: 'bridge status snapshot unavailable',
+      suggestion: 'Please try again or contact support',
+    });
+  });
 });

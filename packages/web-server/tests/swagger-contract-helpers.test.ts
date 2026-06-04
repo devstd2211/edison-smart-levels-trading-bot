@@ -1,5 +1,6 @@
 import {
   createErrorResponses,
+  createResponseMap,
   createSuccessResponseWithExample,
   schemaRef,
 } from '../src/swagger-contract-helpers';
@@ -80,6 +81,59 @@ describe('swagger contract helpers', () => {
               websocket: { port: 4001, url: 'ws://localhost:4001' },
             },
             timestamp: 1700000000000,
+          },
+        },
+      },
+    });
+  });
+
+  test('builds combined response maps that keep success and error contracts aligned', () => {
+    expect(createResponseMap({
+      success: {
+        description: 'Configuration backups',
+        schemaName: 'ConfigBackupsResponsePayload',
+      },
+      errors: {
+        '500': 'Failed to retrieve backups',
+      },
+      errorExample: {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Internal server error',
+        },
+        timestamp: 1700000000000,
+      },
+    })).toEqual({
+      '200': {
+        description: 'Configuration backups',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['success', 'data', 'timestamp'],
+              properties: {
+                success: { type: 'boolean', enum: [true] },
+                data: schemaRef('ConfigBackupsResponsePayload'),
+                timestamp: { type: 'number' },
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Failed to retrieve backups',
+        content: {
+          'application/json': {
+            schema: schemaRef('StructuredApiErrorResponse'),
+            example: {
+              success: false,
+              error: {
+                code: 'INTERNAL_ERROR',
+                message: 'Internal server error',
+              },
+              timestamp: 1700000000000,
+            },
           },
         },
       },

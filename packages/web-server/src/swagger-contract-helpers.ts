@@ -40,6 +40,26 @@ export const createSuccessResponseWithExample = (
   },
 });
 
+type ResponseMapSuccessOptions = {
+  description: string;
+  schemaName: string;
+  statusCode?: string;
+  dataExample?: unknown;
+  timestamp?: number;
+};
+
+type ResponseMapOptions =
+  | {
+    success: ResponseMapSuccessOptions;
+    errors?: undefined;
+    errorExample?: undefined;
+  }
+  | {
+    success: ResponseMapSuccessOptions;
+    errors: Record<string, string>;
+    errorExample: unknown;
+  };
+
 export const createErrorResponse = (
   description: string,
   example: unknown,
@@ -63,6 +83,28 @@ export const createErrorResponses = (
       createErrorResponse(description, example),
     ]),
   );
+
+export const createResponseMap = (
+  options: ResponseMapOptions,
+) => {
+  let errorResponses: Record<string, unknown> = {};
+  if ('errors' in options) {
+    const errorOptions = options as Extract<ResponseMapOptions, { errors: Record<string, string> }>;
+    errorResponses = createErrorResponses(errorOptions.errors, errorOptions.errorExample);
+  }
+
+  return {
+    [options.success.statusCode ?? '200']: options.success.dataExample === undefined
+      ? createSuccessResponse(options.success.description, options.success.schemaName)
+      : createSuccessResponseWithExample(
+        options.success.description,
+        options.success.schemaName,
+        options.success.dataExample,
+        options.success.timestamp,
+      ),
+    ...errorResponses,
+  };
+};
 
 export const createJsonRequestBody = (schemaName: string, required: boolean = true) => ({
   required,

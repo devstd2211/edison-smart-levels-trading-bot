@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/web-server/tests/request-scoped-error-log.test.ts web server request-scoped logging helper guardrail follow-up`
-2. `packages/web-server/tests/swagger-contract-helpers.test.ts web server OpenAPI helper contract guardrail follow-up`
-3. `packages/web-server/src/swagger.config.ts web server OpenAPI response map helper adoption follow-up`
+1. `packages/web-server/src/routes/config-route-contracts.ts web server runtime port contract guardrail follow-up`
+2. `packages/web-server/tests/route-response.test.ts web server shared route response guardrail follow-up`
+3. `packages/web-server/tests/bot-bridge.service.test.ts web server runtime adapter read fallback guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,15 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-04: completed `packages/web-server/tests/config-management.service.test.ts web server config lifecycle guardrail follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/file-watcher.service.test.ts web server analytics watcher runtime guardrail follow-up`.
-- 2026-06-04: completed `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`.
-- `config-management.service.ts` now generates unique timestamped backup and pre-restore file paths so same-timestamp writes keep distinct lifecycle snapshots.
-- `file-watcher.service.ts` now keeps per-target debounce timers so journal and session updates cannot cancel each other.
-- `web-entrypoint-runtime.ts` now forwards `eventBus.emit(...)` boolean results directly, and `BotRuntimeEventBusLike` matches that boundary contract.
+- 2026-06-04: completed `packages/web-server/tests/request-scoped-error-log.test.ts web server request-scoped logging helper guardrail follow-up`.
+- 2026-06-04: completed `packages/web-server/tests/swagger-contract-helpers.test.ts web server OpenAPI helper contract guardrail follow-up`.
+- 2026-06-04: completed `packages/web-server/src/swagger.config.ts web server OpenAPI response map helper adoption follow-up`.
+- `request-scoped-error-log.ts` now normalizes websocket-scoped `requestId` values before event/error payloads reuse the shared request boundary.
+- `swagger-contract-helpers.ts` now exposes `createResponseMap(...)` so success envelopes and shared structured-error maps are assembled through one helper contract.
+- `swagger.config.ts` now uses that shared response-map helper across the config, runtime-discovery, and analytics OpenAPI route stream.
 
 ## Last Verification
-- `npm --prefix packages/web-server run test -- --runInBand tests/config-management.service.test.ts tests/file-watcher.service.test.ts`
-- `npm test -- --runInBand packages/core/src/__tests__/web/web-boundary.test.ts`
+- `npm --prefix packages/web-server run test -- --runInBand tests/request-scoped-error-log.test.ts tests/swagger-contract-helpers.test.ts tests/web-server.functional.test.ts tests/ws-server.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

@@ -188,8 +188,9 @@ function createRetryErrorLogDetails(error: unknown): Record<string, unknown> {
 function createWebSocketLogScope(
   options: WebSocketLogScopeOptions,
 ): Record<string, unknown> {
+  const requestId = resolveRequestId(options.requestId);
   return {
-    ...(resolveRequestId(options.requestId) ? { requestId: options.requestId } : {}),
+    ...(requestId ? { requestId } : {}),
     ...(options.requestType ? { requestType: options.requestType } : {}),
     ...(options.context ? { context: options.context } : {}),
   };
