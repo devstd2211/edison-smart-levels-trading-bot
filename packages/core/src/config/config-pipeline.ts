@@ -8,6 +8,11 @@ import type { Config } from '../types/legacy';
 import { getConfig } from '../config';
 import { applyRuntimeConfigDefaults } from './runtime-config-defaults';
 import { ICONS } from '../cli/cli-runtime';
+import type {
+  ConfigPipelineBaseConfigLoader,
+  ConfigPipelineConfigValidator,
+  ConfigPipelineLoader,
+} from './config-loader-contracts';
 import { StrategyLoaderService } from '../services/strategy-loader.service';
 import { StrategyConfigMergerService } from '../services/strategy-config-merger.service';
 import { ConfigValidatorService } from '../services/config-validator.service';
@@ -17,14 +22,6 @@ import {
   buildStrategyMergeSummaryLines,
   buildStrategyMetadataSummaryLines,
 } from './config-pipeline-summary';
-
-export type ConfigPipelineBaseConfigLoader = () => Config;
-export type ConfigPipelineConfigValidator = (config: Config) => void;
-
-type ConfigPipelineLoader = Readonly<{
-  loadBaseConfig: ConfigPipelineBaseConfigLoader;
-  validate: ConfigPipelineConfigValidator;
-}>;
 
 const loadDefaultBaseConfig: ConfigPipelineBaseConfigLoader = () => getConfig();
 
@@ -100,5 +97,3 @@ export async function loadOptionalRuntimeConfig(
 export async function loadValidatedConfig(): Promise<Config> {
   return loadRuntimeConfig(defaultConfigPipelineLoader);
 }
-
-export type { ConfigPipelineLoader };

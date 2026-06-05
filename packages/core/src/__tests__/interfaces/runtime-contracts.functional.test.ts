@@ -143,6 +143,7 @@ describe('runtime contract interface guardrails', () => {
 
   test('runtime contract interfaces define explicit factory and bot handoff shells', () => {
     const runtimeContractsSource = readInterfaceSource('IRuntimeContracts.ts');
+    const runtimeContractBarrelSource = readInterfaceSource('runtime-contracts.ts');
     const interfaceIndexSource = readInterfaceSource('index.ts');
 
     expect(runtimeContractsSource).toContain('export interface IBotRuntimeBundle');
@@ -170,5 +171,20 @@ describe('runtime contract interface guardrails', () => {
     expect(interfaceIndexSource).toContain('IBotRuntimeBundle');
     expect(interfaceIndexSource).toContain('ITradingBotFactoryRuntime');
     expect(interfaceIndexSource).toContain('ITradingBotRuntime');
+    expect(runtimeContractBarrelSource).toContain('ITradingBotLifecycleDependencies');
+    expect(runtimeContractBarrelSource).toContain('ITradingBotReadAdapters');
+    expect(runtimeContractBarrelSource).toContain('ITradingBotRuntimeDependencies');
+    expect(runtimeContractBarrelSource).toContain("} from './ITradingBotRuntimeDependencies';");
+    expect(runtimeContractBarrelSource).toContain('IBotRuntimeBundle');
+    expect(runtimeContractBarrelSource).toContain('ITradingBotFactoryRuntime');
+    expect(runtimeContractBarrelSource).toContain('ITradingBotRuntime');
+    expect(runtimeContractBarrelSource).toContain("} from './IRuntimeContracts';");
+    expect(runtimeContractBarrelSource).toContain('IBotFactoryRuntimeSource');
+    expect(runtimeContractBarrelSource).toContain('IBotInitializerRuntimeSource');
+    expect(runtimeContractBarrelSource).toContain('IBotRuntimeSource');
+    expect(runtimeContractBarrelSource).toContain('ITradingBotRuntimeSource');
+    expect(runtimeContractBarrelSource).toContain('IWebSocketEventHandlerRuntimeSource');
+    expect(runtimeContractBarrelSource).toContain("} from './IRuntimeSources';");
+    expect(interfaceIndexSource).toContain("} from './runtime-contracts';");
   });
 });

@@ -11,11 +11,11 @@
 import { BotFactory } from '../bot-factory';
 import {
   loadOptionalRuntimeConfig,
-  type ConfigPipelineLoader,
 } from '../config/index';
+import type { ConfigPipelineLoader } from '../config/config-loader-contracts';
 import type { Config } from '../types/legacy';
 import type { TradingBotAppApi } from '../types/trading-bot';
-import type { ITradingBotRuntime } from '../interfaces';
+import type { ITradingBotRuntime } from '../interfaces/runtime-contracts';
 
 export type BotLike = TradingBotAppApi;
 export type CoreRuntimeConfigAction<TResult> = (

@@ -41,22 +41,24 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-05: completed `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract projection guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory handoff projection follow-up`.
-- 2026-06-05: completed merged adjacent slice `packages/core/src/interfaces/IRuntimeContracts.ts runtime contract shell projection follow-up`.
-- `packages/core/src/interfaces/IRuntimeContracts.ts` now keeps `runtimeBundle` on `ITradingBotRuntime`, so the public runtime handoff preserves the narrowed bundle instead of re-projecting adapter state from `readAdapters`.
-- `packages/core/src/factories/create-trading-bot-runtime.ts` now treats `runtimeBundle` as the canonical handoff when materializing a public runtime, which removes the redundant `createBotRuntimeReadApi(...)` re-projection step.
+- 2026-06-05: completed `packages/core/src/factories/create-runtime-bundle.ts runtime read adapter bundle projection follow-up`.
+- 2026-06-05: completed `packages/core/src/interfaces/index.ts runtime contract barrel projection follow-up`.
+- 2026-06-05: completed `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up`.
+- 2026-06-05: completed merged adjacent slice `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`.
+- 2026-06-05: completed merged adjacent slice `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config pipeline entrypoint guardrail follow-up`.
+- `packages/core/src/factories/create-runtime-bundle.ts` now projects the public read API from `ITradingBotReadAdapters`, so the runtime bundle no longer needs the wider `runtimeDependencies` shell just to expose `webApiAdapter`.
+- `packages/core/src/interfaces/runtime-contracts.ts` now owns the grouped runtime contract re-exports, and `packages/core/src/interfaces/index.ts` delegates that runtime-facing surface through one dedicated barrel.
+- `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader types, while `packages/core/src/config/index.ts` stays focused on runtime-config entrypoints and re-exports those contracts type-only.
 
 ## Latest Verification
-- 2026-06-05: `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts` (4 suites, 36 tests)
+- 2026-06-05: `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-pipeline.functional.test.ts` (7 suites, 55 tests)
 - 2026-06-05: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-05: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/factories/create-runtime-bundle.ts`, `packages/core/src/interfaces/index.ts`, and `packages/core/src/config/index.ts`.
-- Continue down the runtime bundle and config entrypoint queue before widening further into the lower config pipeline and adapter follow-up tasks.
+- Start with `packages/core/src/config/config-pipeline.ts`, `packages/core/src/config/runtime-config-defaults.ts`, and `packages/core/src/services/runtime-service-adapters.ts`.
+- Continue down the config pipeline and runtime adapter queue before widening into lower config-loader and validation follow-up tasks.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -3,7 +3,7 @@ import type {
   IBotRuntimeSource,
   ITradingBotFactoryRuntime,
   ITradingBotRuntime,
-} from '../interfaces';
+} from '../interfaces/runtime-contracts';
 import type { BotFactoryOptions } from '../services/factories/bot-factory-options';
 import { TradingBot } from '../bot';
 import { ICONS } from '../cli/cli-runtime';

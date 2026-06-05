@@ -12,7 +12,7 @@
  * Config-aware callers can stay on this entrypoint when that single convenience type is useful.
  */
 
-import type { ConfigPipelineLoader } from '../config/index';
+import type { ConfigPipelineLoader } from '../config/config-loader-contracts';
 export type { ConfigPipelineLoader };
 export type { BotLike, CoreEntrypointRuntime } from './core-entrypoint-runtime';
 export {

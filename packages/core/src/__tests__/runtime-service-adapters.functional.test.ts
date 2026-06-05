@@ -1,6 +1,8 @@
 import { TradingBot } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   createBotRuntimeBundleFromDependencies,
   createBotRuntimeReadApi,
@@ -131,13 +133,24 @@ describe('runtime dependency adapter boundary', () => {
     test('projects the public read-only web API handoff directly from grouped read adapters', () => {
       const { runtimeDependencies } = createRuntimeBundleHarness();
 
-      const runtimeReadApi = createBotRuntimeReadApi(runtimeDependencies);
+      const runtimeReadApi = createBotRuntimeReadApi(runtimeDependencies.readAdapters);
 
       expect(runtimeReadApi.webApiAdapter).toBe(
         runtimeDependencies.readAdapters.webApiAdapter,
       );
       expect('runtimeDependencies' in (runtimeReadApi as unknown as Record<string, unknown>)).toBe(false);
       expect('readAdapters' in (runtimeReadApi as unknown as Record<string, unknown>)).toBe(false);
+    });
+
+    test('keeps the read API projection bound to the narrow read-adapter contract', () => {
+      const runtimeBundleSource = fs.readFileSync(
+        path.resolve(__dirname, '..', 'factories', 'create-runtime-bundle.ts'),
+        'utf8',
+      );
+
+      expect(runtimeBundleSource).toContain('ITradingBotReadAdapters');
+      expect(runtimeBundleSource).toContain('readAdapters: ITradingBotReadAdapters');
+      expect(runtimeBundleSource).not.toContain("Pick<ITradingBotRuntimeDependencies, 'readAdapters'>");
     });
   });
 

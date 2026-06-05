@@ -1,8 +1,9 @@
 import type {
   IBotRuntimeBundle,
+  ITradingBotReadAdapters,
   ITradingBotRuntimeDependencies,
   IBotRuntimeSource,
-} from '../interfaces';
+} from '../interfaces/runtime-contracts';
 import { createTradingBotRuntimeDependencies } from '../services/runtime-service-adapters';
 
 export type BotRuntimeBundle = IBotRuntimeBundle;
@@ -15,16 +16,16 @@ export const createBotRuntimeDependencies = (
 };
 
 export const createBotRuntimeReadApi = (
-  runtimeDependencies: Pick<ITradingBotRuntimeDependencies, 'readAdapters'>,
+  readAdapters: ITradingBotReadAdapters,
 ): BotRuntimeReadApi => ({
-  webApiAdapter: runtimeDependencies.readAdapters.webApiAdapter,
+  webApiAdapter: readAdapters.webApiAdapter,
 });
 
 export const createBotRuntimeBundleFromDependencies = (
   runtimeDependencies: ITradingBotRuntimeDependencies,
 ): BotRuntimeBundle => ({
   runtimeDependencies,
-  ...createBotRuntimeReadApi(runtimeDependencies),
+  ...createBotRuntimeReadApi(runtimeDependencies.readAdapters),
 });
 
 export const createBotRuntimeBundle = (

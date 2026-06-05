@@ -8,7 +8,7 @@ import type {
   ConfigPipelineBaseConfigLoader,
   ConfigPipelineConfigValidator,
   ConfigPipelineLoader,
-} from './config-pipeline';
+} from './config-loader-contracts';
 
 export const CONFIG_ENTRYPOINT_EXPORT_NAMES = [
   'CONFIG_ENTRYPOINT_EXPORT_NAMES',

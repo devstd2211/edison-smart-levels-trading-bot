@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/factories/create-runtime-bundle.ts runtime read adapter bundle projection follow-up`
-2. `packages/core/src/interfaces/index.ts runtime contract barrel projection follow-up`
-3. `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up`
+1. `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`
+2. `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`
+3. `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,16 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-05: completed `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract projection guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory handoff projection follow-up`.
-- 2026-06-05: completed merged adjacent slice `packages/core/src/interfaces/IRuntimeContracts.ts runtime contract shell projection follow-up`.
-- `packages/core/src/interfaces/IRuntimeContracts.ts` now keeps `runtimeBundle` on `ITradingBotRuntime`, so the public runtime contract preserves the narrowed bundle instead of re-projecting adapter state from `readAdapters`.
-- `packages/core/src/factories/create-trading-bot-runtime.ts` now treats `runtimeBundle` as the canonical bot/runtime handoff shell, which removes the redundant `createBotRuntimeReadApi(...)` projection on public runtime creation.
+- 2026-06-05: completed `packages/core/src/factories/create-runtime-bundle.ts runtime read adapter bundle projection follow-up`.
+- 2026-06-05: completed `packages/core/src/interfaces/index.ts runtime contract barrel projection follow-up`.
+- 2026-06-05: completed `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up`.
+- 2026-06-05: completed merged adjacent slice `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`.
+- 2026-06-05: completed merged adjacent slice `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config pipeline entrypoint guardrail follow-up`.
+- `packages/core/src/factories/create-runtime-bundle.ts` now projects the public read API from `ITradingBotReadAdapters`, so the bundle handoff no longer depends on the wider `runtimeDependencies` shell just to expose `webApiAdapter`.
+- `packages/core/src/interfaces/runtime-contracts.ts` now owns the grouped runtime contract re-exports, and `packages/core/src/interfaces/index.ts` delegates that runtime-facing surface through one focused barrel.
+- `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader contracts, while `packages/core/src/config/index.ts` stays focused on the runtime-config entrypoint surface.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-pipeline.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`
