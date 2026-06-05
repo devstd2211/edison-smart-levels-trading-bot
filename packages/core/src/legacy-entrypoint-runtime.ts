@@ -26,12 +26,12 @@ const LEGACY_CORE_RUNTIME_EXPORT_NAMES =
     (name) => name !== CORE_ENTRYPOINT_EXPORT_MARKER,
   ) as LegacyCoreRuntimeExportName[];
 
-export const LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES = [
+export const LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES = Object.freeze([
   'BotFactory',
   ...LEGACY_CORE_RUNTIME_EXPORT_NAMES,
   'main',
   'runLegacyCliEntrypoint',
-] as const;
+] as const);
 
 export type LegacyCoreEntrypointExportName =
   (typeof LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES)[number];
@@ -44,7 +44,9 @@ export function createLegacyEntrypointRunners(
   resolveMainModule: StandaloneEntrypointMainModuleResolver =
     resolveStandaloneEntrypointMainModule,
 ) {
-  return createStandaloneEntrypointRunners(defaultEntrypoint, resolveMainModule);
+  return Object.freeze(
+    createStandaloneEntrypointRunners(defaultEntrypoint, resolveMainModule),
+  );
 }
 
 const legacyEntrypointRunners = createLegacyEntrypointRunners();

@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
-2. `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
-3. `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
+1. `packages/core/src/web/index.ts web runtime compatibility guardrail follow-up`
+2. `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection guardrail follow-up`
+3. `packages/core/src/index.ts legacy runtime compatibility wrapper guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,15 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-05: completed `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up`.
-- `createWebServerRuntime(...)` now returns a frozen runtime pair so the web handoff cannot be rewritten after construction and before lifecycle start.
-- `core/index.ts` now owns the named `CoreEntrypointRuntime` type-only contract, keeping the public programmatic runtime pair explicit on `@edison/core/core`.
-- `createBotRuntime(...)` and `createConfiguredBotRuntime(...)` now return frozen `{ bot, webApiAdapter }` handoffs, preventing accidental widening back into the broader factory runtime source.
+- 2026-06-05: completed `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runtime export guardrail follow-up`.
+- `packages/core/src/cli/index.ts` now documents the CLI entrypoint runtime boundary with explicit wording for the injectable `RunCliMainDependencies` seam and the shared standalone if-main guard.
+- `ARCHITECTURE_QUICK_START.md` now names `CoreEntrypointRuntime` and `TradingBotWebServerRuntime` as the public handoff contracts behind the explicit runtime-pair flow.
+- `LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES` and the shell returned by `createLegacyEntrypointRunners(...)` are now frozen so the legacy compatibility wrapper cannot be widened by downstream mutation.
 
 ## Last Verification
-- `npm --prefix packages/core run test -- --runInBand src/__tests__/web/web-entrypoint.functional.test.ts src/__tests__/core/core-entrypoint.functional.test.ts src/__tests__/cli/cli-entrypoint.functional.test.ts src/__tests__/core/legacy-entrypoint.functional.test.ts`
+- `npm --prefix packages/core run test -- --runInBand src/__tests__/core/readme-entrypoint-boundary.functional.test.ts src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts src/__tests__/core/legacy-entrypoint.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

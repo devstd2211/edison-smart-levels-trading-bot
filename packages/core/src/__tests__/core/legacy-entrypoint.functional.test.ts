@@ -91,6 +91,7 @@ describe('legacy entrypoint wrapper', () => {
   });
 
   test('wrapper export-name contract omits the core marker constant but keeps composed helper names', () => {
+    expect(Object.isFrozen(LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES)).toBe(true);
     expect(LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES).not.toContain(
       'CORE_ENTRYPOINT_EXPORT_NAMES',
     );
@@ -130,6 +131,7 @@ describe('legacy entrypoint wrapper', () => {
     const resolveMainModule = jest.fn(() => currentModule);
     const runners = createLegacyEntrypointRunners(mockMain, resolveMainModule);
 
+    expect(Object.isFrozen(runners)).toBe(true);
     expect(runners.runEntrypointIfMain(otherModule)).toBeUndefined();
     await expect(runners.runEntrypointIfMain(currentModule)).resolves.toBeUndefined();
 

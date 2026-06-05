@@ -1,9 +1,11 @@
 /**
- * Stable CLI package entrypoint.
+ * CLI entrypoint runtime boundary.
  *
  * Keeps the public CLI surface as a thin compatibility barrel over the dedicated
- * runtime helper boundary. Concrete startup composition, dependency binding,
- * and standalone direct-execution checks stay in `cli-entrypoint-runtime.ts`.
+ * runtime helper boundary. RunCliMainDependencies keeps CLI composition injectable,
+ * while concrete startup composition and dependency binding stay in
+ * `cli-entrypoint-runtime.ts`. Shared standalone if-main guard wiring also stays on
+ * this entrypoint surface so direct execution remains explicit.
  */
 
 import { runCliMainIfMain } from './cli-entrypoint-runtime';

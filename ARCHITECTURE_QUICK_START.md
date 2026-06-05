@@ -85,9 +85,11 @@ Programmatic flow stays separate from the CLI path:
 2. Config-only consumers can stay on `@edison/core/config`, where the full loader contract aliases live, while `@edison/core/core` keeps a type-only convenience re-export for the composed `ConfigPipelineLoader` only.
 3. Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam injected into `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`.
 The programmatic runtime handoff stays on the explicit `{ bot, webApiAdapter }` pair rather than exposing the broader factory runtime source.
+That explicit pair is published on `@edison/core/core` as the named `CoreEntrypointRuntime` handoff type, so programmatic consumers can depend on one stable runtime contract instead of recreating the pair shape locally.
 4. Web embedding uses the explicit `createWebServerRuntime(bot, webApiAdapter)` and `startWebServer(runtime, ports)` pair from `@edison/core/web`, where the runtime handoff already contains the web-server bot adapter plus the shared read-only web API adapter.
 5. The lower-level web runtime helper keeps construction and lifecycle separate: `createWebServerInstance(runtime, ports, WebServerCtor)` constructs from the explicit pair, and `startWebServerRuntime(...)` starts it.
 `createWebServerInstance(...)` stays construction-only; `startWebServerRuntime(...)` is the lower-level lifecycle start helper.
+The web entrypoint publishes that runtime pair on `@edison/core/web` as the named `TradingBotWebServerRuntime` contract, keeping web-server embedding on one explicit adapter handoff type.
 
 ## Core Layers
 
