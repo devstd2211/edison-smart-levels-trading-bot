@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 const mockCreate = jest.fn();
 const mockCreateRuntime = jest.fn();
 const mockLoadOptionalRuntimeConfig = jest.fn();
@@ -98,6 +100,7 @@ describe('core entrypoint boundary', () => {
       bot: runtime.bot,
       webApiAdapter: runtime.webApiAdapter,
     });
+    expect(Object.isFrozen(result)).toBe(true);
     expect(runtime.bot.start).not.toHaveBeenCalled();
     expect('runtimeSource' in (result as unknown as Record<string, unknown>)).toBe(false);
   });
@@ -201,6 +204,16 @@ describe('core entrypoint boundary', () => {
     expect(coreEntrypointModule).not.toHaveProperty('ConfigPipelineLoader');
   });
 
+  test('the core entrypoint source keeps CoreEntrypointRuntime as a type-only runtime handoff contract', () => {
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'core', 'index.ts'),
+      'utf8',
+    );
+
+    expect(source).toContain("export type { BotLike, CoreEntrypointRuntime } from './core-entrypoint-runtime';");
+    expect(coreEntrypointModule).not.toHaveProperty('CoreEntrypointRuntime');
+  });
+
   test('configured runtime orchestration keeps the config loader injected at the core boundary', async () => {
     const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const loader = {
@@ -269,6 +282,7 @@ describe('core entrypoint boundary', () => {
       }),
       webApiAdapter: {},
     });
+    expect(Object.isFrozen(result)).toBe(true);
     expect('runtimeSource' in (result as unknown as Record<string, unknown>)).toBe(false);
   });
 

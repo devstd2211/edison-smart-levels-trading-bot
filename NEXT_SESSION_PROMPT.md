@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up`
-2. `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up`
-3. `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up`
+1. `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+2. `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+3. `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,15 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-04: completed `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up`.
-- 2026-06-04: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up`.
-- `config.routes.ts` now defers `.env` loading until runtime server discovery is requested, so importing the route transport no longer performs startup side effects.
-- `bot.routes.ts` now accepts sync or async lifecycle delegates behind one normalized route-mutation adapter, preserving the same control-route envelope when bridge implementations become asynchronous.
-- `web-entrypoint-runtime.ts` now tracks adapter-owned event-bus listeners and removes only those listeners during cleanup, preventing leaked runtime subscriptions when the web boundary clears handlers.
+- 2026-06-05: completed `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up`.
+- `createWebServerRuntime(...)` now returns a frozen runtime pair so the web handoff cannot be rewritten after construction and before lifecycle start.
+- `core/index.ts` now owns the named `CoreEntrypointRuntime` type-only contract, keeping the public programmatic runtime pair explicit on `@edison/core/core`.
+- `createBotRuntime(...)` and `createConfiguredBotRuntime(...)` now return frozen `{ bot, webApiAdapter }` handoffs, preventing accidental widening back into the broader factory runtime source.
 
 ## Last Verification
-- `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/config.routes.test.ts tests/bot.routes.functional.test.ts`
-- `npm --prefix packages/core run test -- --runInBand src/__tests__/web/web-boundary.test.ts src/__tests__/web/web-entrypoint.functional.test.ts`
+- `npm --prefix packages/core run test -- --runInBand src/__tests__/web/web-entrypoint.functional.test.ts src/__tests__/core/core-entrypoint.functional.test.ts src/__tests__/cli/cli-entrypoint.functional.test.ts src/__tests__/core/legacy-entrypoint.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

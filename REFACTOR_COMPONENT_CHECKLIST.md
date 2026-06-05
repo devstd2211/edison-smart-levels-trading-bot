@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up`
-- [ ] `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up`
 - [ ] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config pipeline entrypoint guardrail follow-up`
 - [ ] `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up`
+- [ ] `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`
+- [ ] `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`
+- [ ] `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up` | prod: yes | tests: yes | func: yes

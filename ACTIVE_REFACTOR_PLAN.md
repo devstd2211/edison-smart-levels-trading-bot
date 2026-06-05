@@ -41,23 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-04: completed `packages/web-server/src/routes/config.routes.ts web server config route transport boundary follow-up`.
-- 2026-06-04: completed `packages/web-server/tests/bot.routes.functional.test.ts web server bot route runtime boundary follow-up`.
-- 2026-06-04: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition guardrail follow-up`.
-- `config.routes.ts` no longer loads `.env` at import time; runtime config discovery now defers that side effect until the `/api/config/server` payload is actually resolved.
-- `bot.routes.ts` now treats lifecycle controls as sync-or-async route delegates, so start/stop transport mapping stays stable even when the bridge implementation becomes asynchronous.
-- `web-entrypoint-runtime.ts` now tracks adapter-owned event-bus subscriptions and clears only those listeners, preventing leaked runtime bus handlers when the web adapter removes listeners.
+- 2026-06-05: completed `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime construction lifecycle guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/core/index.ts programmatic runtime entrypoint guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic runtime handoff guardrail follow-up`.
+- `createWebServerRuntime(...)` now returns a frozen runtime pair so the web handoff cannot be rewritten between construction and lifecycle start.
+- `core/index.ts` now owns the named `CoreEntrypointRuntime` type-only contract, keeping the programmatic bot-plus-web-adapter seam explicit on the public core entrypoint.
+- `createBotRuntime(...)` and `createConfiguredBotRuntime(...)` now project frozen `{ bot, webApiAdapter }` handoffs, narrowing the runtime seam without exposing the broader factory runtime source.
 
 ## Latest Verification
-- 2026-06-04: `npm --prefix packages/web-server run test -- --runInBand tests/web-server.functional.test.ts tests/config.routes.test.ts tests/bot.routes.functional.test.ts` (3 suites, 61 tests)
-- 2026-06-04: `npm --prefix packages/core run test -- --runInBand src/__tests__/web/web-boundary.test.ts src/__tests__/web/web-entrypoint.functional.test.ts` (2 suites, 16 tests)
-- 2026-06-04: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
-- 2026-06-04: `npm run build`
+- 2026-06-05: `npm --prefix packages/core run test -- --runInBand src/__tests__/web/web-entrypoint.functional.test.ts src/__tests__/core/core-entrypoint.functional.test.ts src/__tests__/cli/cli-entrypoint.functional.test.ts src/__tests__/core/legacy-entrypoint.functional.test.ts` (4 suites, 41 tests)
+- 2026-06-05: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-05: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts`, `packages/core/src/core/index.ts`, and `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts`.
-- Continue down the core entrypoint/runtime queue before expanding into the config entrypoint follow-up tasks.
+- Start with `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts`, `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts`, and `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`.
+- Continue down the core entrypoint/runtime docs-and-wrapper queue before expanding into the config entrypoint follow-up tasks.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

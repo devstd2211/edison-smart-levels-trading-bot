@@ -26,7 +26,9 @@ export type CoreRuntimeConfigLoader = (
   loader?: ConfigPipelineLoader,
 ) => Promise<Config>;
 
-export type CoreEntrypointRuntime = Pick<ITradingBotRuntime, 'bot' | 'webApiAdapter'>;
+export type CoreEntrypointRuntime = Readonly<
+  Pick<ITradingBotRuntime, 'bot' | 'webApiAdapter'>
+>;
 
 export const CORE_ENTRYPOINT_EXPORT_NAMES = [
   'CORE_ENTRYPOINT_EXPORT_NAMES',
@@ -42,10 +44,10 @@ export const CORE_ENTRYPOINT_EXPORT_NAMES = [
 export function createCoreEntrypointRuntime(
   runtime: ITradingBotRuntime,
 ): CoreEntrypointRuntime {
-  return {
+  return Object.freeze({
     bot: runtime.bot,
     webApiAdapter: runtime.webApiAdapter,
-  };
+  });
 }
 
 // Expects config already processed by ConfigPipeline (strategy merge, env overrides).

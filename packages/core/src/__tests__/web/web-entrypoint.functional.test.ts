@@ -162,5 +162,6 @@ describe('web entrypoint runtime factory adoption', () => {
 
     expect(runtime.botAdapter).toBeDefined();
     expect(runtime.webApiAdapter).toBe(webApiAdapter);
+    expect(Object.isFrozen(runtime)).toBe(true);
   });
 });

@@ -28,10 +28,10 @@ export interface WebServerBotPort extends EventEmitter {
   emit(event: string, data?: unknown): boolean;
 }
 
-export type TradingBotWebServerRuntime = {
+export type TradingBotWebServerRuntime = Readonly<{
   botAdapter: WebServerBotPort;
   webApiAdapter: IWebApiAdapter;
-};
+}>;
 
 export type WebServerPorts = {
   apiPort?: number;
@@ -176,10 +176,10 @@ export function createWebServerRuntime(
   bot: TradingBotWebServerBridge,
   webApiAdapter: IWebApiAdapter,
 ): TradingBotWebServerRuntime {
-  return {
+  return Object.freeze({
     botAdapter: createWebServerBotInstance(bot),
     webApiAdapter,
-  };
+  });
 }
 
 export function createWebServerInstance(
