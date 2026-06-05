@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-05: completed `packages/core/src/web/index.ts web runtime compatibility guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/index.ts legacy runtime compatibility wrapper guardrail follow-up`.
-- `packages/core/src/web/web-entrypoint-runtime.ts` now binds the concrete `WebServer` constructor once through `createWebServerStarter(...)`, so the public web barrel keeps the compatibility wrapper thin while lifecycle delegation stays on the lower runtime boundary.
-- `packages/core/src/core/core-entrypoint-runtime.ts` now freezes `CORE_ENTRYPOINT_EXPORT_NAMES` and routes all config-aware helpers through one loader-bound helper shell instead of duplicating the `loadBotRuntimeConfig(loader?)` orchestration per export.
-- `packages/core/src/legacy-entrypoint-runtime.ts` now owns `runLegacyCliEntrypointFromModule(...)`, so the root compatibility wrapper no longer wires main-module resolution itself.
+- 2026-06-05: completed `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract projection guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory handoff projection follow-up`.
+- 2026-06-05: completed merged adjacent slice `packages/core/src/interfaces/IRuntimeContracts.ts runtime contract shell projection follow-up`.
+- `packages/core/src/interfaces/IRuntimeContracts.ts` now keeps `runtimeBundle` on `ITradingBotRuntime`, so the public runtime handoff preserves the narrowed bundle instead of re-projecting adapter state from `readAdapters`.
+- `packages/core/src/factories/create-trading-bot-runtime.ts` now treats `runtimeBundle` as the canonical handoff when materializing a public runtime, which removes the redundant `createBotRuntimeReadApi(...)` re-projection step.
 
 ## Latest Verification
-- 2026-06-05: `npm test -- --runInBand packages/core/src/__tests__/web/web-entrypoint.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (5 suites, 60 tests)
+- 2026-06-05: `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts` (4 suites, 36 tests)
 - 2026-06-05: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-05: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts`, `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts`, and `packages/core/src/factories/create-trading-bot-runtime.ts`.
-- Continue down the runtime factory and runtime-contract queue before expanding further into the config entrypoint follow-up tasks.
+- Start with `packages/core/src/factories/create-runtime-bundle.ts`, `packages/core/src/interfaces/index.ts`, and `packages/core/src/config/index.ts`.
+- Continue down the runtime bundle and config entrypoint queue before widening further into the lower config pipeline and adapter follow-up tasks.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

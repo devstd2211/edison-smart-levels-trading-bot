@@ -38,6 +38,7 @@ describe('createTradingBotRuntime factory boundary', () => {
 
     expect(runtime.bot).toBe(bot);
     expect(runtime.runtimeSource).toBe(services);
+    expect(runtime.runtimeBundle.webApiAdapter).toBe(runtime.webApiAdapter);
     expect(runtime.webApiAdapter).toBe(bot.getWebApiAdapter());
     expect(bot.getStatus()).toEqual({
       isRunning: false,
@@ -67,6 +68,7 @@ describe('createTradingBotRuntime factory boundary', () => {
       .mockReturnValue({
         bot,
         runtimeSource: {} as never,
+        runtimeBundle: {} as never,
         webApiAdapter: {} as never,
       });
 
@@ -96,9 +98,8 @@ describe('createTradingBotRuntime factory boundary', () => {
     expect(webApiAdapterSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('createTradingBotRuntimeFromFactoryRuntime materializes the public web API handoff from grouped read adapters', () => {
+  test('createTradingBotRuntimeFromFactoryRuntime keeps the factory runtime bundle as the canonical public handoff', () => {
     const { runtimeFactory } = createRuntimeFactoryHarness();
-    const groupedReadAdapter = runtimeFactory.runtimeBundle.runtimeDependencies.readAdapters.webApiAdapter;
     const duplicatedBundleAdapter = { kind: 'duplicated-bundle-adapter' } as never;
 
     runtimeFactory.runtimeBundle.webApiAdapter = duplicatedBundleAdapter;
@@ -108,8 +109,9 @@ describe('createTradingBotRuntime factory boundary', () => {
       createRuntimeDefaultLifecycleConfig(),
     );
 
-    expect(runtime.webApiAdapter).toBe(groupedReadAdapter);
-    expect(runtime.webApiAdapter).not.toBe(duplicatedBundleAdapter);
+    expect(runtime.runtimeBundle).toBe(runtimeFactory.runtimeBundle);
+    expect(runtime.webApiAdapter).toBe(duplicatedBundleAdapter);
+    expect(runtime.webApiAdapter).toBe(runtime.runtimeBundle.webApiAdapter);
   });
 
   test('tracked runtime construction stays side-effect free until start is called', () => {

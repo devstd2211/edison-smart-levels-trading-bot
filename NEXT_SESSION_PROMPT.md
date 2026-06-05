@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`
-2. `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract projection guardrail follow-up`
-3. `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory handoff projection follow-up`
+1. `packages/core/src/factories/create-runtime-bundle.ts runtime read adapter bundle projection follow-up`
+2. `packages/core/src/interfaces/index.ts runtime contract barrel projection follow-up`
+3. `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-06-05: completed `packages/core/src/web/index.ts web runtime compatibility guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/index.ts legacy runtime compatibility wrapper guardrail follow-up`.
-- `packages/core/src/web/web-entrypoint-runtime.ts` now binds the concrete `WebServer` constructor once through `createWebServerStarter(...)`, so the public web barrel keeps the compatibility wrapper thin while lifecycle delegation stays below.
-- `packages/core/src/core/core-entrypoint-runtime.ts` now freezes `CORE_ENTRYPOINT_EXPORT_NAMES` and routes config-aware helpers through one loader-bound helper shell.
-- `packages/core/src/legacy-entrypoint-runtime.ts` now owns `runLegacyCliEntrypointFromModule(...)`, so the root wrapper no longer wires main-module resolution itself.
+- 2026-06-05: completed `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract projection guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory handoff projection follow-up`.
+- 2026-06-05: completed merged adjacent slice `packages/core/src/interfaces/IRuntimeContracts.ts runtime contract shell projection follow-up`.
+- `packages/core/src/interfaces/IRuntimeContracts.ts` now keeps `runtimeBundle` on `ITradingBotRuntime`, so the public runtime contract preserves the narrowed bundle instead of re-projecting adapter state from `readAdapters`.
+- `packages/core/src/factories/create-trading-bot-runtime.ts` now treats `runtimeBundle` as the canonical bot/runtime handoff shell, which removes the redundant `createBotRuntimeReadApi(...)` projection on public runtime creation.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/web/web-entrypoint.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

@@ -123,6 +123,7 @@ describe('BotFactory', () => {
     const expectedRuntime = {
       bot: {} as never,
       runtimeSource: {} as never,
+      runtimeBundle: {} as never,
       webApiAdapter: {} as never,
     };
     const factoryRuntime = {

@@ -16,5 +16,6 @@ export interface ITradingBotFactoryRuntime {
 export interface ITradingBotRuntime {
   bot: TradingBot;
   runtimeSource: IBotFactoryRuntimeSource;
+  runtimeBundle: IBotRuntimeBundle;
   webApiAdapter: IWebApiAdapter;
 }

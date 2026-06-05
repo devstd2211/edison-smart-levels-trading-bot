@@ -157,6 +157,16 @@ describe('runtime contract interface guardrails', () => {
     expect(runtimeContractsSource).toContain('runtimeBundle: IBotRuntimeBundle;');
     expect(runtimeContractsSource).toContain('export interface ITradingBotRuntime');
     expect(runtimeContractsSource).toContain('bot: TradingBot;');
+    expect(runtimeContractsSource).toContain(
+      [
+        'export interface ITradingBotRuntime {',
+        '  bot: TradingBot;',
+        '  runtimeSource: IBotFactoryRuntimeSource;',
+        '  runtimeBundle: IBotRuntimeBundle;',
+        '  webApiAdapter: IWebApiAdapter;',
+        '}',
+      ].join('\n'),
+    );
     expect(interfaceIndexSource).toContain('IBotRuntimeBundle');
     expect(interfaceIndexSource).toContain('ITradingBotFactoryRuntime');
     expect(interfaceIndexSource).toContain('ITradingBotRuntime');
