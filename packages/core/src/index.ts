@@ -5,13 +5,14 @@
  * The root surface does not expose dedicated web startup helpers; new web callers use `@edison/core/web`.
  * Runtime ownership for the CLI handoff stays in `legacy-entrypoint-runtime.ts`,
  * so this wrapper can remain a thin compatibility barrel.
- * Direct execution still relies on the shared standalone if-main helper.
+ * Direct execution still uses the shared standalone if-main behavior,
+ * but that wiring now stays inside `legacy-entrypoint-runtime.ts`.
  */
 
 import {
   main,
   runLegacyCliEntrypoint,
-  runLegacyCliEntrypointIfMain,
+  runLegacyCliEntrypointFromModule,
 } from './legacy-entrypoint-runtime';
 
 export {
@@ -30,5 +31,5 @@ export { main };
 export type { ConfigPipelineLoader } from './core';
 export { runLegacyCliEntrypoint };
 
-// Start the CLI only when this legacy wrapper is executed directly via the shared standalone if-main helper.
-void runLegacyCliEntrypointIfMain(module);
+// Start the CLI only when this legacy wrapper is executed directly; the runtime helper owns the if-main wiring.
+void runLegacyCliEntrypointFromModule(module);

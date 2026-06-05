@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/web/index.ts web runtime compatibility guardrail follow-up`
-- [ ] `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection guardrail follow-up`
-- [ ] `packages/core/src/index.ts legacy runtime compatibility wrapper guardrail follow-up`
 - [ ] `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`
 - [ ] `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract projection guardrail follow-up`
 - [ ] `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory handoff projection follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`
 - [ ] `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`
 - [ ] `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up`
+- [ ] `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`
+- [ ] `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`
+- [ ] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config pipeline loader guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/web/index.ts web runtime compatibility guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy runtime compatibility wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up` | prod: yes | tests: yes | func: yes

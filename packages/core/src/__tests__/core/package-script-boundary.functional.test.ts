@@ -316,6 +316,12 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
       '`loadBotRuntimeConfig(loader?)` is the single injected config-loader seam',
     );
+    expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
+      'function createConfiguredCoreEntrypointHelpers(',
+    );
+    expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
+      'const configuredCoreEntrypointHelpers = createConfiguredCoreEntrypointHelpers();',
+    );
     expect(configEntrypointSource).toContain(
       'Public config entrypoint surface.',
     );
@@ -351,7 +357,7 @@ describe('package script boundary', () => {
       'Callers keep adapter creation explicit at the boundary; the starter receives the pair and ports only.',
     );
     expect(readTextFile('packages/core/src/web/index.ts')).toContain(
-      'The workspace WebServer receives the already-materialized runtime pair.',
+      'The workspace WebServer constructor is bound here once, then receives the already-materialized runtime pair.',
     );
     expect(readTextFile('packages/core/src/web/index.ts')).toContain(
       '`startWebServer(...)` owns lifecycle start; lower-level construction stays in `createWebServerInstance(...)`.',
@@ -371,6 +377,12 @@ describe('package script boundary', () => {
       'createWebServerInstance(...) is construction-only and does not start lifecycle.',
     );
     expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
+      'export function createWebServerStarter',
+    );
+    expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
+      'Binds one concrete WebServer constructor to the shared runtime starter.',
+    );
+    expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
       'Adapter mapping keeps the web-server contract derived from the runtime Position shape.',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from './cli-entrypoint-runtime';");
@@ -387,7 +399,7 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'CLI startup attempts embedded web handoff before bot lifecycle start.',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'RunCliMainDependencies keeps CLI composition injectable',
     );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
@@ -433,7 +445,7 @@ describe('package script boundary', () => {
       'Type-only loader compatibility still comes through `./core`, while the full',
     );
     expect(legacyEntrypointSource).toContain(
-      'void runLegacyCliEntrypointIfMain(module);',
+      'void runLegacyCliEntrypointFromModule(module);',
     );
     expect(legacyEntrypointSource).toContain(
       'Root compatibility re-exports stay limited to core helpers plus the legacy CLI handoff.',
@@ -465,7 +477,10 @@ describe('package script boundary', () => {
       'export function createLegacyEntrypointRunners',
     );
     expect(legacyEntrypointRuntimeSource).toContain(
-      'return createStandaloneEntrypointRunners(defaultEntrypoint, resolveMainModule);',
+      'return Object.freeze(',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'createStandaloneEntrypointRunners(defaultEntrypoint, resolveMainModule)',
     );
     expect(legacyEntrypointRuntimeSource).toContain(
       'const legacyEntrypointRunners = createLegacyEntrypointRunners();',
@@ -481,6 +496,12 @@ describe('package script boundary', () => {
     );
     expect(legacyEntrypointRuntimeSource).toContain(
       'return legacyEntrypointRunners.runEntrypointIfMain(',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'export function runLegacyCliEntrypointFromModule(',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'does not need to know how main-module resolution is wired.',
     );
     expect(standaloneEntrypointRuntimeSource).toContain(
       'return currentModule === mainModule;',
@@ -859,20 +880,22 @@ describe('package script boundary', () => {
     expect(configRoutes).toContain("./config-route-contracts");
     expect(configRoutes).toContain('getBackupCollection()');
     expect(configRoutes).toContain('getHistory()');
-    expect(configRoutes).toContain('createConfigMutationPreviewResponse');
-    expect(configRoutes).toContain('createConfigUpdateResponse');
-    expect(configRoutes).toContain('createConfigValidationResponse');
-    expect(configRoutes).toContain('requireConfigMutationRequest');
+    expect(configRoutes).toContain('createConfigRouteHandlers');
+    expect(configRoutes).toContain('createConfigRouteApi');
     expect(configRouteContracts).toContain('ConfigMutationRequestPayload');
     expect(configRouteContracts).toContain('parseValidationConfigRequest');
     expect(configRouteContracts).toContain('ConfigMutationPreviewPayload');
     expect(configRouteContracts).toContain('ConfigValidationResponsePayload');
     expect(configRouteContracts).toContain('createServerRuntimeConfigPayload');
+    expect(configRouteContracts).toContain('createConfigMutationPreviewResponse');
+    expect(configRouteContracts).toContain('createConfigUpdateResponse');
+    expect(configRouteContracts).toContain('createConfigValidationResponse');
+    expect(configRouteContracts).toContain('requireConfigMutationRequest');
     expect(configService).toContain('CONFIG_SCHEMA_METADATA');
     expect(configService).toContain('getBackupCollection');
     expect(dataRoutes).toContain("@edison/contracts/runtime-api");
     expect(dataRoutes).not.toContain('../types/api.types.js');
-    expect(swaggerConfig).toContain('createConfigRouteSuccessResponse');
+    expect(swaggerConfig).toContain('createConfigRouteResponses');
     expect(swaggerConfig).toContain('createConfigBackupCollectionSchema');
     expect(swaggerConfig).toContain('createSchemaAlias');
     expect(swaggerConfig).toContain('ConfigServerRuntimeResponsePayload');
@@ -947,9 +970,14 @@ describe('package script boundary', () => {
     expect(controlPage).toContain('Cleanup Old Backups');
     expect(controlPage).not.toContain('FALLBACK_CONTROL_CONFIG');
     expect(readTextFile('packages/web-server/src/index.ts')).toContain('RUNTIME_CONFIG_PATH');
-    expect(readTextFile('packages/web-server/src/index.ts')).toContain('RUNTIME_DISCOVERY_GUIDANCE_LINES');
+    expect(readTextFile('packages/web-server/src/index.ts')).toContain(
+      'createDocsRuntimeDiscoverySectionHtml',
+    );
     expect(readTextFile('packages/web-server/src/runtime-discovery-guidance.ts')).toContain('current origin first');
     expect(readTextFile('packages/web-server/src/runtime-discovery-guidance.ts')).toContain('active browser protocol');
+    expect(readTextFile('packages/web-server/src/runtime-discovery-guidance.ts')).toContain(
+      'RUNTIME_DISCOVERY_GUIDANCE_LINES',
+    );
     expect(readTextFile('packages/web-server/src/swagger.config.ts')).toContain('RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION');
     expect(dashboardPage).toContain("@edison/contracts/runtime-api");
     expect(positionCard).toContain("@edison/contracts/runtime-api");

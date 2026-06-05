@@ -41,23 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-06-05: completed `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`.
-- 2026-06-05: completed `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runtime export guardrail follow-up`.
-- `packages/core/src/cli/index.ts` now states the CLI entrypoint runtime boundary directly, including the injectable `RunCliMainDependencies` handoff and shared standalone if-main guard wording.
-- `ARCHITECTURE_QUICK_START.md` now documents the named `CoreEntrypointRuntime` and `TradingBotWebServerRuntime` handoff contracts alongside the explicit runtime-pair flow.
-- `LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES` and the object returned by `createLegacyEntrypointRunners(...)` are now frozen so the legacy wrapper shell cannot be widened by downstream mutation.
+- 2026-06-05: completed `packages/core/src/web/index.ts web runtime compatibility guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection guardrail follow-up`.
+- 2026-06-05: completed `packages/core/src/index.ts legacy runtime compatibility wrapper guardrail follow-up`.
+- `packages/core/src/web/web-entrypoint-runtime.ts` now binds the concrete `WebServer` constructor once through `createWebServerStarter(...)`, so the public web barrel keeps the compatibility wrapper thin while lifecycle delegation stays on the lower runtime boundary.
+- `packages/core/src/core/core-entrypoint-runtime.ts` now freezes `CORE_ENTRYPOINT_EXPORT_NAMES` and routes all config-aware helpers through one loader-bound helper shell instead of duplicating the `loadBotRuntimeConfig(loader?)` orchestration per export.
+- `packages/core/src/legacy-entrypoint-runtime.ts` now owns `runLegacyCliEntrypointFromModule(...)`, so the root compatibility wrapper no longer wires main-module resolution itself.
 
 ## Latest Verification
-- 2026-06-05: `npm --prefix packages/core run test -- --runInBand src/__tests__/core/readme-entrypoint-boundary.functional.test.ts src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts src/__tests__/core/legacy-entrypoint.functional.test.ts` (3 suites, 20 tests)
+- 2026-06-05: `npm test -- --runInBand packages/core/src/__tests__/web/web-entrypoint.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (5 suites, 60 tests)
 - 2026-06-05: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-05: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/web/index.ts`, `packages/core/src/core/core-entrypoint-runtime.ts`, and `packages/core/src/index.ts`.
-- Continue down the core entrypoint/runtime queue before expanding into the config entrypoint follow-up tasks.
+- Start with `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts`, `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts`, and `packages/core/src/factories/create-trading-bot-runtime.ts`.
+- Continue down the runtime factory and runtime-contract queue before expanding further into the config entrypoint follow-up tasks.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

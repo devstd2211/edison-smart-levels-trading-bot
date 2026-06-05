@@ -6,27 +6,29 @@
  * so callers keep the web-facing bot adapter and read-only web API adapter visible
  * at the boundary instead of rediscovering adapters through bot internals.
  * Callers keep adapter creation explicit at the boundary; the starter receives the pair and ports only.
- * The workspace WebServer receives the already-materialized runtime pair.
+ * The workspace WebServer constructor is bound here once, then receives the already-materialized runtime pair.
  * `startWebServer(...)` owns lifecycle start; lower-level construction stays in `createWebServerInstance(...)`.
  */
 
 import { WebServer } from 'trading-bot-web-server';
 import {
+  createWebServerStarter,
   createWebServerBotInstance,
   createWebServerRuntime,
-  startWebServerRuntime,
   type TradingBotWebServerRuntime,
   type WebServerInstance,
   type WebServerPorts,
 } from './web-entrypoint-runtime';
 
 export { createWebServerBotInstance, createWebServerRuntime };
-export const WEB_ENTRYPOINT_EXPORT_NAMES = [
+const startWorkspaceWebServer = createWebServerStarter(WebServer);
+
+export const WEB_ENTRYPOINT_EXPORT_NAMES = Object.freeze([
   'WEB_ENTRYPOINT_EXPORT_NAMES',
   'createWebServerBotInstance',
   'createWebServerRuntime',
   'startWebServer',
-] as const;
+] as const);
 export type {
   TradingBotWebServerBridge,
   WebServerBotPort,
@@ -39,5 +41,5 @@ export async function startWebServer(
   runtime: TradingBotWebServerRuntime,
   ports: WebServerPorts,
 ): Promise<WebServerInstance> {
-  return startWebServerRuntime(runtime, ports, WebServer);
+  return startWorkspaceWebServer(runtime, ports);
 }

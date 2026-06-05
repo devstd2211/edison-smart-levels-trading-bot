@@ -22,6 +22,7 @@ import {
   LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES,
   main as legacyRuntimeMain,
   runLegacyCliEntrypoint as runLegacyCliEntrypointFromRuntime,
+  runLegacyCliEntrypointFromModule,
   runLegacyCliEntrypointIfMain,
   shouldRunLegacyCliEntrypoint,
 } from '../../legacy-entrypoint-runtime';
@@ -88,6 +89,7 @@ describe('legacy entrypoint wrapper', () => {
     expect(source).not.toContain("from './cli';");
     expect(source).not.toContain('startWebServerRuntime');
     expect(source).not.toContain('createWebServerRuntime');
+    expect(source).toContain('void runLegacyCliEntrypointFromModule(module);');
   });
 
   test('wrapper export-name contract omits the core marker constant but keeps composed helper names', () => {
@@ -137,6 +139,19 @@ describe('legacy entrypoint wrapper', () => {
 
     expect(mockMain).toHaveBeenCalledTimes(1);
     expect(resolveMainModule).toHaveBeenCalledTimes(2);
+  });
+
+  test('wrapper root-module helper keeps the direct-execution wiring on the shared runtime boundary', async () => {
+    mockMain.mockResolvedValue(undefined);
+    const currentModule = { id: 'legacy-wrapper' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+
+    expect(runLegacyCliEntrypointFromModule(otherModule, currentModule, mockMain)).toBeUndefined();
+    await expect(
+      runLegacyCliEntrypointFromModule(currentModule, currentModule, mockMain),
+    ).resolves.toBeUndefined();
+
+    expect(mockMain).toHaveBeenCalledTimes(1);
   });
 
   test('wrapper re-exports BotFactory runtime bundle creation without widening the runtime contract', () => {

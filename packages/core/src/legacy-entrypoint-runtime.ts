@@ -75,3 +75,15 @@ export function runLegacyCliEntrypointIfMain(
     cliEntrypoint,
   );
 }
+
+/**
+ * Owns the root-wrapper direct-execution guard so the compatibility barrel
+ * does not need to know how main-module resolution is wired.
+ */
+export function runLegacyCliEntrypointFromModule(
+  currentModule: NodeModule,
+  mainModule: NodeModule | undefined = resolveStandaloneEntrypointMainModule(),
+  cliEntrypoint: LegacyCliEntrypoint = main,
+): Promise<void> | undefined {
+  return runLegacyCliEntrypointIfMain(currentModule, mainModule, cliEntrypoint);
+}

@@ -30,7 +30,7 @@ export type CoreEntrypointRuntime = Readonly<
   Pick<ITradingBotRuntime, 'bot' | 'webApiAdapter'>
 >;
 
-export const CORE_ENTRYPOINT_EXPORT_NAMES = [
+export const CORE_ENTRYPOINT_EXPORT_NAMES = Object.freeze([
   'CORE_ENTRYPOINT_EXPORT_NAMES',
   'createBot',
   'createBotRuntime',
@@ -39,7 +39,7 @@ export const CORE_ENTRYPOINT_EXPORT_NAMES = [
   'loadBotRuntimeConfig',
   'startBot',
   'startConfiguredBot',
-] as const;
+] as const);
 
 export function createCoreEntrypointRuntime(
   runtime: ITradingBotRuntime,
@@ -89,28 +89,52 @@ export async function loadBotRuntimeConfig(
   return loadOptionalRuntimeConfig(loader);
 }
 
+type ConfiguredCoreEntrypointHelpers = Readonly<{
+  createConfiguredBot: (loader?: ConfigPipelineLoader) => Promise<BotLike>;
+  createConfiguredBotRuntime: (
+    loader?: ConfigPipelineLoader,
+  ) => Promise<CoreEntrypointRuntime>;
+  startConfiguredBot: (loader?: ConfigPipelineLoader) => Promise<BotLike>;
+}>;
+
 // Reuses the same public config-loader handoff for all config-aware helper paths.
-async function runWithLoadedRuntimeConfig<TResult>(
-  action: (config: Config) => Promise<TResult>,
-  loader?: ConfigPipelineLoader,
-): Promise<TResult> {
-  return withLoadedRuntimeConfig(action, loadBotRuntimeConfig, loader);
+function createConfiguredCoreEntrypointHelpers(
+  loadRuntimeConfig: CoreRuntimeConfigLoader = loadBotRuntimeConfig,
+): ConfiguredCoreEntrypointHelpers {
+  const runWithLoadedRuntimeConfig = <TResult>(
+    action: (config: Config) => Promise<TResult>,
+    loader?: ConfigPipelineLoader,
+  ): Promise<TResult> => withLoadedRuntimeConfig(action, loadRuntimeConfig, loader);
+
+  return Object.freeze({
+    createConfiguredBot: (
+      loader?: ConfigPipelineLoader,
+    ): Promise<BotLike> => runWithLoadedRuntimeConfig(createBot, loader),
+    createConfiguredBotRuntime: (
+      loader?: ConfigPipelineLoader,
+    ): Promise<CoreEntrypointRuntime> => runWithLoadedRuntimeConfig(createBotRuntime, loader),
+    startConfiguredBot: (
+      loader?: ConfigPipelineLoader,
+    ): Promise<BotLike> => runWithLoadedRuntimeConfig(startBot, loader),
+  });
 }
+
+const configuredCoreEntrypointHelpers = createConfiguredCoreEntrypointHelpers();
 
 export async function createConfiguredBot(
   loader?: ConfigPipelineLoader,
 ): Promise<BotLike> {
-  return runWithLoadedRuntimeConfig(createBot, loader);
+  return configuredCoreEntrypointHelpers.createConfiguredBot(loader);
 }
 
 export async function createConfiguredBotRuntime(
   loader?: ConfigPipelineLoader,
 ): Promise<CoreEntrypointRuntime> {
-  return runWithLoadedRuntimeConfig(createBotRuntime, loader);
+  return configuredCoreEntrypointHelpers.createConfiguredBotRuntime(loader);
 }
 
 export async function startConfiguredBot(
   loader?: ConfigPipelineLoader,
 ): Promise<BotLike> {
-  return runWithLoadedRuntimeConfig(startBot, loader);
+  return configuredCoreEntrypointHelpers.startConfiguredBot(loader);
 }

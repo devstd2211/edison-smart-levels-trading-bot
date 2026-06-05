@@ -42,6 +42,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('keeps the programmatic core entrypoint export surface focused on runtime creation helpers', () => {
+    expect(Object.isFrozen(CORE_ENTRYPOINT_EXPORT_NAMES)).toBe(true);
     expect(Object.keys(coreEntrypointModule).sort()).toEqual(
       [...CORE_ENTRYPOINT_EXPORT_NAMES].sort(),
     );
@@ -182,6 +183,23 @@ describe('core entrypoint boundary', () => {
         'startConfiguredBot',
       ]),
     );
+  });
+
+  test('configured helper source binds the public config-loader seam once for all configured helper paths', () => {
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'core', 'core-entrypoint-runtime.ts'),
+      'utf8',
+    );
+
+    expect(source).toContain('function createConfiguredCoreEntrypointHelpers(');
+    expect(source).toContain(
+      'const configuredCoreEntrypointHelpers = createConfiguredCoreEntrypointHelpers();',
+    );
+    expect(source).toContain('return configuredCoreEntrypointHelpers.createConfiguredBot(loader);');
+    expect(source).toContain(
+      'return configuredCoreEntrypointHelpers.createConfiguredBotRuntime(loader);',
+    );
+    expect(source).toContain('return configuredCoreEntrypointHelpers.startConfiguredBot(loader);');
   });
 
   test('core barrel re-exports the runtime helper implementations directly', () => {

@@ -198,6 +198,27 @@ export function createWebServerInstance(
 }
 
 /**
+ * Binds one concrete WebServer constructor to the shared runtime starter.
+ * Compatibility wrappers can capture that constructor once and keep lifecycle
+ * delegation on this lower-level runtime boundary.
+ */
+export function createWebServerStarter(
+  WebServerCtor: WebServerFactory,
+): (
+  runtime: TradingBotWebServerRuntime,
+  ports: WebServerPorts,
+) => Promise<WebServerInstance> {
+  return async (
+    runtime: TradingBotWebServerRuntime,
+    ports: WebServerPorts,
+  ): Promise<WebServerInstance> => {
+    const server = createWebServerInstance(runtime, ports, WebServerCtor);
+    await server.start();
+    return server;
+  };
+}
+
+/**
  * Adapter mapping keeps the web-server contract derived from the runtime Position shape.
  * Runtime Position does not expose a live mark price here, so the adapter uses entryPrice as the currentPrice snapshot.
  */
@@ -242,7 +263,5 @@ export async function startWebServerRuntime(
   ports: WebServerPorts,
   WebServerCtor: WebServerFactory,
 ): Promise<WebServerInstance> {
-  const server = createWebServerInstance(runtime, ports, WebServerCtor);
-  await server.start();
-  return server;
+  return createWebServerStarter(WebServerCtor)(runtime, ports);
 }

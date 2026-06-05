@@ -46,6 +46,7 @@ describe('web entrypoint runtime factory adoption', () => {
   });
 
   test('keeps the web entrypoint export surface focused on explicit runtime handoff helpers', () => {
+    expect(Object.isFrozen(WEB_ENTRYPOINT_EXPORT_NAMES)).toBe(true);
     expect(Object.keys(webEntrypointModule).sort()).toEqual(
       [...WEB_ENTRYPOINT_EXPORT_NAMES].sort(),
     );
@@ -70,7 +71,7 @@ describe('web entrypoint runtime factory adoption', () => {
       'Callers keep adapter creation explicit at the boundary; the starter receives the pair and ports only.',
     );
     expect(webEntrypointSource).toContain(
-      'The workspace WebServer receives the already-materialized runtime pair.',
+      'The workspace WebServer constructor is bound here once, then receives the already-materialized runtime pair.',
     );
     expect(webEntrypointSource).toContain(
       '`startWebServer(...)` owns lifecycle start; lower-level construction stays in `createWebServerInstance(...)`.',
@@ -85,6 +86,9 @@ describe('web entrypoint runtime factory adoption', () => {
 
     expect(webRuntimeSource).toContain(
       'createWebServerInstance(...) is construction-only and does not start lifecycle.',
+    );
+    expect(webRuntimeSource).toContain(
+      'Binds one concrete WebServer constructor to the shared runtime starter.',
     );
     expect(webRuntimeSource).toContain(
       'startWebServerRuntime(...) owns the lifecycle start after construction.',
