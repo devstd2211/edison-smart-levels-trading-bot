@@ -18,11 +18,8 @@ const createDefaultDataSubscriptions = (config: Config): DataSubscriptionsConfig
   },
 });
 
-export const applyRuntimeConfigDefaults = (config: Config): Config => {
-  if (!config.dataSubscriptions) {
-    config.dataSubscriptions = createDefaultDataSubscriptions(config);
-  }
-
-  config.webApi = normalizeWebApiConfig(config.webApi);
-  return config;
-};
+export const applyRuntimeConfigDefaults = (config: Config): Config => ({
+  ...config,
+  dataSubscriptions: config.dataSubscriptions ?? createDefaultDataSubscriptions(config),
+  webApi: normalizeWebApiConfig(config.webApi),
+});

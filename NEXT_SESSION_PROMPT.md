@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`
-2. `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`
-3. `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`
+1. `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config pipeline loader guardrail follow-up`
+2. `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`
+3. `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,12 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-06-27: completed `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`.
+- 2026-06-27: completed `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`.
+- 2026-06-27: completed `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`.
+- `loadOptionalRuntimeConfig` now routes through a single `loadRuntimeConfig(loader ?? defaultConfigPipelineLoader)` call instead of branching on `loadValidatedConfig`.
+- `applyRuntimeConfigDefaults` is now a pure projection — returns a spread config instead of mutating in place; `config.ts` updated to capture the return value.
+- `ITradingBotRuntimeDependencyParts` now references `ITradingBotLifecycleDependencies` and `ITradingBotReadAdapters` directly; `createTradingBotRuntimeDependenciesFromParts` simplified to identity pass.
 - 2026-06-05: completed `packages/core/src/factories/create-runtime-bundle.ts runtime read adapter bundle projection follow-up`.
 - 2026-06-05: completed `packages/core/src/interfaces/index.ts runtime contract barrel projection follow-up`.
 - 2026-06-05: completed `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up`.
@@ -63,6 +69,6 @@ After all three slices are complete:
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader contracts, while `packages/core/src/config/index.ts` stays focused on the runtime-config entrypoint surface.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-pipeline.functional.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
+- `npm test -- --runInBand packages/core/src/__tests__/config/config-pipeline.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts` (2 suites, 16 tests)
+- `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- `npm run build` — clean

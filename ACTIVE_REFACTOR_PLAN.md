@@ -41,6 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-27: completed `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`.
+- 2026-06-27: completed `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`.
+- 2026-06-27: completed `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`.
+- `config-pipeline.ts`: `loadOptionalRuntimeConfig` no longer branches on `loadValidatedConfig`; all paths go through `loadRuntimeConfig(loader ?? defaultConfigPipelineLoader)`.
+- `runtime-config-defaults.ts`: `applyRuntimeConfigDefaults` is now a pure projection (non-mutating spread return); `config.ts` updated to capture the return value instead of relying on side effects.
+- `runtime-service-adapters.ts`: `ITradingBotRuntimeDependencyParts` now uses direct type references (`ITradingBotLifecycleDependencies`, `ITradingBotReadAdapters`) instead of pick-indexing; `createTradingBotRuntimeDependenciesFromParts` simplified to a direct pass since the types are structurally identical.
 - 2026-06-05: completed `packages/core/src/factories/create-runtime-bundle.ts runtime read adapter bundle projection follow-up`.
 - 2026-06-05: completed `packages/core/src/interfaces/index.ts runtime contract barrel projection follow-up`.
 - 2026-06-05: completed `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up`.
@@ -51,9 +57,10 @@ Historical detail is archived elsewhere and should not be copied here.
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader types, while `packages/core/src/config/index.ts` stays focused on runtime-config entrypoints and re-exports those contracts type-only.
 
 ## Latest Verification
+- 2026-06-27: `npm test -- --runInBand packages/core/src/__tests__/config/config-pipeline.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts` (2 suites, 16 tests)
+- 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-27: `npm run build` — clean
 - 2026-06-05: `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-pipeline.functional.test.ts` (7 suites, 55 tests)
-- 2026-06-05: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
-- 2026-06-05: `npm run build`
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.

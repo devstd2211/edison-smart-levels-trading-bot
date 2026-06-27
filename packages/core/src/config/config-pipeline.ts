@@ -91,7 +91,7 @@ export async function loadRuntimeConfig(
 export async function loadOptionalRuntimeConfig(
   loader?: ConfigPipelineLoader,
 ): Promise<Config> {
-  return loader ? loadRuntimeConfig(loader) : loadValidatedConfig();
+  return loadRuntimeConfig(loader ?? defaultConfigPipelineLoader);
 }
 
 export async function loadValidatedConfig(): Promise<Config> {

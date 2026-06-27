@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`
-- [ ] `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`
-- [ ] `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`
 - [ ] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config pipeline loader guardrail follow-up`
 - [ ] `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`
 - [ ] `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up`
@@ -32,6 +29,9 @@ Legend:
 - [ ] `packages/core/src/__tests__/config/orchestration-config.test.ts config type guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/factories/create-runtime-bundle.ts runtime read adapter bundle projection follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces/index.ts runtime contract barrel projection follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/index.ts config pipeline entrypoint boundary follow-up` | prod: yes | tests: yes | func: yes

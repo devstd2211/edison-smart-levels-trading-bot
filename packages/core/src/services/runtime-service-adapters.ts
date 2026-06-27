@@ -15,6 +15,8 @@ import type {
   IBotInitializerResilienceServices,
   IBotRuntimeSource,
   ITradingBotExecutionServices,
+  ITradingBotLifecycleDependencies,
+  ITradingBotReadAdapters,
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
   ITradingBotRuntimeSource,
@@ -30,8 +32,8 @@ import { createWebApiReadServices, selectWebApiReadServices } from './containers
 
 export interface ITradingBotRuntimeDependencyParts {
   tradingBotServices: ITradingBotServices;
-  lifecycleDependencies: ITradingBotRuntimeDependencies['lifecycleDependencies'];
-  readAdapters: ITradingBotRuntimeDependencies['readAdapters'];
+  lifecycleDependencies: ITradingBotLifecycleDependencies;
+  readAdapters: ITradingBotReadAdapters;
 }
 
 const createTradingExecutionServices = (
@@ -181,11 +183,7 @@ export const createTradingBotRuntimeDependencyParts = (
 
 export const createTradingBotRuntimeDependenciesFromParts = (
   parts: ITradingBotRuntimeDependencyParts,
-): ITradingBotRuntimeDependencies => ({
-  tradingBotServices: parts.tradingBotServices,
-  lifecycleDependencies: parts.lifecycleDependencies,
-  readAdapters: parts.readAdapters,
-});
+): ITradingBotRuntimeDependencies => parts;
 
 export const createTradingBotRuntimeDependencies = (
   runtimeSource: IBotRuntimeSource,

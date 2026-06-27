@@ -50,7 +50,7 @@ describe('config pipeline composition root', () => {
 
     expect(getConfig).toHaveBeenCalledTimes(1);
     expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
-    expect(result).toBe(config);
+    expect(result).toMatchObject(config);
   });
 
   test('loadConfigPipeline keeps the config-only loader path on the shared pipeline without startup validation', async () => {
@@ -61,7 +61,7 @@ describe('config pipeline composition root', () => {
 
     expect(getConfig).toHaveBeenCalledTimes(1);
     expect(ConfigValidatorService.validateAtStartup).not.toHaveBeenCalled();
-    expect(result).toBe(config);
+    expect(result).toMatchObject(config);
   });
 
   test('loadConfigPipeline reuses the runtime loader path without startup validation', async () => {
@@ -75,7 +75,7 @@ describe('config pipeline composition root', () => {
 
     expect(loader.loadBaseConfig).toHaveBeenCalledTimes(1);
     expect(loader.validate).toHaveBeenCalledWith(result);
-    expect(result).toBe(config);
+    expect(result).toMatchObject(config);
   });
 
   test('loadRuntimeConfig normalizes runtime defaults for custom loaders too', async () => {
@@ -111,7 +111,7 @@ describe('config pipeline composition root', () => {
 
     expect(getConfig).toHaveBeenCalledTimes(1);
     expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
-    expect(result).toBe(config);
+    expect(result).toMatchObject(config);
   });
 
   test('loadOptionalRuntimeConfig reuses the validated default path when no custom loader is provided', async () => {
@@ -122,7 +122,7 @@ describe('config pipeline composition root', () => {
 
     expect(getConfig).toHaveBeenCalledTimes(1);
     expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
-    expect(result).toBe(config);
+    expect(result).toMatchObject(config);
   });
 
   test('loadOptionalRuntimeConfig keeps custom loader behavior on the shared runtime path', async () => {
@@ -136,7 +136,7 @@ describe('config pipeline composition root', () => {
 
     expect(loader.loadBaseConfig).toHaveBeenCalledTimes(1);
     expect(loader.validate).toHaveBeenCalledWith(result);
-    expect(result).toBe(config);
+    expect(result).toMatchObject(config);
   });
 
   test('applyStrategyConfig formats indicator details without arrow delimiters', async () => {

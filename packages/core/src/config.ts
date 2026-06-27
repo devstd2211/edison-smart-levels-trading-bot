@@ -24,16 +24,13 @@ import {
 export function getConfig(): Config {
   loadConfigEnvironment();
   const configPath = resolveRootConfigPath();
-  const config = readBaseConfigFile(configPath, fs);
-  const hadMissingDataSubscriptions = !config.dataSubscriptions;
-  logConfigLoadDebug(console, configPath, config, hadMissingDataSubscriptions);
-  applyRuntimeConfigDefaults(config);
+  const rawConfig = readBaseConfigFile(configPath, fs);
+  const hadMissingDataSubscriptions = !rawConfig.dataSubscriptions;
+  logConfigLoadDebug(console, configPath, rawConfig, hadMissingDataSubscriptions);
+  const config = applyRuntimeConfigDefaults(rawConfig);
   logConfigDefaultsApplied(console, config, hadMissingDataSubscriptions);
   applyConfigEnvironmentOverrides(config);
 
-  // =========================================================================
-  // VALIDATE RISKMANAGEMENT CONFIG (NEW - Session 29.4c)
-  // =========================================================================
   validateRiskManagementConfig(config);
 
   return config;
