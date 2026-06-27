@@ -41,6 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-27: completed `packages/core/src/__tests__/config/config-pipeline-summary.test.ts config pipeline summary guardrail follow-up`.
+- 2026-06-27: completed `packages/core/src/config/web-api-config.ts web api config projection boundary follow-up`.
+- 2026-06-27: completed `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up`.
+- `config-pipeline-summary.test.ts`: added edge-case guardrails — empty/undefined inputs, stochastic/bollinger paths, metadata-without-description, export boundary check.
+- `config-pipeline-summary.ts`: `buildStrategyMetadataSummaryLines` parameter narrowed to `{ metadata?: StrategyConfigV2['metadata'] }` to match actual null-safe behavior.
+- `web-api-config.ts`: `DEFAULT_WEB_API_INDICATOR_PREFERENCES` typed as `Required<WebApiIndicatorPreferences>` — removes `!` assertions in `getDefaultWebApiIndicatorPreferences` and `?? []` fallbacks in `normalizeWebApiConfig`; `getDefaultWebApiConfig` return type narrowed to `{ indicatorPreferences: Required<WebApiIndicatorPreferences> }`.
+- `web-api-config.functional.test.ts`: added guardrails for undefined config, empty array preservation, invalid-value filtering, and clone isolation.
 - 2026-06-27: completed `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config pipeline loader guardrail follow-up`.
 - 2026-06-27: completed `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`.
 - 2026-06-27: completed `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up`.
@@ -63,7 +70,10 @@ Historical detail is archived elsewhere and should not be copied here.
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader types, while `packages/core/src/config/index.ts` stays focused on runtime-config entrypoints and re-exports those contracts type-only.
 
 ## Latest Verification
-- 2026-06-27: `npm test -- --runInBand config-pipeline.functional config-pipeline-summary runtime-service-adapters.functional` (3 suites, 21 tests)
+- 2026-06-27: `npm test -- --runInBand config-pipeline-summary web-api-config.functional` (2 suites, 14 tests)
+- 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-27: `npm run build` — clean
+- Earlier 2026-06-27: `npm test -- --runInBand config-pipeline.functional config-pipeline-summary runtime-service-adapters.functional` (3 suites, 21 tests)
 - 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-27: `npm run build` — clean
 - Earlier 2026-06-27: `npm test -- --runInBand packages/core/src/__tests__/config/config-pipeline.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts` (2 suites, 16 tests)

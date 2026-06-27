@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/__tests__/config/config-pipeline-summary.test.ts config pipeline summary guardrail follow-up`
-- [ ] `packages/core/src/config/web-api-config.ts web api config projection boundary follow-up`
-- [ ] `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up`
 - [ ] `packages/core/src/config/config-pipeline.constants.ts config pipeline constants boundary follow-up`
 - [ ] `packages/core/src/__tests__/config/config-loader.test.ts config loader boundary guardrail follow-up`
 - [ ] `packages/core/src/config-loader.ts config file loader boundary follow-up`
@@ -35,6 +32,9 @@ Legend:
 - [ ] `packages/core/src/__tests__/config/orchestration-config.test.ts config type guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/__tests__/config/config-pipeline-summary.test.ts config pipeline summary guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/web-api-config.ts web api config projection boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config pipeline loader guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up` | prod: yes | tests: yes | func: yes

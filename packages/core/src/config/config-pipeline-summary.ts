@@ -24,7 +24,7 @@ export type StrategyIndicatorConfig = Partial<{
 export const buildStrategyMetadataSummaryLines = (
   strategyName: string,
   strategyFile: string,
-  strategy: Pick<StrategyConfigV2, 'metadata'>,
+  strategy: { metadata?: StrategyConfigV2['metadata'] },
 ): string[] => {
   const lines = [
     `${ICONS.note} Loading strategy: ${strategyName}`,

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import {
+  DEFAULT_WEB_API_INDICATOR_PREFERENCES,
   getDefaultWebApiIndicatorPreferences,
   normalizeWebApiConfig,
 } from '../../config/web-api-config';
@@ -32,6 +33,46 @@ describe('web-api config defaults', () => {
       emaPeriods: [20, 50],
       atrPeriods: [14],
     });
+  });
+
+  test('normalizeWebApiConfig uses full defaults when called with no argument', () => {
+    const result = normalizeWebApiConfig();
+
+    expect(result.indicatorPreferences).toEqual(getDefaultWebApiIndicatorPreferences());
+  });
+
+  test('normalizeWebApiConfig preserves empty arrays instead of falling back to defaults', () => {
+    const result = normalizeWebApiConfig({
+      indicatorPreferences: { timeframes: [], rsiPeriods: [] },
+    });
+
+    expect(result.indicatorPreferences.timeframes).toEqual([]);
+    expect(result.indicatorPreferences.rsiPeriods).toEqual([]);
+    expect(result.indicatorPreferences.emaPeriods).toEqual(
+      DEFAULT_WEB_API_INDICATOR_PREFERENCES.emaPeriods,
+    );
+  });
+
+  test('normalizeWebApiConfig filters non-string values from timeframes and non-finite numbers from period lists', () => {
+    const result = normalizeWebApiConfig({
+      indicatorPreferences: {
+        timeframes: [1, 'valid', null, '4h'] as never,
+        rsiPeriods: ['bad', 14, Infinity, NaN, 7] as never,
+      },
+    });
+
+    expect(result.indicatorPreferences.timeframes).toEqual(['valid', '4h']);
+    expect(result.indicatorPreferences.rsiPeriods).toEqual([14, 7]);
+  });
+
+  test('getDefaultWebApiIndicatorPreferences returns independent clones across calls', () => {
+    const first = getDefaultWebApiIndicatorPreferences();
+    first.timeframes.push('mutated');
+
+    const second = getDefaultWebApiIndicatorPreferences();
+
+    expect(second.timeframes).not.toContain('mutated');
+    expect(second).toEqual(DEFAULT_WEB_API_INDICATOR_PREFERENCES);
   });
 
   test('config.example propagates the documented default web-api preferences', () => {

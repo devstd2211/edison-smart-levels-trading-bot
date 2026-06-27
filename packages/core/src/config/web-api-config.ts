@@ -1,6 +1,6 @@
 import type { WebApiConfig, WebApiIndicatorPreferences } from '@edison/contracts/web-api';
 
-export const DEFAULT_WEB_API_INDICATOR_PREFERENCES: WebApiIndicatorPreferences = {
+export const DEFAULT_WEB_API_INDICATOR_PREFERENCES: Required<WebApiIndicatorPreferences> = {
   timeframes: ['1h', '4h'],
   rsiPeriods: [14],
   emaPeriods: [20, 50],
@@ -11,15 +11,14 @@ export const DEFAULT_WEB_API_CONFIG: Required<WebApiConfig> = {
   indicatorPreferences: DEFAULT_WEB_API_INDICATOR_PREFERENCES,
 };
 
-export const getDefaultWebApiIndicatorPreferences = (): WebApiIndicatorPreferences => ({
-  ...DEFAULT_WEB_API_INDICATOR_PREFERENCES,
-  timeframes: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.timeframes!],
-  rsiPeriods: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.rsiPeriods!],
-  emaPeriods: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.emaPeriods!],
-  atrPeriods: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.atrPeriods!],
+export const getDefaultWebApiIndicatorPreferences = (): Required<WebApiIndicatorPreferences> => ({
+  timeframes: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.timeframes],
+  rsiPeriods: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.rsiPeriods],
+  emaPeriods: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.emaPeriods],
+  atrPeriods: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.atrPeriods],
 });
 
-export const getDefaultWebApiConfig = (): Required<WebApiConfig> => ({
+export const getDefaultWebApiConfig = (): { indicatorPreferences: Required<WebApiIndicatorPreferences> } => ({
   indicatorPreferences: getDefaultWebApiIndicatorPreferences(),
 });
 
@@ -39,22 +38,10 @@ export const normalizeWebApiConfig = (config?: WebApiConfig): Required<WebApiCon
 
   return {
     indicatorPreferences: {
-      timeframes: cloneStringList(
-        preferences?.timeframes,
-        defaults.indicatorPreferences.timeframes ?? [],
-      ),
-      rsiPeriods: cloneNumberList(
-        preferences?.rsiPeriods,
-        defaults.indicatorPreferences.rsiPeriods ?? [],
-      ),
-      emaPeriods: cloneNumberList(
-        preferences?.emaPeriods,
-        defaults.indicatorPreferences.emaPeriods ?? [],
-      ),
-      atrPeriods: cloneNumberList(
-        preferences?.atrPeriods,
-        defaults.indicatorPreferences.atrPeriods ?? [],
-      ),
+      timeframes: cloneStringList(preferences?.timeframes, defaults.indicatorPreferences.timeframes),
+      rsiPeriods: cloneNumberList(preferences?.rsiPeriods, defaults.indicatorPreferences.rsiPeriods),
+      emaPeriods: cloneNumberList(preferences?.emaPeriods, defaults.indicatorPreferences.emaPeriods),
+      atrPeriods: cloneNumberList(preferences?.atrPeriods, defaults.indicatorPreferences.atrPeriods),
     },
   };
 };
