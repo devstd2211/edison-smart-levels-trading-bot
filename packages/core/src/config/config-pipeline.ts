@@ -16,6 +16,7 @@ import type {
 import { StrategyLoaderService } from '../services/strategy-loader.service';
 import { StrategyConfigMergerService } from '../services/strategy-config-merger.service';
 import { ConfigValidatorService } from '../services/config-validator.service';
+import type { StrategyIndicatorConfig } from './config-pipeline-summary';
 import {
   buildStrategyAnalyzerSummaryLines,
   buildStrategyIndicatorSummaryLines,
@@ -64,7 +65,9 @@ export async function applyStrategyConfig(config: Config): Promise<Config> {
       const changeReport = strategyMerger.getChangeReport(config, strategy);
       buildStrategyMergeSummaryLines(changeReport.changesCount).forEach((line) => console.log(line));
       buildStrategyAnalyzerSummaryLines(strategy.analyzers).forEach((line) => console.log(line));
-      buildStrategyIndicatorSummaryLines(strategy.indicators).forEach((line) => console.log(line));
+      buildStrategyIndicatorSummaryLines(
+        strategy.indicators as Record<string, StrategyIndicatorConfig> | undefined,
+      ).forEach((line) => console.log(line));
     } catch (error) {
       console.error(`${ICONS.error} Failed to load strategy:`, error);
       throw error;

@@ -41,6 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-27: completed `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config pipeline loader guardrail follow-up`.
+- 2026-06-27: completed `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`.
+- 2026-06-27: completed `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up`.
+- `config-pipeline.functional.test.ts`: added `loadOptionalRuntimeConfig applies runtime defaults on the unified loader path` test using legacy pre-defaults config to explicitly guardrail the pure-function pipeline path.
+- `runtime-service-adapters.functional.test.ts`: added `createTradingBotRuntimeDependenciesFromParts is an identity projection` test asserting `runtimeDependencies === runtimeParts`.
+- `config-pipeline-summary.ts`: removed `StrategyIndicatorSummarySource` union type; `buildStrategyIndicatorSummaryLines` now takes `Record<string, StrategyIndicatorConfig>`; removed unsafe `as StrategyIndicatorConfig` cast; `StrategyIndicatorConfig` exported; call site in `config-pipeline.ts` updated.
 - 2026-06-27: completed `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`.
 - 2026-06-27: completed `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`.
 - 2026-06-27: completed `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`.
@@ -57,7 +63,10 @@ Historical detail is archived elsewhere and should not be copied here.
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader types, while `packages/core/src/config/index.ts` stays focused on runtime-config entrypoints and re-exports those contracts type-only.
 
 ## Latest Verification
-- 2026-06-27: `npm test -- --runInBand packages/core/src/__tests__/config/config-pipeline.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts` (2 suites, 16 tests)
+- 2026-06-27: `npm test -- --runInBand config-pipeline.functional config-pipeline-summary runtime-service-adapters.functional` (3 suites, 21 tests)
+- 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-27: `npm run build` — clean
+- Earlier 2026-06-27: `npm test -- --runInBand packages/core/src/__tests__/config/config-pipeline.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts` (2 suites, 16 tests)
 - 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-27: `npm run build` — clean
 - 2026-06-05: `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-pipeline.functional.test.ts` (7 suites, 55 tests)

@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config pipeline loader guardrail follow-up`
-2. `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime service adapter projection guardrail follow-up`
-3. `packages/core/src/config/config-pipeline-summary.ts config pipeline summary boundary follow-up`
+1. `packages/core/src/__tests__/config/config-pipeline-summary.test.ts config pipeline summary guardrail follow-up`
+2. `packages/core/src/config/web-api-config.ts web api config projection boundary follow-up`
+3. `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,9 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-06-27: completed `packages/core/src/__tests__/config/config-pipeline.functional.test.ts` — added defaults-on-unified-path guardrail test.
+- 2026-06-27: completed `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts` — added identity projection guardrail test.
+- 2026-06-27: completed `packages/core/src/config/config-pipeline-summary.ts` — removed union type, exported `StrategyIndicatorConfig`, removed unsafe cast.
 - 2026-06-27: completed `packages/core/src/config/config-pipeline.ts config pipeline loader boundary follow-up`.
 - 2026-06-27: completed `packages/core/src/config/runtime-config-defaults.ts runtime config defaults projection follow-up`.
 - 2026-06-27: completed `packages/core/src/services/runtime-service-adapters.ts runtime service adapter bundle projection follow-up`.

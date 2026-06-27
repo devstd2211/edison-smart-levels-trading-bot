@@ -139,6 +139,21 @@ describe('config pipeline composition root', () => {
     expect(result).toMatchObject(config);
   });
 
+  test('loadOptionalRuntimeConfig applies runtime defaults on the unified loader path', async () => {
+    const config = createLegacyPreRuntimeDefaultsConfig();
+    (getConfig as jest.Mock).mockReturnValue(config);
+
+    const result = await loadOptionalRuntimeConfig();
+
+    expect(result.dataSubscriptions).toEqual({
+      candles: { enabled: true, calculateIndicators: true },
+      orderbook: { enabled: true, updateIntervalMs: 5000 },
+      ticks: { enabled: false, calculateDelta: true },
+    });
+    expect(result.webApi).toBeDefined();
+    expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
+  });
+
   test('applyStrategyConfig formats indicator details without arrow delimiters', async () => {
     const config = {
       ...createMinimalLifecycleConfig(),

@@ -130,6 +130,14 @@ describe('runtime dependency adapter boundary', () => {
       expect('webApiServices' in (runtimeBundle as unknown as Record<string, unknown>)).toBe(false);
     });
 
+    test('createTradingBotRuntimeDependenciesFromParts is an identity projection of the assembled parts', () => {
+      const { services } = createRuntimeBundleHarness();
+      const runtimeParts = createTradingBotRuntimeDependencyParts(services);
+      const runtimeDependencies = createTradingBotRuntimeDependenciesFromParts(runtimeParts);
+
+      expect(runtimeDependencies).toBe(runtimeParts);
+    });
+
     test('projects the public read-only web API handoff directly from grouped read adapters', () => {
       const { runtimeDependencies } = createRuntimeBundleHarness();
 

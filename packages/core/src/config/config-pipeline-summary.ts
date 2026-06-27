@@ -12,7 +12,7 @@ import type {
 
 const DEFAULT_SEPARATOR = '='.repeat(CONFIG_PIPELINE_SEPARATOR_LENGTH);
 
-type StrategyIndicatorConfig = Partial<{
+export type StrategyIndicatorConfig = Partial<{
   period: number;
   fastPeriod: number;
   slowPeriod: number;
@@ -20,10 +20,6 @@ type StrategyIndicatorConfig = Partial<{
   dPeriod: number;
   stdDev: number;
 }>;
-
-type StrategyIndicatorSummarySource =
-  | StrategyConfigV2['indicators']
-  | Record<string, StrategyIndicatorConfig>;
 
 export const buildStrategyMetadataSummaryLines = (
   strategyName: string,
@@ -100,7 +96,7 @@ export const buildStrategyAnalyzerSummaryLines = (
 };
 
 export const buildStrategyIndicatorSummaryLines = (
-  indicators?: StrategyIndicatorSummarySource,
+  indicators?: Record<string, StrategyIndicatorConfig>,
 ): string[] => {
   if (!indicators || Object.keys(indicators).length === 0) {
     return [];
@@ -112,23 +108,22 @@ export const buildStrategyIndicatorSummaryLines = (
     DEFAULT_SEPARATOR,
   ];
 
-  Object.entries(indicators).forEach(([name, configEntry]) => {
-    const detailsConfig = configEntry as StrategyIndicatorConfig;
-    const details: string[] = [];
-    if (detailsConfig.period) {
-      details.push(`period=${detailsConfig.period}`);
+  Object.entries(indicators).forEach(([name, details]) => {
+    const parts: string[] = [];
+    if (details.period) {
+      parts.push(`period=${details.period}`);
     }
-    if (detailsConfig.fastPeriod) {
-      details.push(`fast=${detailsConfig.fastPeriod}, slow=${detailsConfig.slowPeriod}`);
+    if (details.fastPeriod) {
+      parts.push(`fast=${details.fastPeriod}, slow=${details.slowPeriod}`);
     }
-    if (detailsConfig.kPeriod) {
-      details.push(`k=${detailsConfig.kPeriod}, d=${detailsConfig.dPeriod}`);
+    if (details.kPeriod) {
+      parts.push(`k=${details.kPeriod}, d=${details.dPeriod}`);
     }
-    if (detailsConfig.stdDev) {
-      details.push(`stdDev=${detailsConfig.stdDev}`);
+    if (details.stdDev) {
+      parts.push(`stdDev=${details.stdDev}`);
     }
 
-    const detailsSuffix = details.length > 0 ? `: ${details.join(', ')}` : '';
+    const detailsSuffix = parts.length > 0 ? `: ${parts.join(', ')}` : '';
     lines.push(`   - ${name}${detailsSuffix}`);
   });
 
