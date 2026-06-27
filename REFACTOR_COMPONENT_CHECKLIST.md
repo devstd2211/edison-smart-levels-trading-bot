@@ -15,23 +15,27 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/config/config-pipeline.constants.ts config pipeline constants boundary follow-up`
-- [ ] `packages/core/src/__tests__/config/config-loader.test.ts config loader boundary guardrail follow-up`
-- [ ] `packages/core/src/config-loader.ts config file loader boundary follow-up`
 - [ ] `packages/core/src/config.ts root config assembly boundary follow-up`
 - [ ] `packages/core/src/config/risk-management.validate.ts risk management validation boundary follow-up`
 - [ ] `packages/core/src/__tests__/config/orchestration-config.test.ts config type guardrail follow-up`
-- [ ] `packages/core/src/__tests__/config/config-pipeline-summary.test.ts config pipeline summary guardrail follow-up`
-- [ ] `packages/core/src/config/web-api-config.ts web api config projection boundary follow-up`
-- [ ] `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up`
-- [ ] `packages/core/src/config/config-pipeline.constants.ts config pipeline constants boundary follow-up`
-- [ ] `packages/core/src/__tests__/config/config-loader.test.ts config loader boundary guardrail follow-up`
-- [ ] `packages/core/src/config-loader.ts config file loader boundary follow-up`
-- [ ] `packages/core/src/config.ts root config assembly boundary follow-up`
-- [ ] `packages/core/src/config/risk-management.validate.ts risk management validation boundary follow-up`
-- [ ] `packages/core/src/__tests__/config/orchestration-config.test.ts config type guardrail follow-up`
+- [ ] `packages/core/src/services/trading-lifecycle.service.ts trading lifecycle service boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/trading-lifecycle.functional.test.ts trading lifecycle service guardrail follow-up`
+- [ ] `packages/core/src/services/graceful-shutdown.service.ts graceful shutdown service boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/graceful-shutdown.functional.test.ts graceful shutdown service guardrail follow-up`
+- [ ] `packages/core/src/services/real-time-risk-monitor.service.ts real-time risk monitor service boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/real-time-risk-monitor.functional.test.ts real-time risk monitor service guardrail follow-up`
+- [ ] `packages/core/src/services/order-execution-pipeline.service.ts order execution pipeline service boundary follow-up`
+- [ ] `packages/core/src/services/performance-analytics.service.ts performance analytics service boundary follow-up`
+- [ ] `packages/core/src/services/strategy-loader.service.ts strategy loader service boundary follow-up`
+- [ ] `packages/core/src/services/config-validator.service.ts config validator service boundary follow-up`
+- [ ] `packages/core/src/services/strategy-config-merger.service.ts strategy config merger service boundary follow-up`
+- [ ] `packages/core/src/services/index.ts services barrel boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/config/config-pipeline.constants.ts config pipeline constants boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-pipeline.constants.test.ts config pipeline constants guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-loader.test.ts config loader boundary guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config-loader.ts config file loader boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/config/config-pipeline-summary.test.ts config pipeline summary guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/web-api-config.ts web api config projection boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up` | prod: yes | tests: yes | func: yes

@@ -51,20 +51,10 @@ export function readBaseConfigFile(
 export function logConfigLoadDebug(
   logger: ConfigConsole,
   configPath: string,
-  config: Config,
+  _config: Config,
   hadMissingDataSubscriptions: boolean,
 ): void {
   logger.log(`${ICONS.search} DEBUG: Loading config from:`, configPath);
-  logger.log(
-    `${ICONS.search} DEBUG: Config loaded. scalpingLadderTp exists:`,
-    !!config.scalpingLadderTp,
-    'enabled:',
-    config.scalpingLadderTp?.enabled,
-  );
-  logger.log(
-    `${ICONS.search} DEBUG: entryConfig.divergenceDetector:`,
-    JSON.stringify(config.entryConfig?.divergenceDetector || 'MISSING'),
-  );
 
   if (hadMissingDataSubscriptions) {
     logger.log(`${ICONS.warning}  dataSubscriptions missing in config - using defaults`);

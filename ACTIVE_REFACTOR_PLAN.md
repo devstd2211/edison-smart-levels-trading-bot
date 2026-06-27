@@ -41,6 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-27: completed `packages/core/src/config/config-pipeline.constants.ts config pipeline constants boundary follow-up`.
+- 2026-06-27: completed `packages/core/src/__tests__/config/config-loader.test.ts config loader boundary guardrail follow-up`.
+- 2026-06-27: completed `packages/core/src/config-loader.ts config file loader boundary follow-up`.
+- `config-pipeline.constants.ts`: new guardrail test created (`config-pipeline.constants.test.ts`) — 4 tests assert each constant's display-formatting value.
+- `config-loader.test.ts`: added 6 new tests — `logConfigLoadDebug` path logging and defaults warning, `logConfigDefaultsApplied` conditional logging, `applyConfigEnvironmentOverrides` legacy-key fallback path and no-env-vars unchanged path.
+- `config-loader.ts`: removed feature-specific debug lines (`scalpingLadderTp`, `entryConfig.divergenceDetector`) from `logConfigLoadDebug` — loader no longer references specific config field shapes; `_config` parameter retained for signature consistency.
 - 2026-06-27: completed `packages/core/src/__tests__/config/config-pipeline-summary.test.ts config pipeline summary guardrail follow-up`.
 - 2026-06-27: completed `packages/core/src/config/web-api-config.ts web api config projection boundary follow-up`.
 - 2026-06-27: completed `packages/core/src/__tests__/config/web-api-config.functional.test.ts web api config projection guardrail follow-up`.
@@ -70,7 +76,10 @@ Historical detail is archived elsewhere and should not be copied here.
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader types, while `packages/core/src/config/index.ts` stays focused on runtime-config entrypoints and re-exports those contracts type-only.
 
 ## Latest Verification
-- 2026-06-27: `npm test -- --runInBand config-pipeline-summary web-api-config.functional` (2 suites, 14 tests)
+- 2026-06-27: `npm test -- --runInBand config-pipeline.constants config-loader.test` (2 suites, 15 tests)
+- 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-27: `npm run build` — clean
+- Earlier 2026-06-27: `npm test -- --runInBand config-pipeline-summary web-api-config.functional` (2 suites, 14 tests)
 - 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-27: `npm run build` — clean
 - Earlier 2026-06-27: `npm test -- --runInBand config-pipeline.functional config-pipeline-summary runtime-service-adapters.functional` (3 suites, 21 tests)

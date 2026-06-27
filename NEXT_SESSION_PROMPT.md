@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/config/config-pipeline.constants.ts config pipeline constants boundary follow-up`
-2. `packages/core/src/__tests__/config/config-loader.test.ts config loader boundary guardrail follow-up`
-3. `packages/core/src/config-loader.ts config file loader boundary follow-up`
+1. `packages/core/src/config.ts root config assembly boundary follow-up`
+2. `packages/core/src/config/risk-management.validate.ts risk management validation boundary follow-up`
+3. `packages/core/src/__tests__/config/orchestration-config.test.ts config type guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,9 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-06-27: completed `config-pipeline.constants.ts` — new guardrail test created, 4 constant values asserted.
+- 2026-06-27: completed `config-loader.test.ts` — 6 new tests: logConfigLoadDebug, logConfigDefaultsApplied, legacy API_KEY fallback, no-env-vars unchanged path.
+- 2026-06-27: completed `config-loader.ts` — removed feature-specific debug lines (scalpingLadderTp, entryConfig) from logConfigLoadDebug; loader no longer references specific config shapes.
 - 2026-06-27: completed `config-pipeline-summary.test.ts` — edge-case guardrails + export boundary check.
 - 2026-06-27: completed `web-api-config.ts` — Required<> types, removed ! and ?? [] defensives.
 - 2026-06-27: completed `web-api-config.functional.test.ts` — undefined, empty array, filtering, clone isolation tests.
@@ -75,6 +78,6 @@ After all three slices are complete:
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader contracts, while `packages/core/src/config/index.ts` stays focused on the runtime-config entrypoint surface.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/config/config-pipeline.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts` (2 suites, 16 tests)
+- `npm test -- --runInBand config-pipeline.constants config-loader.test` (2 suites, 15 tests)
 - `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - `npm run build` — clean
