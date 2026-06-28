@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/services/ladder-tp-manager.service.ts ladder tp manager service boundary follow-up`
-- [ ] `packages/core/src/services/ladder-exit-detector.service.ts ladder exit detector service boundary follow-up`
-- [ ] `packages/core/src/services/swing-point-detector.service.ts swing point detector service boundary follow-up`
 - [ ] `packages/core/src/services/anti-flip.service.ts anti flip service boundary follow-up`
 - [ ] `packages/core/src/services/bot-metrics.service.ts bot metrics service boundary follow-up`
 - [ ] `packages/core/src/services/session-stats.service.ts session stats service boundary follow-up`
@@ -29,6 +26,9 @@ Legend:
 - [ ] `packages/core/src/services/strategy-manager.service.ts strategy manager service boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/ladder-tp-manager.service.ts ladder tp manager service boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/ladder-exit-detector.service.ts ladder exit detector service boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/swing-point-detector.service.ts swing point detector service boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/position-exiting.service.ts position exiting service boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/position-lifecycle.service.ts position lifecycle service boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/limit-order-executor.service.ts limit order executor service boundary follow-up` | prod: yes | tests: yes | func: yes

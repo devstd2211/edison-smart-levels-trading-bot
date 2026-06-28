@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/services/ladder-tp-manager.service.ts ladder tp manager service boundary follow-up`
-2. `packages/core/src/services/ladder-exit-detector.service.ts ladder exit detector service boundary follow-up`
-3. `packages/core/src/services/swing-point-detector.service.ts swing point detector service boundary follow-up`
+1. `packages/core/src/services/anti-flip.service.ts anti flip service boundary follow-up`
+2. `packages/core/src/services/bot-metrics.service.ts bot metrics service boundary follow-up`
+3. `packages/core/src/services/session-stats.service.ts session stats service boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,7 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-06-28: completed `ladder-tp-manager.service.ts`, `ladder-exit-detector.service.ts`, `swing-point-detector.service.ts` (Batch 7, commit a83aa0a). 124 tests pass, build clean.
 - 2026-06-28: completed `position-exiting.service.ts`, `position-lifecycle.service.ts`, `limit-order-executor.service.ts` (Batch 6, commit 856bd40). 328 tests pass, build clean.
 - 2026-06-28: completed `config-validator.service.ts` — removed hasPath/getPath JSDoc, all five throwXxxError Phase 8.9.31 docblocks, inline logging comment; test docblocks cleaned; functional test created (validateAtStartup pass/fail, validateAll errors, printEnabledAnalyzers, export boundary).
 - 2026-06-28: completed `strategy-config-merger.service.ts` — removed Phase 8.9.77 file docblock, JSDoc from all 7 methods, all THROW/GRACEFUL_DEGRADE/numbered-step comments; kept WHY comments; cleaned error-handling.test.ts; functional test created (mergeConfigs, getChangeReport, export boundary).

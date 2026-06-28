@@ -41,6 +41,10 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-28: completed `ladder-tp-manager.service.ts`, `ladder-exit-detector.service.ts`, `swing-point-detector.service.ts` (Batch 7). 124 tests pass; build clean. Commit a83aa0a.
+- `ladder-tp-manager.service.ts`: removed Phase 3/8.9.26 docblock, CONSTANTS/class section dividers, PUBLIC METHODS/HELPER METHODS dividers, all method JSDoc, all WHAT inlines (calculate/fallback/validate comments).
+- `ladder-exit-detector.service.ts`: removed Phase 8.9.27 docblock, class section divider, PUBLIC/PRIVATE dividers, all method JSDoc, all SKIP/RETRY/THROW strategy inline labels, WHAT inlines (validate/fallback/find comments).
+- `swing-point-detector.service.ts`: removed 15-line class docblock, CONSTANTS/SERVICE dividers, Phase 8.9.44 markers from constructor/methods, all method JSDoc, all section headers (VALIDATION/DETECTION ALGORITHM/RECORD DETECTIONS/SUMMARY LOG), all WHAT inlines.
 - 2026-06-28: completed `packages/core/src/services/position-exiting.service.ts`, `position-lifecycle.service.ts`, `limit-order-executor.service.ts` (Batch 6). All 328 tests pass; build clean. Commit 856bd40.
 - `position-exiting.service.ts`: removed 20-line Responsibilities docblock, class-level section dividers, all 16 method JSDoc, WHAT inline comments; cleaned Phase docblocks from all 5 test files; kept WHY comments (atomic lock, race condition guards, TP coupling).
 - `position-lifecycle.service.ts`: removed 21-line Consolidated docblock, CONSTANTS/class section dividers, all field/constructor Phase comments, all public API section headers, all method JSDoc; kept `// Used by PositionExitingService to track TP hits` (WHY coupling note); cleaned Phase docblocks from error-handling and p0-safety test files.
