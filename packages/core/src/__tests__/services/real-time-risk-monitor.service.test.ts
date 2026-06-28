@@ -1,17 +1,3 @@
-/**
- * Phase 9.1: Real-Time Risk Monitor Service Tests
- *
- * Comprehensive unit tests for RealTimeRiskMonitor service
- * Tests health score calculation, danger detection, and alert triggering
- *
- * Coverage:
- * - Health score calculation (overall + components)
- * - Danger level detection (SAFE/WARNING/CRITICAL)
- * - Risk alert triggering
- * - Position monitoring
- * - Cache management
- */
-
 import { PositionSide } from '../../types/legacy';
 import {
   DangerLevel,

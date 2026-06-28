@@ -1,27 +1,5 @@
-/**
- * Phase 9: Real-Time Risk Monitor Service
- *
- * Monitors position health in real-time with:
- * - Health score calculation (0-100)
- * - Danger level detection
- * - Alert triggers for various risk conditions
- * - Continuous monitoring of all positions
- *
- * Health Score Components:
- * - Time at Risk Score (20%) - Based on holding time
- * - Drawdown Score (30%) - Based on current unrealized loss
- * - Volume/Liquidity Score (20%) - Based on volume conditions
- * - Volatility Score (15%) - Based on ATR changes
- * - Profitability Score (15%) - Based on current PnL
- *
- * Danger Levels:
- * - SAFE: Score >= 70
- * - WARNING: Score 30-69
- * - CRITICAL: Score < 30
- */
-
 import { BotEventBus } from './event-bus';
-import { LoggerService, PositionSide } from '../types/legacy';
+import { LoggerService } from '../types/legacy';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import {
   RiskMonitoringConfig,
@@ -53,23 +31,6 @@ import {
 } from './real-time-risk-monitor/real-time-risk-monitor-score.utils';
 import { ICONS } from '../cli/cli-runtime';
 
-/**
- * RealTimeRiskMonitor: Continuous position health monitoring
- *
- * Responsibilities:
- * 1. Calculate health scores for each position (0-100)
- * 2. Detect danger levels (SAFE, WARNING, CRITICAL)
- * 3. Analyze position-specific risk factors
- * 4. Emit risk alerts when thresholds triggered
- * 5. Generate comprehensive health reports
- *
- * Health Score Formula:
- * - Time at Risk (20%): Based on holding time vs max
- * - Drawdown (30%): Based on unrealized loss
- * - Volume/Liquidity (20%): Based on volume conditions
- * - Volatility (15%): Based on volatility changes
- * - Profitability (15%): Based on current PnL
- */
 export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
   private config: RiskMonitoringConfig;
   private positionLifecycleService: PositionLifecycleService;
@@ -77,7 +38,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
   private eventBus: BotEventBus;
   private lastCheckTime: number = 0;
   private healthScoreCache: Map<string, HealthScore> = new Map();
-  private generatedAlerts: Map<string, RiskAlert[]> = new Map(); // Track alerts per position
+  private generatedAlerts: Map<string, RiskAlert[]> = new Map();
   private isStarted = false;
   private unsubscribePositionClosed?: () => void;
 
@@ -88,16 +49,12 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     this.eventBus = eventBus;
   }
 
-  /**
-   * Start subscriptions for cache invalidation (explicit lifecycle)
-   */
   public start(): void {
     if (this.isStarted) {
       return;
     }
     this.isStarted = true;
 
-    // [P1] Subscribe to position-closed event for cache invalidation
     if (this.eventBus && typeof this.eventBus.subscribe === 'function') {
       this.unsubscribePositionClosed = this.eventBus.subscribe('position-closed', (data: PositionClosedEventPayload) => {
         this.onPositionClosed(data);
@@ -106,9 +63,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     }
   }
 
-  /**
-   * Stop subscriptions (explicit lifecycle)
-   */
   public stop(): void {
     if (!this.isStarted) {
       return;
@@ -126,20 +80,13 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     }
   }
 
-  /**
-   * Calculate comprehensive health score for a position
-   * Returns score 0-100, with details on each component
-   *
-   * Phase 8.5: ErrorHandler integration with GRACEFUL_DEGRADE strategy
-   */
   public async calculatePositionHealth(positionId: string, currentPrice: number): Promise<HealthScore> {
     this.ensureStarted();
     const now = Date.now();
     const position = this.positionLifecycleService.getCurrentPosition();
 
-    // Phase 8.5: GRACEFUL_DEGRADE on position validation failure
     if (!position || position.id !== positionId) {
-      const handled = await ErrorHandler.handle(
+      await ErrorHandler.handle(
         new PositionNotFoundError(`Position not found: ${positionId}`, {
           positionId,
           requestedId: positionId,
@@ -157,34 +104,28 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
         }
       );
 
-      // GRACEFUL_DEGRADE: Return cached health score if available
       const cached = this.getLatestHealthScore(positionId);
       if (cached) {
         return cached;
       }
 
-      // No cache: return conservative safe default
       return createSafeDefaultHealthScore(positionId);
     }
 
-    // Get cached score if available and recent
     const cached = this.healthScoreCache.get(positionId);
     if (cached && now - cached.lastUpdate < 60000) {
-      // Cache for 1 minute
       return cached;
     }
 
-    // Phase 8.5: Validate currentPrice before use
     const { price: validPrice } = await this.validateCurrentPrice(
       positionId,
       currentPrice,
       position.entryPrice
     );
 
-    // Phase 8.5: Validate position quantity and entryPrice to prevent zero division
     const denominator = position.quantity * position.entryPrice;
     if (denominator === 0) {
-      const handled = await ErrorHandler.handle(
+      await ErrorHandler.handle(
         new PositionSizingError('Zero quantity or entry price in PnL calculation', {
           requestedSize: position.quantity,
           entryPrice: position.entryPrice,
@@ -205,7 +146,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
         }
       );
 
-      // GRACEFUL_DEGRADE: Return safe default score (70 = SAFE threshold)
       return createSafeDefaultHealthScore(positionId);
     }
 
@@ -227,26 +167,11 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       analysis,
     };
 
-    // Cache result
     this.healthScoreCache.set(positionId, healthScore);
 
     return healthScore;
   }
 
-  /**
-   * Calculate unrealized PnL for a position
-   */
-  private calculateUnrealizedPnL(position: Position, currentPrice: number): number {
-    if (position.side === PositionSide.LONG) {
-      return (currentPrice - position.entryPrice) * position.quantity;
-    } else {
-      return (position.entryPrice - currentPrice) * position.quantity;
-    }
-  }
-
-  /**
-   * Check if position is in danger
-   */
   public async checkPositionDanger(positionId: string, currentPrice?: number): Promise<DangerLevel> {
     this.ensureStarted();
     const position = this.positionLifecycleService.getCurrentPosition();
@@ -254,19 +179,11 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       throw new Error(`Position not found: ${positionId}`);
     }
 
-    // Use provided currentPrice or fallback to entry price
     const price = currentPrice || position.entryPrice;
     const healthScore = await this.calculatePositionHealth(positionId, price);
     return healthScore.status;
   }
 
-  /**
-   * Monitor all open positions and return health report
-   */
-  /**
-   * PHASE 13.1a: Updated to require currentPrice parameter
-   * Caller (WebSocket or candle handler) must provide real market price
-   */
   public async monitorAllPositions(currentPrice?: number): Promise<HealthReport> {
     this.ensureStarted();
     const now = Date.now();
@@ -276,8 +193,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
 
     if (position) {
       try {
-        // PHASE 13.1a: Use provided currentPrice or fallback to entryPrice
-        // WARNING: If currentPrice is not provided, health scoring will be inaccurate!
         const priceToUse = currentPrice ?? position.entryPrice;
         if (!currentPrice) {
           this.logger.warn(
@@ -287,12 +202,10 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
         const healthScore = await this.calculatePositionHealth(position.id, priceToUse);
         scores.push(healthScore);
 
-        // Check for alerts (PHASE 13.1a: pass currentPrice for accurate assessment)
         const alert = await this.shouldTriggerAlert(position.id, priceToUse);
         if (alert) {
           alerts.push(alert);
 
-          // Phase 8.5: SKIP event publishing on failure
           try {
             this.eventBus.publishSync({
               type: LiveTradingEventType.RISK_ALERT_TRIGGERED,
@@ -303,7 +216,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
               timestamp: now,
             });
           } catch (error) {
-            const handled = await ErrorHandler.handle(error, {
+            await ErrorHandler.handle(error, {
               strategy: RecoveryStrategy.SKIP,
               logger: this.logger,
               context: 'RealTimeRiskMonitor.publishRiskAlertEvent',
@@ -315,12 +228,9 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
                 });
               },
             });
-
-            // SKIP: Continue monitoring, event publishing is non-critical
           }
         }
 
-        // Phase 8.5: SKIP event publishing on failure
         try {
           this.eventBus.publishSync({
             type: LiveTradingEventType.HEALTH_SCORE_UPDATED,
@@ -335,7 +245,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
             timestamp: now,
           });
         } catch (error) {
-          const handled = await ErrorHandler.handle(error, {
+          await ErrorHandler.handle(error, {
             strategy: RecoveryStrategy.SKIP,
             logger: this.logger,
             context: 'RealTimeRiskMonitor.publishHealthScoreEvent',
@@ -347,12 +257,9 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
               });
             },
           });
-
-          // SKIP: Continue monitoring, event publishing is non-critical
         }
       } catch (error) {
-        // Phase 8.5: Use ErrorHandler for position monitoring failures with SKIP strategy
-        const handled = await ErrorHandler.handle(error, {
+        await ErrorHandler.handle(error, {
           strategy: RecoveryStrategy.SKIP,
           logger: this.logger,
           context: 'RealTimeRiskMonitor.monitorAllPositions',
@@ -364,12 +271,9 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
             });
           },
         });
-
-        // SKIP: Continue with other positions
       }
     }
 
-    // Calculate statistics
     const safePositions = scores.filter((s) => s.status === DangerLevel.SAFE).length;
     const warningPositions = scores.filter((s) => s.status === DangerLevel.WARNING).length;
     const criticalPositions = scores.filter((s) => s.status === DangerLevel.CRITICAL).length;
@@ -387,13 +291,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     };
   }
 
-  /**
-   * Check if position should trigger an alert
-   */
-  /**
-   * PHASE 13.1a: Check if position should trigger an alert
-   * NOW REQUIRES: currentPrice parameter for accurate health calculation
-   */
   public async shouldTriggerAlert(positionId: string, currentPrice: number): Promise<RiskAlert | null> {
     this.ensureStarted();
     const position = this.positionLifecycleService.getCurrentPosition();
@@ -401,8 +298,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       return null;
     }
 
-    // PHASE 13.1a: REQUIRED parameter - no fallback to entryPrice
-    // Caller MUST provide real market price for accurate risk assessment
     const healthScore = await this.calculatePositionHealth(positionId, currentPrice);
 
     // Check for critical danger
@@ -448,25 +343,15 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     return null;
   }
 
-  /**
-   * Get latest health score for a position (from cache)
-   */
   public getLatestHealthScore(positionId: string): HealthScore | undefined {
     return this.healthScoreCache.get(positionId);
   }
 
-  /**
-   * Clear health score cache
-   */
   public clearHealthScoreCache(): void {
     this.healthScoreCache.clear();
     this.logger.debug('[RealTimeRiskMonitor] Cleared health score cache');
   }
 
-  /**
-   * [P1] Handle position-closed event
-   * Invalidate health score cache when position closes
-   */
   private onPositionClosed(data: PositionClosedEventPayload): void {
     const positionId = this.extractPositionIdFromClosedEvent(data);
 
@@ -475,7 +360,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       return;
     }
 
-    // Clear cache for this position
     this.healthScoreCache.delete(positionId);
     this.generatedAlerts.delete(positionId);
 
@@ -505,9 +389,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       && typeof (value as Position).symbol === 'string';
   }
 
-  /**
-   * Get monitoring statistics
-   */
   public getStatistics(): {
     positionsMonitored: number;
     lastCheckTime: number;
@@ -522,17 +403,13 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     };
   }
 
-  /**
-   * Phase 8.5: Validate current price for health calculation
-   * Returns validated price or fallback on failure with GRACEFUL_DEGRADE
-   */
   private async validateCurrentPrice(
     positionId: string,
     currentPrice: number | undefined,
     fallbackPrice: number
   ): Promise<{ price: number; usedCache: boolean }> {
     if (currentPrice !== undefined && (isNaN(currentPrice) || currentPrice <= 0)) {
-      const handled = await ErrorHandler.handle(
+      await ErrorHandler.handle(
         new OrderValidationError('Invalid current price for health calculation', {
           field: 'currentPrice',
           value: currentPrice,
@@ -553,7 +430,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
         }
       );
 
-      // GRACEFUL_DEGRADE: Use fallback (entryPrice)
       return { price: fallbackPrice, usedCache: false };
     }
 
