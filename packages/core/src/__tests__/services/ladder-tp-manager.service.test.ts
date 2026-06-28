@@ -1,15 +1,3 @@
-/**
- * Tests for LadderTpManagerService (Phase 3)
- *
- * Coverage:
- * - Create ladder levels (LONG/SHORT)
- * - Check TP hit detection
- * - Execute partial closes
- * - Move to breakeven after TP1
- * - Move trailing SL after TP2
- * - Config validation
- */
-
 import { LadderTpManagerService } from '../../services/ladder-tp-manager.service';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { IExchange } from '../../interfaces/IExchange';

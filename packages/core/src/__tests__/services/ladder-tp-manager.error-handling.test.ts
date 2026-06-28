@@ -1,16 +1,3 @@
-/**
- * Error Handling Tests for LadderTpManagerService (Phase 8.9.26)
- *
- * Coverage:
- * - Configuration validation with THROW strategy
- * - Partial close execution with RETRY strategy
- * - Move to breakeven with RETRY + FALLBACK strategies
- * - Move trailing SL with RETRY + GRACEFUL_DEGRADE strategies
- * - Logger failures with SKIP strategy
- * - Backward compatibility without ErrorHandler
- * - Integration scenarios with cascading failures
- */
-
 import { LadderTpManagerService } from '../../services/ladder-tp-manager.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { ConfigurationError, ExitExecutionError, PositionProtectionError } from '../../errors/DomainErrors';

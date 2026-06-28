@@ -1,24 +1,4 @@
 import { PERCENT_MULTIPLIER, PRICE_TOLERANCE, INTEGER_MULTIPLIERS } from '../constants';
-/**
- * Ladder TP Manager Service (Phase 3) - Phase 8.9.26 ErrorHandler Integration
- *
- * Manages multi-level take profit execution for scalping strategies with error recovery.
- *
- * Features:
- * - 3 TP levels with partial closes (e.g., 0.08%, 0.15%, 0.25%)
- * - Position closes: 33%, 33%, 34%
- * - Move SL to breakeven after TP1 with RETRY strategy
- * - Trailing SL after TP2 with RETRY strategy
- * - R/R Ratio: ~1.26:1 (weighted average)
- * - ErrorHandler integration with RETRY + FALLBACK + GRACEFUL_DEGRADE strategies
- *
- * Example:
- * Entry: 1.0000 LONG
- * TP1: 1.0008 (33% close) → Move SL to 1.0000 (breakeven)
- * TP2: 1.0015 (33% close) → Trailing SL activated
- * TP3: 1.0025 (34% close) → Full exit
- */
-
 import {
   LoggerService,
   SignalDirection,
@@ -33,11 +13,6 @@ import { ConfigurationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
 import { ICONS } from '../cli/cli-runtime';
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-// Read from config: minPartialClosePercent, maxPartialClosePercent
 const MIN_PARTIAL_CLOSE_QUANTITY = 0.01;
 const PARTIAL_CLOSE_RETRY_CONFIG = {
   maxAttempts: 3,
@@ -50,10 +25,6 @@ const STOP_LOSS_UPDATE_RETRY_CONFIG = {
   backoffMultiplier: 2,
 } as const;
 
-// ============================================================================
-// LADDER TP MANAGER SERVICE
-// ============================================================================
-
 export class LadderTpManagerService {
   constructor(
     private config: LadderTpManagerConfig,
@@ -61,23 +32,9 @@ export class LadderTpManagerService {
     private logger: LoggerService,
     private readonly errorHandler?: ErrorHandler,
   ) {
-    // Validate config
     this.validateConfig();
   }
 
-  // ==========================================================================
-  // PUBLIC METHODS
-  // ==========================================================================
-
-  /**
-   * Create ladder TP levels for position
-   *
-   * Calculates TP prices based on entry price and direction
-   *
-   * @param entry - Entry price
-   * @param direction - Signal direction (LONG/SHORT)
-   * @returns Array of ladder TP levels
-   */
   createLadderLevels(entry: number, direction: SignalDirection): LadderTpLevel[] {
     this.logger.debug('Creating ladder TP levels', {
       entry,
@@ -86,13 +43,10 @@ export class LadderTpManagerService {
     });
 
     const levels: LadderTpLevel[] = this.config.levels.map((levelConfig, index) => {
-      // Calculate target price
       let targetPrice: number;
       if (direction === SignalDirection.LONG) {
-        // LONG: TP above entry
         targetPrice = entry * (1 + levelConfig.pricePercent / PERCENT_MULTIPLIER);
       } else {
-        // SHORT: TP below entry
         targetPrice = entry * (1 - levelConfig.pricePercent / PERCENT_MULTIPLIER);
       }
 
@@ -117,30 +71,17 @@ export class LadderTpManagerService {
     return levels;
   }
 
-  /**
-   * Check if TP level was hit
-   *
-   * Compares current price with TP target price
-   *
-   * @param level - TP level to check
-   * @param currentPrice - Current market price
-   * @param direction - Signal direction (LONG/SHORT)
-   * @returns True if TP was hit
-   */
   checkTpHit(level: LadderTpLevel, currentPrice: number, direction: SignalDirection): boolean {
     if (level.hit) {
-      return false; // Already hit
+      return false;
     }
 
-    // Calculate tolerance
     const tolerance = level.targetPrice * (PRICE_TOLERANCE.TP_HIT_DETECTION_PERCENT / PERCENT_MULTIPLIER);
 
     let isHit: boolean;
     if (direction === SignalDirection.LONG) {
-      // LONG: current price >= target price
       isHit = currentPrice >= level.targetPrice - tolerance;
     } else {
-      // SHORT: current price <= target price
       isHit = currentPrice <= level.targetPrice + tolerance;
     }
 
@@ -155,19 +96,8 @@ export class LadderTpManagerService {
     return isHit;
   }
 
-  /**
-   * Execute partial close for TP level
-   *
-   * Closes specified % of position via Bybit API
-   * Uses RETRY strategy for transient failures with ErrorHandler
-   *
-   * @param level - TP level to execute
-   * @param position - Current position
-   * @returns True if close successful
-   */
   async executePartialClose(level: LadderTpLevel, position: Position): Promise<boolean> {
     try {
-      // Calculate quantity to close
       const closeQty = position.quantity * (level.closePercent / PERCENT_MULTIPLIER);
 
       if (closeQty < 0.01) {
@@ -186,7 +116,6 @@ export class LadderTpManagerService {
         targetPrice: level.targetPrice,
       });
 
-      // Execute partial close with RETRY if ErrorHandler available
       if (this.errorHandler) {
         const result = await this.errorHandler.executeAsync(
           () =>
@@ -209,7 +138,6 @@ export class LadderTpManagerService {
           return false;
         }
       } else {
-        // Fallback without ErrorHandler
         await this.bybitService.closePosition({
           positionId: position.id,
           percentage: level.closePercent,
@@ -231,15 +159,6 @@ export class LadderTpManagerService {
     }
   }
 
-  /**
-   * Move SL to breakeven (entry price)
-   *
-   * Called after TP1 hit to protect position
-   * Uses RETRY strategy for transient failures
-   *
-   * @param position - Current position
-   * @returns True if SL moved successfully
-   */
   async moveToBreakeven(position: Position): Promise<boolean> {
     if (!this.config.moveToBreakevenAfterTP1) {
       return false;
@@ -254,7 +173,6 @@ export class LadderTpManagerService {
         entry: position.entryPrice,
       });
 
-      // Update SL with RETRY if ErrorHandler available
       if (this.errorHandler) {
         const result = await this.errorHandler.executeAsync(
           () =>
@@ -276,7 +194,6 @@ export class LadderTpManagerService {
           return false;
         }
       } else {
-        // Fallback without ErrorHandler
         await this.bybitService.updateStopLoss({
           positionId: position.id,
           newPrice: breakeven,
@@ -296,37 +213,23 @@ export class LadderTpManagerService {
     }
   }
 
-  /**
-   * Move SL to trailing price
-   *
-   * Called after TP2 hit to maximize profits
-   * Uses RETRY strategy for transient failures
-   *
-   * @param position - Current position
-   * @param currentPrice - Current market price
-   * @returns True if SL moved successfully
-   */
   async moveTrailing(position: Position, currentPrice: number): Promise<boolean> {
     if (!this.config.trailingAfterTP2) {
       return false;
     }
 
     try {
-      // Calculate trailing SL price
       let newSlPrice: number;
       if (position.side === PositionSide.LONG) {
-        // LONG: SL below current price
         newSlPrice = currentPrice * (1 - this.config.trailingDistancePercent / PERCENT_MULTIPLIER);
       } else {
-        // SHORT: SL above current price
         newSlPrice = currentPrice * (1 + this.config.trailingDistancePercent / PERCENT_MULTIPLIER);
       }
 
-      // Only move SL if it improves current SL
       const shouldMove =
         position.side === PositionSide.LONG
-          ? newSlPrice > (position.stopLoss?.price || 0) // LONG: move SL up
-          : newSlPrice < (position.stopLoss?.price || Infinity); // SHORT: move SL down
+          ? newSlPrice > (position.stopLoss?.price || 0)
+          : newSlPrice < (position.stopLoss?.price || Infinity);
 
       if (!shouldMove) {
         this.logger.debug(`${ICONS.note} Trailing SL not better than current SL - skipping`, {
@@ -343,7 +246,6 @@ export class LadderTpManagerService {
         trailingDistance: this.config.trailingDistancePercent,
       });
 
-      // Update SL with RETRY if ErrorHandler available
       if (this.errorHandler) {
         const result = await this.errorHandler.executeAsync(
           () =>
@@ -365,7 +267,6 @@ export class LadderTpManagerService {
           return false;
         }
       } else {
-        // Fallback without ErrorHandler
         await this.bybitService.updateStopLoss({
           positionId: position.id,
           newPrice: newSlPrice,
@@ -385,13 +286,6 @@ export class LadderTpManagerService {
     }
   }
 
-  // ==========================================================================
-  // HELPER METHODS
-  // ==========================================================================
-
-  /**
-   * Validate configuration with error recovery support
-   */
   private validateConfig(): void {
     if (this.config.levels.length === 0) {
       throw new ConfigurationError(
@@ -403,7 +297,6 @@ export class LadderTpManagerService {
       );
     }
 
-    // Validate each level
     for (const level of this.config.levels) {
       if (level.pricePercent <= 0) {
         throw new ConfigurationError(
@@ -430,7 +323,6 @@ export class LadderTpManagerService {
       }
     }
 
-    // Validate total closePercent ~= 100%
     if (this.config.trailingAfterTP2 && this.config.trailingDistancePercent <= 0) {
       throw new ConfigurationError(
         `Invalid trailingDistancePercent: ${this.config.trailingDistancePercent} (must be > 0)`,
@@ -443,9 +335,6 @@ export class LadderTpManagerService {
     }
   }
 
-  /**
-   * Get config for external access
-   */
   getConfig(): LadderTpManagerConfig {
     return this.config;
   }

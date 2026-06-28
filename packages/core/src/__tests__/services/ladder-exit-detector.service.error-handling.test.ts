@@ -1,16 +1,3 @@
-/**
- * Error Handling Tests for LadderExitDetectorService (Phase 8.9.27)
- *
- * Coverage:
- * - Input validation with THROW strategy
- * - API calls with RETRY strategy
- * - TP level detection
- * - Complete ladder execution analysis
- * - Logging failures with SKIP strategy
- * - Backward compatibility without ErrorHandler
- * - Integration scenarios with cascading failures
- */
-
 import { ICONS } from '../../cli/cli-runtime';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ConfigurationError } from '../../errors/DomainErrors';
