@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/config.ts root config assembly boundary follow-up`
-2. `packages/core/src/config/risk-management.validate.ts risk management validation boundary follow-up`
-3. `packages/core/src/__tests__/config/orchestration-config.test.ts config type guardrail follow-up`
+1. `packages/core/src/__tests__/services/graceful-shutdown.functional.test.ts graceful shutdown service guardrail follow-up`
+2. `packages/core/src/services/real-time-risk-monitor.service.ts real-time risk monitor service boundary follow-up`
+3. `packages/core/src/__tests__/services/real-time-risk-monitor.functional.test.ts real-time risk monitor service guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,12 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-06-28: completed `trading-lifecycle.service.ts` — removed Phase 9 docblock, class Responsibilities/Architecture docblock, all WHAT-explaining comments and method-level JSDoc.
+- 2026-06-28: completed `trading-lifecycle.functional.test.ts` — Phase marker removed; stop() guardrail, double-stop no-op, export boundary added.
+- 2026-06-28: completed `graceful-shutdown.service.ts` — removed Phase 9 docblock; deleted dead methods calculateUnrealizedPnL/calculateUnrealizedPnLPercent and unused PersistedPositionState import.
+- 2026-06-27: completed `config.ts` — removed stale docblock, validator call narrowed to pass `config.riskManagement`.
+- 2026-06-27: completed `risk-management.validate.ts` — input narrowed to `RiskManagementConfig`, bounds extracted to `BOUNDS` constant, 14-test functional test created.
+- 2026-06-27: completed `orchestration-config.test.ts` — Phase markers removed, typo fixed, export boundary describe added.
 - 2026-06-27: completed `config-pipeline.constants.ts` — new guardrail test created, 4 constant values asserted.
 - 2026-06-27: completed `config-loader.test.ts` — 6 new tests: logConfigLoadDebug, logConfigDefaultsApplied, legacy API_KEY fallback, no-env-vars unchanged path.
 - 2026-06-27: completed `config-loader.ts` — removed feature-specific debug lines (scalpingLadderTp, entryConfig) from logConfigLoadDebug; loader no longer references specific config shapes.
@@ -78,6 +84,6 @@ After all three slices are complete:
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader contracts, while `packages/core/src/config/index.ts` stays focused on the runtime-config entrypoint surface.
 
 ## Last Verification
-- `npm test -- --runInBand config-pipeline.constants config-loader.test` (2 suites, 15 tests)
+- `npm test -- --runInBand trading-lifecycle.functional trading-lifecycle.error-handling graceful-shutdown.functional graceful-shutdown.service.test` (4 suites, 71 tests)
 - `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - `npm run build` — clean

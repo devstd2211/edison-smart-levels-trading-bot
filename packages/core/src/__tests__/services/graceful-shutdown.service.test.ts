@@ -1,19 +1,3 @@
-/**
- * Phase 9.1: GracefulShutdownManager Unit Tests
- *
- * Test Coverage:
- * - Signal handler registration (SIGINT/SIGTERM)
- * - Shutdown sequence and orchestration
- * - Position closure via ActionQueue
- * - Order cancellation via IExchange
- * - State persistence to disk
- * - State recovery from disk
- * - Timeout protection
- * - Error handling and edge cases
- *
- * Total: 16 tests
- */
-
 import { GracefulShutdownManager } from '../../services/graceful-shutdown.service';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ActionQueueService } from '../../services/action-queue.service';

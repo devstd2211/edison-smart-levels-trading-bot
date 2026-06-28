@@ -1,3 +1,4 @@
+import { TradingLifecycleManager } from '../../services/trading-lifecycle.service';
 import { ICONS } from '../../cli/cli-runtime';
 import { PositionLifecycleState } from '../../types/legacy';
 import {
@@ -57,5 +58,38 @@ describe('TradingLifecycleManager functional behavior', () => {
     );
 
     cleanup();
+  });
+
+  it('stop() calls unsubscribe handlers registered during start()', () => {
+    const { manager, eventBus, cleanup } = createManagedTradingLifecycleContext();
+
+    const unsubscribeOpened = jest.fn();
+    const unsubscribeClosed = jest.fn();
+    eventBus.subscribe
+      .mockReturnValueOnce(unsubscribeOpened)
+      .mockReturnValueOnce(unsubscribeClosed);
+
+    manager.start();
+    manager.stop();
+
+    expect(unsubscribeOpened).toHaveBeenCalledTimes(1);
+    expect(unsubscribeClosed).toHaveBeenCalledTimes(1);
+
+    cleanup();
+  });
+
+  it('stop() before start() is a no-op', () => {
+    const { manager, eventBus, cleanup } = createManagedTradingLifecycleContext();
+
+    expect(() => manager.stop()).not.toThrow();
+    expect(eventBus.subscribe).not.toHaveBeenCalled();
+
+    cleanup();
+  });
+
+  describe('export boundary', () => {
+    it('TradingLifecycleManager is a constructible class', () => {
+      expect(typeof TradingLifecycleManager).toBe('function');
+    });
   });
 });

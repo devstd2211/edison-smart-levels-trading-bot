@@ -1,14 +1,3 @@
-/**
- * TradingLifecycleManager Error Handling Tests (Phase 8.9.38)
- *
- * Comprehensive test suite for error handling in position lifecycle management:
- * - Event publication failures with RETRY strategy
- * - State transition failures with GRACEFUL_DEGRADE strategy
- * - Emergency close execution with FALLBACK strategy
- * - Timeout detection with error recovery
- * - Cascading failures and recovery
- */
-
 import { TradingLifecycleManager } from '../../services/trading-lifecycle.service';
 import { ErrorHandler } from '../../errors';
 import { TradingError } from '../../errors/BaseError';
@@ -33,7 +22,7 @@ const createConfig = createTradingLifecycleConfig;
 // TESTS
 // ============================================================================
 
-describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
+describe('TradingLifecycleManager error handling', () => {
   let manager: TradingLifecycleManager;
   let mockLogger: TradingLifecycleRuntime['logger'];
   let mockEventBus: TradingLifecycleRuntime['eventBus'];

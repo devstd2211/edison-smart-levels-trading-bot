@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { GracefulShutdownManager } from '../../services/graceful-shutdown.service';
 import { ICONS } from '../../cli/cli-runtime';
 import {
   createManagedGracefulShutdownTestContext,
@@ -42,5 +43,22 @@ describe('GracefulShutdownManager functional', () => {
     } finally {
       cleanup();
     }
+  });
+
+  it('isShutdownInProgress() starts false', () => {
+    setupGracefulShutdownFsMocks();
+    const { manager, cleanup } = createManagedGracefulShutdownTestContext();
+
+    try {
+      expect(manager.isShutdownInProgress()).toBe(false);
+    } finally {
+      cleanup();
+    }
+  });
+
+  describe('export boundary', () => {
+    it('GracefulShutdownManager is a constructible class', () => {
+      expect(typeof GracefulShutdownManager).toBe('function');
+    });
   });
 });

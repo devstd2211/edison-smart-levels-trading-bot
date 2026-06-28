@@ -1,23 +1,4 @@
-﻿/**
- * Phase 9: Trading Lifecycle Manager Service
- *
- * Orchestrates the full position lifecycle with:
- * - Position timeout detection and handling
- * - Holding time tracking from open to close
- * - Emergency close triggers
- * - State validation before transitions
- *
- * Subscribes to EventBus events:
- * - position-opened: Track new positions
- * - position-closed: Stop tracking closed positions
- *
- * Emits EventBus events:
- * - position-timeout-warning: Position approaching timeout
- * - position-timeout-critical: Position at timeout threshold
- * - position-timeout-triggered: Emergency close initiated
- */
-
-import { BotEventBus } from './event-bus';
+﻿import { BotEventBus } from './event-bus';
 import {
   LoggerService,
   PositionSide,
@@ -48,26 +29,10 @@ import { publishEventWithRetryOrWarn } from './trading-lifecycle/trading-lifecyc
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
 import { ICONS } from '../cli/cli-runtime';
 
-/**
- * TradingLifecycleManager: Orchestrates position lifecycle with timeout detection
- *
- * Responsibilities:
- * 1. Track all open positions with timing metadata
- * 2. Detect positions approaching/exceeding timeout thresholds
- * 3. Emit warnings before emergency close
- * 4. Execute emergency closes via ActionQueue
- * 5. Validate state transitions
- *
- * Architecture:
- * - Subscribes to position lifecycle events
- * - Maintains in-memory map of tracked positions
- * - Checks timeouts on each candle or explicit call
- * - Delegates emergency close execution to ActionQueue
- */
 export class TradingLifecycleManager implements ITradingLifecycleManager, ILifecycle {
   private config: PositionLifecycleConfig;
   private trackedPositions: Map<string, TrackedPosition>;
-  private warningEmittedFor: Set<string>; // Track which positions we've warned about
+  private warningEmittedFor: Set<string>;
   private logger: LoggerService;
   private eventBus: BotEventBus;
   private actionQueue: ActionQueueService;
@@ -75,7 +40,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
   private started = false;
   private unsubscribeHandlers: Array<() => void> = [];
 
-  // State machine: Valid transitions for position lifecycle
   private readonly VALID_STATE_TRANSITIONS: Map<PositionLifecycleState, PositionLifecycleState[]> = new Map([
     [PositionLifecycleState.OPEN, [PositionLifecycleState.WARNING, PositionLifecycleState.CLOSING, PositionLifecycleState.CLOSED]],
     [PositionLifecycleState.WARNING, [PositionLifecycleState.CRITICAL, PositionLifecycleState.CLOSING, PositionLifecycleState.CLOSED]],
@@ -111,12 +75,8 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     });
   }
 
-  /**
-   * Subscribe to position lifecycle events
-   */
   private initializeEventSubscriptions(): void {
     this.unsubscribeHandlers = [];
-    // Listen for position opens
     const unsubscribeOpened = this.eventBus.subscribe('position-opened', (event: PositionOpenedEventPayload) => {
       const position = this.getOpenedPosition(event);
       if (position && position.id) {
@@ -135,7 +95,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       }
     });
 
-    // Listen for position closes
     const unsubscribeClosed = this.eventBus.subscribe('position-closed', (event: PositionClosedEventPayload) => {
       const positionId = this.getClosedPositionId(event);
       if (positionId) {
@@ -182,9 +141,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       && typeof (value as Position).symbol === 'string';
   }
 
-  /**
-   * Start lifecycle (subscribe to EventBus)
-   */
   start(): void {
     if (this.started) {
       return;
@@ -193,9 +149,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     this.initializeEventSubscriptions();
   }
 
-  /**
-   * Stop lifecycle (unsubscribe from EventBus)
-   */
   stop(): void {
     if (!this.started) {
       return;
@@ -211,9 +164,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     this.started = false;
   }
 
-  /**
-   * Track a position for timeout monitoring
-   */
   public trackPosition(position: TrackedPosition): void {
     if (!position.positionId) {
       this.logger.warn(`${ICONS.warning} [TradingLifecycleManager] Cannot track position without ID`);
@@ -232,9 +182,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     });
   }
 
-  /**
-   * Stop tracking a closed position
-   */
   public untrackPosition(positionId: string): void {
     const existed = this.trackedPositions.delete(positionId);
     if (existed) {
@@ -243,10 +190,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     }
   }
 
-  /**
-   * Check all tracked positions for timeout conditions
-   * Returns comprehensive timeout detection result
-   */
   public async checkPositionTimeouts(): Promise<TimeoutCheckResult> {
     const now = Date.now();
     const alerts: TimeoutAlert[] = [];
@@ -277,14 +220,12 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
           `${ICONS.alarm} [TradingLifecycleManager] CRITICAL TIMEOUT: ${position.symbol} position has exceeded max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
         );
 
-        // Trigger emergency close if enabled
         if (this.config.enableAutomaticTimeout) {
           await this.handlePositionTimeout(position);
         }
       } else if (timeout.isWarning) {
         anyWarnings = true;
 
-        // Emit warning alert only once per position
         if (!this.warningEmittedFor.has(positionId)) {
           if (timeout.alert) {
             alerts.push(timeout.alert);
@@ -393,13 +334,9 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     };
   }
 
-  /**
-   * Handle a position timeout by initiating emergency close
-   */
   public async handlePositionTimeout(position: TrackedPosition): Promise<void> {
     this.logger.warn(`${ICONS.alarm} [TradingLifecycleManager] Initiating emergency close for ${position.symbol} position: ${position.positionId}`);
 
-    // Create emergency close request
     const request: EmergencyCloseRequest = {
       positionId: position.positionId,
       reason: EmergencyCloseReason.POSITION_TIMEOUT,
@@ -412,14 +349,9 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       },
     };
 
-    // Delegate to triggerEmergencyClose
     await this.triggerEmergencyClose(request);
   }
 
-  /**
-   * Trigger emergency close via ActionQueue
-   * Closes entire position (100%)
-   */
   public async triggerEmergencyClose(request: EmergencyCloseRequest): Promise<void> {
     const position = this.trackedPositions.get(request.positionId);
     if (!position) {
@@ -443,7 +375,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
 
       await this.emitEmergencyCloseEvent(request);
 
-      // FALLBACK Strategy: Queue close action with error recovery
       try {
         const closeAction = this.buildEmergencyCloseAction(request);
 
@@ -456,7 +387,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
               strategy: RecoveryStrategy.FALLBACK,
               context: `TradingLifecycleManager.enqueueEmergencyClose[${request.positionId}]`,
               onFailure: () => {
-                // FALLBACK: Log fallback action if queueing fails
                 this.logger.error(
                   `${ICONS.warning} [TradingLifecycleManager] Fallback: Emergency close action queued with potential delays for ${position.symbol}`
                 );
@@ -464,11 +394,9 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
             }
           );
         } else {
-          // Fallback without ErrorHandler
           this.actionQueue.enqueue(closeAction);
         }
       } catch (queueError) {
-        // FALLBACK: Log detailed error but continue
         this.logger.error(
           `${ICONS.warning} [TradingLifecycleManager] Fallback: Failed to queue emergency close, attempting direct notification`
         );
@@ -492,9 +420,6 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     }
   }
 
-  /**
-   * Validate state transition according to state machine
-   */
   public validateStateTransition(from: PositionLifecycleState, to: PositionLifecycleState): boolean {
     const allowedTransitions = this.VALID_STATE_TRANSITIONS.get(from);
     if (!allowedTransitions) {
@@ -509,39 +434,24 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     return isValid;
   }
 
-  /**
-   * Get all currently tracked positions
-   */
   public getTrackedPositions(): TrackedPosition[] {
     return Array.from(this.trackedPositions.values());
   }
 
-  /**
-   * Get a specific tracked position
-   */
   public getTrackedPosition(positionId: string): TrackedPosition | undefined {
     return this.trackedPositions.get(positionId);
   }
 
-  /**
-   * Get count of tracked positions
-   */
   public getTrackedPositionCount(): number {
     return this.trackedPositions.size;
   }
 
-  /**
-   * Clear all tracked positions (used during shutdown)
-   */
   public clearAllTrackedPositions(): void {
     this.trackedPositions.clear();
     this.warningEmittedFor.clear();
     this.logger.info(`${ICONS.broom} [TradingLifecycleManager] Cleared all tracked positions`);
   }
 
-  /**
-   * Get lifecycle statistics
-   */
   public getStatistics(): {
     totalTracked: number;
     byState: Record<string, number>;

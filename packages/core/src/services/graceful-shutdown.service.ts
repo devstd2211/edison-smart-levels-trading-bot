@@ -1,28 +1,3 @@
-/**
- * Phase 9: Graceful Shutdown Manager Service
- *
- * Handles safe bot shutdown with:
- * - Position closure or persistence
- * - Order cancellation
- * - State persistence to disk
- * - Recovery on bot restart
- * - Signal handler registration (SIGINT, SIGTERM)
- *
- * Shutdown Sequence:
- * 1. Register signal handlers
- * 2. Emit shutdown-started event
- * 3. Cancel all pending orders
- * 4. Close positions (or persist state)
- * 5. Persist bot state to disk
- * 6. Emit shutdown-complete event
- * 7. Exit process
- *
- * Recovery:
- * - Load persisted positions from disk
- * - Restore position state
- * - Resume monitoring
- */
-
 import * as fs from 'fs';
 import * as path from 'path';
 import { BotEventBus } from './event-bus';
@@ -36,7 +11,6 @@ import { getErrorMessage } from '../utils/error.utils';
 
 import {
   LoggerService,
-  PersistedPositionState,
   RecoveryMetadata,
   BotStateSnapshot,
   IGracefulShutdownManager,
@@ -460,20 +434,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         },
       });
     }
-  }
-
-  private calculateUnrealizedPnL(position: PersistedPositionState): number {
-    const currentPrice = position.currentPrice || position.entryPrice;
-    if (position.direction === 'LONG') {
-      return (currentPrice - position.entryPrice) * position.quantity;
-    }
-    return (position.entryPrice - currentPrice) * position.quantity;
-  }
-
-  private calculateUnrealizedPnLPercent(position: PersistedPositionState): number {
-    const pnl = this.calculateUnrealizedPnL(position);
-    const positionValue = position.quantity * position.entryPrice;
-    return (pnl / positionValue) * 100;
   }
 
   public isShutdownInProgress(): boolean {

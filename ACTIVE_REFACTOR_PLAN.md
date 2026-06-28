@@ -41,6 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-28: completed `packages/core/src/services/trading-lifecycle.service.ts trading lifecycle service boundary follow-up`.
+- 2026-06-28: completed `packages/core/src/__tests__/services/trading-lifecycle.functional.test.ts trading lifecycle service guardrail follow-up`.
+- 2026-06-28: completed `packages/core/src/services/graceful-shutdown.service.ts graceful shutdown service boundary follow-up`.
+- `trading-lifecycle.service.ts`: removed Phase 9 file docblock and class Responsibilities/Architecture docblock; removed all inline WHAT-explaining comments and method-level JSDoc from public methods.
+- `trading-lifecycle.functional.test.ts` + `error-handling.test.ts`: removed "Phase 8.9.38" marker; added `stop()` unsubscribe guardrail, double-stop no-op test, and export boundary describe.
+- `graceful-shutdown.service.ts`: removed Phase 9 file docblock; deleted dead methods `calculateUnrealizedPnL` and `calculateUnrealizedPnLPercent` (unused) and their `PersistedPositionState` import.
+- `graceful-shutdown.service.test.ts` + `error-handling.test.ts`: removed Phase 9.1 and Phase 8.4 docblocks/markers; added `isShutdownInProgress()` functional guardrail and export boundary to `graceful-shutdown.functional.test.ts`.
+- 2026-06-27: completed `packages/core/src/config.ts root config assembly boundary follow-up`.
+- 2026-06-27: completed `packages/core/src/config/risk-management.validate.ts risk management validation boundary follow-up`.
+- 2026-06-27: completed `packages/core/src/__tests__/config/orchestration-config.test.ts config type guardrail follow-up`.
+- `config.ts`: removed stale file-level docblock; narrowed validator call to pass `config.riskManagement` directly.
+- `risk-management.validate.ts`: input narrowed from `Config` to `RiskManagementConfig`; validation bounds extracted to `BOUNDS` constant; new functional test created with 14 tests covering missing fields, out-of-range values, and NaN.
+- `orchestration-config.test.ts`: stale "Phase 4.10:" markers removed from all describe labels and file header; test name typo fixed ("overboughtThreshold > oversoldThreshold"); export boundary describe block added.
 - 2026-06-27: completed `packages/core/src/config/config-pipeline.constants.ts config pipeline constants boundary follow-up`.
 - 2026-06-27: completed `packages/core/src/__tests__/config/config-loader.test.ts config loader boundary guardrail follow-up`.
 - 2026-06-27: completed `packages/core/src/config-loader.ts config file loader boundary follow-up`.
@@ -76,7 +89,13 @@ Historical detail is archived elsewhere and should not be copied here.
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader types, while `packages/core/src/config/index.ts` stays focused on runtime-config entrypoints and re-exports those contracts type-only.
 
 ## Latest Verification
-- 2026-06-27: `npm test -- --runInBand config-pipeline.constants config-loader.test` (2 suites, 15 tests)
+- 2026-06-28: `npm test -- --runInBand trading-lifecycle.functional trading-lifecycle.error-handling graceful-shutdown.functional graceful-shutdown.service.test` (4 suites, 71 tests)
+- 2026-06-28: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-28: `npm run build` — clean
+- 2026-06-27: `npm test -- --runInBand risk-management.validate.functional orchestration-config` (2 suites, 47 tests)
+- 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-27: `npm run build` — clean
+- Earlier 2026-06-27: `npm test -- --runInBand config-pipeline.constants config-loader.test` (2 suites, 15 tests)
 - 2026-06-27: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-27: `npm run build` — clean
 - Earlier 2026-06-27: `npm test -- --runInBand config-pipeline-summary web-api-config.functional` (2 suites, 14 tests)
@@ -92,8 +111,7 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/config/config-pipeline.ts`, `packages/core/src/config/runtime-config-defaults.ts`, and `packages/core/src/services/runtime-service-adapters.ts`.
-- Continue down the config pipeline and runtime adapter queue before widening into lower config-loader and validation follow-up tasks.
+- Start with `graceful-shutdown.functional.test.ts`, `real-time-risk-monitor.service.ts`, and `real-time-risk-monitor.functional.test.ts`.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -1,15 +1,3 @@
-/**
- * Phase 8.4: GracefulShutdownManager - ErrorHandler Integration Tests
- *
- * Tests ErrorHandler integration in GracefulShutdownManager with:
- * - RETRY strategy for order cancellation (hanging orders & conditional orders)
- * - GRACEFUL_DEGRADE strategy for state persistence
- * - GRACEFUL_DEGRADE strategy for directory creation
- * - FALLBACK strategy for state recovery
- *
- * Total: 22 comprehensive tests
- */
-
 import { describe, it, expect, jest, beforeEach  } from '@jest/globals';
 import { GracefulShutdownManager } from '../../services/graceful-shutdown.service';
 import { ICONS } from '../../cli/cli-runtime';
@@ -46,7 +34,7 @@ const mockExit = jest.fn(() => {
 });
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
-describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
+describe('GracefulShutdownManager error handling integration', () => {
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
