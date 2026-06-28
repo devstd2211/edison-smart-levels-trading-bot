@@ -1,18 +1,4 @@
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
-/**
- * Limit Order Executor Service (Phase 2)
- *
- * Executes trades using limit orders instead of market orders
- * for fee savings (0.01% maker vs 0.06% taker = 0.05% savings).
- *
- * Features:
- * - Place limit orders at bid/ask with minimal slippage
- * - Wait for fill with configurable timeout
- * - Automatic fallback to market order if not filled
- * - Retry logic with max attempts
- * - Detailed execution statistics
- */
-
 import {
   LoggerService,
   SignalDirection,
@@ -34,10 +20,6 @@ import {
 import { getErrorMessage } from '../utils/error.utils';
 import { ICONS } from '../cli/cli-runtime';
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
 const BYBIT_SUCCESS_CODE = INTEGER_MULTIPLIERS.ZERO;
 const POSITION_IDX_ONE_WAY = INTEGER_MULTIPLIERS.ZERO;
 const MARKET_FALLBACK_MAX_ATTEMPTS = 2;
@@ -46,10 +28,6 @@ const PLACEMENT_BACKOFF_BASE_MS = 500;
 const PLACEMENT_BACKOFF_MAX_MS = 2000;
 const STATUS_BACKOFF_BASE_MS = 50;
 const STATUS_BACKOFF_MAX_MS = 200;
-
-// ============================================================================
-// LIMIT ORDER EXECUTOR SERVICE
-// ============================================================================
 
 export class LimitOrderExecutorService {
   constructor(
@@ -60,48 +38,18 @@ export class LimitOrderExecutorService {
   ) {
   }
 
-  // ==========================================================================
-  // PUBLIC METHODS
-  // ==========================================================================
-
-  /**
-   * Calculate optimal limit price for entry
-   *
-   * For LONG: Place limit order below current ask (bid side)
-   * For SHORT: Place limit order above current bid (ask side)
-   *
-   * @param direction - Signal direction (LONG/SHORT)
-   * @param currentPrice - Current market price
-   * @param slippagePercent - Slippage % (e.g., 0.02 = 0.02%)
-   * @returns Calculated limit price
-   */
   calculateLimitPrice(
     direction: SignalDirection,
     currentPrice: number,
     slippagePercent: number,
   ): number {
     if (direction === SignalDirection.LONG) {
-      // LONG: Place bid below ask to get filled as maker
-      // Example: ask = 100, slippage = 0.02% → limit = 99.98
       return currentPrice * (1 - slippagePercent / PERCENT_MULTIPLIER);
     } else {
-      // SHORT: Place ask above bid to get filled as maker
-      // Example: bid = 100, slippage = 0.02% → limit = 100.02
       return currentPrice * (1 + slippagePercent / PERCENT_MULTIPLIER);
     }
   }
 
-  /**
-   * Place limit order with retry logic
-   *
-   * Uses ErrorHandler to track and handle errors if available
-   *
-   * @param direction - Signal direction (LONG/SHORT)
-   * @param quantity - Order quantity (contracts)
-   * @param limitPrice - Limit price
-   * @param leverage - Position leverage
-   * @returns LimitOrderResult with order details
-   */
   async placeLimitOrder(
     direction: SignalDirection,
     quantity: number,
@@ -118,14 +66,11 @@ export class LimitOrderExecutorService {
       leverage,
     });
 
-    // Set leverage first
     await this.bybitService.setLeverage(leverage);
 
-    // Round quantity and price to exchange precision
     const orderQty = this.bybitService.roundQuantity(quantity);
     const orderPrice = this.bybitService.roundPrice(limitPrice);
 
-    // Retry loop with ErrorHandler tracking
     for (let attempt = 1; attempt <= this.config.maxRetries + 1; attempt++) {
       try {
         this.logger.info(`${ICONS.note} Placing limit order (attempt)`, {
@@ -197,7 +142,6 @@ export class LimitOrderExecutorService {
       }
     }
 
-    // All retries failed
     const finalError = new LimitOrderPlacementError(
       `Failed to place limit order after ${this.config.maxRetries + 1} attempts`,
       {
@@ -220,16 +164,6 @@ export class LimitOrderExecutorService {
     throw finalError;
   }
 
-  /**
-   * Wait for limit order to fill with timeout
-   *
-   * Checks order status every 200ms until filled or timeout
-   * Uses ErrorHandler for status check retries
-   *
-   * @param orderId - Order ID to monitor
-   * @param timeoutMs - Max wait time (ms)
-   * @returns True if filled, false if timeout
-   */
   async waitForFill(orderId: string, timeoutMs: number): Promise<boolean> {
     const startTime = Date.now();
     const endTime = startTime + timeoutMs;
@@ -241,7 +175,6 @@ export class LimitOrderExecutorService {
 
     while (Date.now() < endTime) {
       try {
-        // Get order status with ErrorHandler RETRY for transient failures
         const filled = await this.checkOrderStatusWithRetry(orderId);
 
         if (filled !== null) {
@@ -261,7 +194,6 @@ export class LimitOrderExecutorService {
           return filled;
         }
 
-        // Order still active, wait and check again
         await this.sleep(ORDER_CHECK_INTERVAL_MS);
       } catch (error) {
         this.logger.warn('Error checking order status', {
@@ -272,7 +204,6 @@ export class LimitOrderExecutorService {
       }
     }
 
-    // Timeout reached
     const executionTime = Date.now() - startTime;
     this.logger.warn(`${ICONS.stopwatch} Limit order fill timeout`, {
       orderId,
@@ -291,10 +222,6 @@ export class LimitOrderExecutorService {
     );
   }
 
-  /**
-   * Check order status with ErrorHandler tracking
-   * Returns true if filled, false if cancelled, null if still active
-   */
   private async checkOrderStatusWithRetry(orderId: string): Promise<boolean | null> {
     let lastError: Error | undefined;
     const maxAttempts = ORDER_STATUS_MAX_ATTEMPTS;
@@ -323,7 +250,6 @@ export class LimitOrderExecutorService {
         const orders = response.result?.list || [];
 
         if (orders.length === 0) {
-          // Order not in active list, check history
           const historyResponse = await this.bybitService.getRestClient().getHistoricOrders({
             category: 'linear',
             symbol: this.bybitService.getSymbol(),
@@ -343,7 +269,6 @@ export class LimitOrderExecutorService {
           return null;
         }
 
-        // Order still active
         return null;
       } catch (error) {
         lastError = error as Error;
@@ -355,7 +280,6 @@ export class LimitOrderExecutorService {
       }
     }
 
-    // All retries failed
     this.logger.warn(`${ICONS.warning} Order status check failed after retries`, {
       orderId,
       error: lastError?.message,
@@ -364,14 +288,6 @@ export class LimitOrderExecutorService {
     return null;
   }
 
-  /**
-   * Cancel unfilled limit order
-   *
-   * Non-critical operation - uses SKIP strategy to log and continue
-   *
-   * @param orderId - Order ID to cancel
-   * @returns True if cancelled successfully
-   */
   async cancelOrder(orderId: string): Promise<boolean> {
     try {
       this.logger.info(`${ICONS.no_entry} Cancelling unfilled limit order`, { orderId });
@@ -406,7 +322,6 @@ export class LimitOrderExecutorService {
       this.logger.info(`${ICONS.success} Order cancelled successfully`, { orderId });
       return true;
     } catch (error) {
-      // SKIP strategy: log and continue
       this.logger.warn(`${ICONS.warning} Order cancellation failed - continuing`, {
         orderId,
         error: getErrorMessage(error),
@@ -415,17 +330,6 @@ export class LimitOrderExecutorService {
     }
   }
 
-  /**
-   * Fallback to market order execution
-   *
-   * Used when limit order times out or fails
-   * Uses RETRY for transient errors, THROW for critical errors
-   *
-   * @param direction - Signal direction (LONG/SHORT)
-   * @param quantity - Order quantity (contracts)
-   * @param leverage - Position leverage
-   * @returns MarketOrderResult with execution details
-   */
   async fallbackToMarket(
     direction: SignalDirection,
     quantity: number,
@@ -440,7 +344,6 @@ export class LimitOrderExecutorService {
       leverage,
     });
 
-    // Retry loop with ErrorHandler tracking
     for (let attempt = 1; attempt <= MARKET_FALLBACK_MAX_ATTEMPTS; attempt++) {
       try {
         const side = direction === SignalDirection.LONG ? PositionSide.LONG : PositionSide.SHORT;
@@ -495,7 +398,6 @@ export class LimitOrderExecutorService {
       }
     }
 
-    // All retries failed - throw wrapped error
     const fallbackError = new MarketOrderFallbackError(
       'Failed to execute fallback market order after retries',
       {
@@ -516,21 +418,6 @@ export class LimitOrderExecutorService {
     throw fallbackError;
   }
 
-  /**
-   * Execute entry with limit order and optional market fallback
-   *
-   * Main entry point for limit order execution:
-   * 1. Calculate limit price
-   * 2. Place limit order (RETRY strategy)
-   * 3. Wait for fill with timeout (RETRY strategy for status checks)
-   * 4. If not filled → cancel (SKIP strategy) and fallback to market (if enabled)
-   *
-   * @param direction - Signal direction (LONG/SHORT)
-   * @param quantity - Order quantity (contracts)
-   * @param currentPrice - Current market price
-   * @param leverage - Position leverage
-   * @returns Execution result (limit or market)
-   */
   async executeEntry(
     direction: SignalDirection,
     quantity: number,
@@ -543,7 +430,6 @@ export class LimitOrderExecutorService {
     }
 
     try {
-      // 1. Calculate limit price
       const limitPrice = this.calculateLimitPrice(
         direction,
         currentPrice,
@@ -558,10 +444,8 @@ export class LimitOrderExecutorService {
         slippage: this.config.slippagePercent,
       });
 
-      // 2. Place limit order (with RETRY via ErrorHandler)
       const limitResult = await this.placeLimitOrder(direction, quantity, limitPrice, leverage);
 
-      // 3. Wait for fill (with RETRY for status checks)
       let filled = false;
       try {
         filled = await this.waitForFill(limitResult.orderId, this.config.timeoutMs);
@@ -575,7 +459,6 @@ export class LimitOrderExecutorService {
       }
 
       if (filled) {
-        // Success! Calculate maker fee (0.01%)
         const feePaid = (quantity * limitPrice * MAKER_FEE_PERCENT) / PERCENT_MULTIPLIER;
 
         this.logger.info(`${ICONS.money} Limit order filled successfully - Fee savings achieved!`, {
@@ -593,7 +476,6 @@ export class LimitOrderExecutorService {
         };
       }
 
-      // 4. Not filled - cancel (SKIP strategy) and fallback
       this.logger.warn(`${ICONS.warning} Limit order not filled - attempting cancellation`, {
         orderId: limitResult.orderId,
         timeoutMs: this.config.timeoutMs,
@@ -608,7 +490,6 @@ export class LimitOrderExecutorService {
         return await this.fallbackToMarket(direction, quantity, leverage);
       }
 
-      // No fallback - return unfilled result
       this.logger.warn(`${ICONS.no_entry} Fallback to market disabled - entry failed`);
       return {
         ...limitResult,
@@ -619,7 +500,6 @@ export class LimitOrderExecutorService {
         error: getErrorMessage(error),
       });
 
-      // If fallback enabled, try market order
       if (this.config.fallbackToMarket) {
         this.logger.info(`${ICONS.refresh} Attempting market order fallback due to execution error`);
         try {
@@ -636,13 +516,6 @@ export class LimitOrderExecutorService {
     }
   }
 
-  // ==========================================================================
-  // HELPER METHODS
-  // ==========================================================================
-
-  /**
-   * Sleep for specified milliseconds
-   */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }

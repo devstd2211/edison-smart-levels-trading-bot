@@ -1,16 +1,3 @@
-/**
- * Phase 8.9.17: PositionLifecycleService - ErrorHandler Integration Tests
- *
- * Tests ErrorHandler integration in PositionLifecycleService with:
- * - RETRY strategy for exchange operations (price fetch, order cancellation, TP updates)
- * - GRACEFUL_DEGRADE strategy for journal operations
- * - SKIP strategy for non-critical operations (analytics, notifications)
- * - FALLBACK strategy for snapshot creation
- * - Atomic lock pattern preservation
- *
- * Phase 8.7 (20 tests) + Phase 8.9.17 (2 new tests) = 22 comprehensive tests
- */
-
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';

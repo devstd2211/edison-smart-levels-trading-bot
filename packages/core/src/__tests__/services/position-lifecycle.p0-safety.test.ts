@@ -1,13 +1,3 @@
-/**
- * Phase 9.P0 Safety Tests: Atomic Lock & Snapshots
- *
- * Tests for:
- * - P0.1: Atomic lock for position close (prevent timeout ↔ close race)
- * - P0.3: Atomic snapshots for concurrent reads (prevent WebSocket ↔ monitor race)
- *
- * Total: 9 tests
- */
-
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { Position } from '../../types/legacy';
 import { BotEventBus } from '../../services/event-bus';

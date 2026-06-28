@@ -1,9 +1,3 @@
-/**
- * Limit Order Executor Service Tests (Phase 2)
- *
- * Tests for limit order execution with fallback to market orders
- */
-
 import { LimitOrderExecutorService } from '../../services/limit-order-executor.service';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';

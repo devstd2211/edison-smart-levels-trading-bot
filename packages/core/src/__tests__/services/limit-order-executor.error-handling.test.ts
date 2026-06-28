@@ -1,15 +1,3 @@
-/**
- * Limit Order Executor Service - Error Handling Tests (Phase 8.9.15)
- *
- * Comprehensive error handling tests with ErrorHandler integration
- * Tests coverage:
- * - Placement error handling (RETRY strategy)
- * - Fill timeout handling (RETRY strategy for status checks)
- * - Cancellation handling (SKIP strategy)
- * - Fallback handling (RETRY + THROW strategies)
- * - Integration scenarios (E2E workflows)
- */
-
 import { LimitOrderExecutorService } from '../../services/limit-order-executor.service';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';
