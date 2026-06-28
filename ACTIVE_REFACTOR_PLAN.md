@@ -41,6 +41,10 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-28: completed `packages/core/src/services/position-exiting.service.ts`, `position-lifecycle.service.ts`, `limit-order-executor.service.ts` (Batch 6). All 328 tests pass; build clean. Commit 856bd40.
+- `position-exiting.service.ts`: removed 20-line Responsibilities docblock, class-level section dividers, all 16 method JSDoc, WHAT inline comments; cleaned Phase docblocks from all 5 test files; kept WHY comments (atomic lock, race condition guards, TP coupling).
+- `position-lifecycle.service.ts`: removed 21-line Consolidated docblock, CONSTANTS/class section dividers, all field/constructor Phase comments, all public API section headers, all method JSDoc; kept `// Used by PositionExitingService to track TP hits` (WHY coupling note); cleaned Phase docblocks from error-handling and p0-safety test files.
+- `limit-order-executor.service.ts`: removed Phase 2 file docblock, CONSTANTS/class section dividers, PUBLIC METHODS/HELPER METHODS section dividers, all method JSDoc, all WHAT inline comments; cleaned Phase docblocks from service.test.ts and error-handling.test.ts.
 - 2026-06-28: completed `packages/core/src/services/config-validator.service.ts config validator service boundary follow-up`.
 - 2026-06-28: completed `packages/core/src/services/strategy-config-merger.service.ts strategy config merger service boundary follow-up`.
 - 2026-06-28: completed `packages/core/src/services/index.ts services barrel boundary follow-up`.
