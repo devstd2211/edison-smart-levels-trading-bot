@@ -41,6 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-28: completed `packages/core/src/__tests__/services/performance-analytics.functional.test.ts performance analytics service guardrail follow-up`.
+- 2026-06-28: completed `packages/core/src/services/strategy-loader.service.ts strategy loader service boundary follow-up`.
+- 2026-06-28: completed `packages/core/src/__tests__/services/strategy-loader.functional.test.ts strategy loader service guardrail follow-up`.
+- `performance-analytics.functional.test.ts`: created — calculateWinRate/calculateProfitFactor pure math, getMetrics() empty-journal, getStatistics() initial state, clearCache() no-throw, export boundary.
+- `strategy-loader.service.ts`: removed file docblock, AVAILABLE_ANALYZERS group comments, field comment, all method JSDoc, all inline WHAT/Phase comments; fixed pre-existing bug — added `positionSizing` and `trailingStop` to `validateRiskManagementOverrides` valid fields so `atr-minimal.strategy.json` loads cleanly.
+- `strategy-loader.functional.test.ts`: created — `getAvailableAnalyzers()` sorted/non-empty, `loadStrategy()` throws StrategyLoadError on missing file, loads valid file, `loadAllStrategies()` empty-dir and skip-invalid behaviors, export boundary.
 - 2026-06-28: completed `packages/core/src/services/order-execution-pipeline.service.ts order execution pipeline service boundary follow-up`.
 - 2026-06-28: completed `packages/core/src/__tests__/services/order-execution-pipeline.functional.test.ts order execution pipeline service guardrail follow-up`.
 - 2026-06-28: completed `packages/core/src/services/performance-analytics.service.ts performance analytics service boundary follow-up`.
