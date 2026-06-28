@@ -41,6 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-28: completed `packages/core/src/services/order-execution-pipeline.service.ts order execution pipeline service boundary follow-up`.
+- 2026-06-28: completed `packages/core/src/__tests__/services/order-execution-pipeline.functional.test.ts order execution pipeline service guardrail follow-up`.
+- 2026-06-28: completed `packages/core/src/services/performance-analytics.service.ts performance analytics service boundary follow-up`.
+- `order-execution-pipeline.service.ts`: removed Phase 9 file docblock, class Responsibilities/Architecture docblock, Phase 8.3/15.2 inline markers, all method-level JSDoc, and WHAT-explaining inline comments throughout.
+- `order-execution-pipeline.functional.test.ts`: created new — `getMetrics()` initial state, `resetMetrics()` zeroing, `calculateSlippage()` pure math, `validateSlippage()` boundary, export boundary.
+- `performance-analytics.service.ts`: removed Phase 9 file docblock, class docblock, all Phase 8.9.36/13.1a markers on fields/constructor/methods, all method-level JSDoc, and WHAT-explaining inline comments; `/* Silent */` → `{}`.
 - 2026-06-28: completed `packages/core/src/services/trading-lifecycle.service.ts trading lifecycle service boundary follow-up`.
 - 2026-06-28: completed `packages/core/src/__tests__/services/trading-lifecycle.functional.test.ts trading lifecycle service guardrail follow-up`.
 - 2026-06-28: completed `packages/core/src/services/graceful-shutdown.service.ts graceful shutdown service boundary follow-up`.

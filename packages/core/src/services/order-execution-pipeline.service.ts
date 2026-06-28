@@ -1,28 +1,3 @@
-/**
- * Phase 9: Order Execution Pipeline Service
- *
- * Enhanced order execution with:
- * - Retry logic with exponential backoff
- * - Order timeout detection and handling
- * - Slippage detection and limits
- * - Order status verification and polling
- *
- * Retries:
- * - Max 3 attempts by default
- * - Exponential backoff: 1s → 2s → 4s
- * - Configurable via OrderExecutionConfig
- *
- * Timeout:
- * - Default 30 seconds per order
- * - Detects if order not filled within timeout
- * - Cancels order on timeout
- *
- * Slippage:
- * - Calculates actual vs expected price
- * - Validates against configured limits
- * - Logs excessive slippage
- */
-
 import { LoggerService } from './logger.service';
 import { IExchange } from '../interfaces';
 import {
@@ -37,25 +12,9 @@ import {
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { ICONS } from '../cli/cli-runtime';
 
-/**
- * OrderExecutionPipeline: Enhanced order execution with retry and verification
- *
- * Responsibilities:
- * 1. Place orders via BybitService with retry logic
- * 2. Detect and handle timeout conditions
- * 3. Calculate and validate slippage
- * 4. Poll order status after placement
- * 5. Track execution metrics
- *
- * Architecture:
- * - Wraps BybitService.placeOrder()
- * - Implements exponential backoff retry
- * - Polls for order confirmation
- * - Validates order execution quality
- */
 export class OrderExecutionPipeline implements IOrderExecutionPipeline {
   private config: OrderExecutionConfig;
-  private exchangeService: IExchange; // Phase 15.2: Properly typed exchange service
+  private exchangeService: IExchange;
   private logger: LoggerService;
   private metrics: ExecutionMetrics;
 
@@ -75,16 +34,11 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     };
   }
 
-  /**
-   * Place order with retry logic and timeout handling
-   * Phase 8.3: Refactored to use ErrorHandler with exponential backoff
-   */
   public async placeOrder(order: OrderRequest, config?: OrderExecutionConfig): Promise<OrderResult> {
     const executionConfig = config || this.config;
     const startTime = Date.now();
     let retryCount = 0;
 
-    // Generate order ID if not provided
     if (!order.orderId) {
       order.orderId = `order-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     }
@@ -97,10 +51,8 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       maxRetries: executionConfig.maxRetries,
     });
 
-    // Phase 8.3: Use ErrorHandler.executeAsync for order placement with exponential backoff
     const placeOrderResult = await ErrorHandler.executeAsync(
       async () => {
-        // Place order via Exchange Service (Phase 15.2: Using IExchange interface)
         return await this.exchangeService.placeOrder({
           symbol: order.symbol,
           side: order.side,
@@ -116,7 +68,7 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
         retryConfig: {
           maxAttempts: executionConfig.maxRetries,
           initialDelayMs: executionConfig.retryDelayMs,
-          backoffMultiplier: 2, // Exponential backoff (not linear!)
+          backoffMultiplier: 2,
           maxDelayMs: 10000,
         },
         logger: this.logger,
@@ -138,7 +90,6 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       }
     );
 
-    // Handle placement failure
     if (!placeOrderResult.success) {
       const failureResult: OrderResult = {
         success: false,
@@ -153,7 +104,6 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
         timestamp: Date.now(),
       };
 
-      // Update metrics
       this.updateMetrics(false, failureResult.executionTime, 0, retryCount);
 
       this.logger.error(`[OrderExecutionPipeline] Order placement failed after retries: ${order.orderId}`, {
@@ -164,10 +114,8 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       return failureResult;
     }
 
-    // Order was placed successfully
     const result = placeOrderResult.value;
 
-    // Verify order was placed properly
     if (!result || !result.orderId) {
       const failureResult: OrderResult = {
         success: false,
@@ -188,13 +136,10 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
 
     const executionTime = Date.now() - startTime;
 
-    // Poll for order confirmation
-    const finalStatus = await this.pollOrderStatus(result.orderId, 10); // 10 polls max
+    const finalStatus = await this.pollOrderStatus(result.orderId, 10);
 
-    // Calculate slippage
     const slippageAnalysis = this.calculateSlippage(order.price, result.price || order.price);
 
-    // Validate slippage
     if (!this.validateSlippage(slippageAnalysis.slippagePercent, {
       slippagePercent: executionConfig.slippagePercent,
     })) {
@@ -206,7 +151,6 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       });
     }
 
-    // Success result
     const successResult: OrderResult = {
       success: true,
       orderId: result.orderId,
@@ -219,7 +163,6 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       timestamp: Date.now(),
     };
 
-    // Update metrics
     this.updateMetrics(true, executionTime, slippageAnalysis.slippagePercent, retryCount);
 
     this.logger.info(`[OrderExecutionPipeline] Order placed successfully: ${order.orderId}`, {
@@ -232,12 +175,8 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     return successResult;
   }
 
-  /**
-   * Verify order was actually placed on exchange
-   */
   public async verifyOrderPlacement(orderId: string): Promise<OrderStatus> {
     try {
-      // Query order status from exchange
       const orderStatus = await this.exchangeService.getOrderStatus(orderId);
       return this.mapOrderStatus(orderStatus);
     } catch (error) {
@@ -246,12 +185,8 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     }
   }
 
-  /**
-   * Poll order status until filled or timeout
-   * Max attempts to prevent infinite loops
-   */
   public async pollOrderStatus(orderId: string, maxAttempts: number = 10): Promise<OrderStatus> {
-    const pollIntervalMs = 500; // Poll every 500ms
+    const pollIntervalMs = 500;
     let attempts = 0;
 
     while (attempts < maxAttempts) {
@@ -259,10 +194,9 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
         const status = await this.verifyOrderPlacement(orderId);
 
         if (status === OrderStatus.FILLED || status === OrderStatus.CANCELLED || status === OrderStatus.FAILED) {
-          return status; // Terminal state reached
+          return status;
         }
 
-        // Wait before next poll
         if (attempts < maxAttempts - 1) {
           await this.delay(pollIntervalMs);
         }
@@ -275,14 +209,10 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       }
     }
 
-    // Max attempts reached
     this.logger.warn(`[OrderExecutionPipeline] Order status poll timeout: ${orderId}`);
     return OrderStatus.TIMEOUT;
   }
 
-  /**
-   * Calculate slippage between expected and actual price
-   */
   public calculateSlippage(expectedPrice: number, actualPrice: number): SlippageAnalysis {
     const slippageAmount = Math.abs(actualPrice - expectedPrice);
     const slippagePercent = (slippageAmount / expectedPrice) * 100;
@@ -296,28 +226,17 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     };
   }
 
-  /**
-   * Validate slippage against limits
-   */
   public validateSlippage(slippagePercent: number, limits: { slippagePercent: number }): boolean {
     return slippagePercent <= limits.slippagePercent;
   }
 
-  /**
-   * Helper: Delay execution (for backoff)
-   */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  /**
-   * Helper: Map exchange order status to OrderStatus enum
-   * Phase 15.2: Updated to handle IExchange.getOrderStatus() response object
-   */
   private mapOrderStatus(
     exchangeStatus: string | { orderId: string; status: string; filledQuantity: number; averagePrice: number }
   ): OrderStatus {
-    // Handle object response from IExchange.getOrderStatus()
     const statusString = typeof exchangeStatus === 'string' ? exchangeStatus : exchangeStatus.status;
 
     const statusMap: Record<string, OrderStatus> = {
@@ -331,7 +250,6 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
       'Deactivated': OrderStatus.CANCELLED,
       'Triggered': OrderStatus.PENDING,
       'Active': OrderStatus.PENDING,
-      // Phase 15.2: IExchange standard status values
       'PENDING': OrderStatus.PENDING,
       'FILLED': OrderStatus.FILLED,
       'CANCELLED': OrderStatus.CANCELLED,
@@ -341,9 +259,6 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     return statusMap[statusString] || OrderStatus.PENDING;
   }
 
-  /**
-   * Update execution metrics
-   */
   private updateMetrics(success: boolean, executionTime: number, slippage: number, retries: number): void {
     this.metrics.totalOrders++;
     this.metrics.totalRetries += retries;
@@ -351,11 +266,9 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
 
     if (success) {
       this.metrics.successfulOrders++;
-      // Update average execution time
       const prevTotal = (this.metrics.averageExecutionTime * (this.metrics.successfulOrders - 1)) || 0;
       this.metrics.averageExecutionTime = (prevTotal + executionTime) / this.metrics.successfulOrders;
 
-      // Update average slippage
       const prevSlippageTotal = (this.metrics.averageSlippage * (this.metrics.successfulOrders - 1)) || 0;
       this.metrics.averageSlippage = (prevSlippageTotal + slippage) / this.metrics.successfulOrders;
     } else {
@@ -365,16 +278,10 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
     this.metrics.lastUpdateTime = Date.now();
   }
 
-  /**
-   * Get execution metrics
-   */
   public getMetrics(): ExecutionMetrics {
     return { ...this.metrics };
   }
 
-  /**
-   * Reset metrics
-   */
   public resetMetrics(): void {
     this.metrics = {
       totalOrders: 0,

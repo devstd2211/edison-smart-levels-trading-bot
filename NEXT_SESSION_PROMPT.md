@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/services/order-execution-pipeline.service.ts order execution pipeline service boundary follow-up`
-2. `packages/core/src/__tests__/services/order-execution-pipeline.functional.test.ts order execution pipeline service guardrail follow-up`
-3. `packages/core/src/services/performance-analytics.service.ts performance analytics service boundary follow-up`
+1. `packages/core/src/__tests__/services/performance-analytics.functional.test.ts performance analytics service guardrail follow-up`
+2. `packages/core/src/services/strategy-loader.service.ts strategy loader service boundary follow-up`
+3. `packages/core/src/__tests__/services/strategy-loader.functional.test.ts strategy loader service guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,9 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-06-28: completed `order-execution-pipeline.service.ts` — removed Phase 9 file docblock, class docblock, Phase 8.3/15.2 markers, all method JSDoc and WHAT-comments.
+- 2026-06-28: completed `order-execution-pipeline.functional.test.ts` — created; getMetrics() initial state, resetMetrics() zeroing, calculateSlippage() math, validateSlippage() boundary, export boundary.
+- 2026-06-28: completed `performance-analytics.service.ts` — removed Phase 9 file docblock, class docblock, all Phase 8.9.36/13.1a field/method markers, all method JSDoc, all WHAT-comments; `/* Silent */` → `{}`.
 - 2026-06-28: completed `real-time-risk-monitor.service.ts` — removed Phase 9 docblock, class docblock, dead calculateUnrealizedPnL method; removed PositionSide import; fixed all `const handled =` to plain `await`; removed all Phase/WHAT comments.
 - 2026-06-28: completed `real-time-risk-monitor.functional.test.ts` — added start() idempotency, stop() unsubscribe, stop()-before-start() no-op, export boundary.
 - 2026-06-28: completed `graceful-shutdown.functional.test.ts` — guardrails added (isShutdownInProgress, export boundary).
@@ -87,6 +90,6 @@ After all three slices are complete:
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader contracts, while `packages/core/src/config/index.ts` stays focused on the runtime-config entrypoint surface.
 
 ## Last Verification
-- `npm test -- --runInBand real-time-risk-monitor.functional real-time-risk-monitor.service.test` (2 suites, 40 tests)
+- `npm test -- --runInBand order-execution-pipeline.functional order-execution-pipeline.service.test performance-analytics.service.test` (3 suites, 65 tests)
 - `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - `npm run build` — clean

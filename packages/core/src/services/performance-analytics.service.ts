@@ -1,22 +1,3 @@
-/**
- * Phase 9: Performance Analytics Service
- *
- * Analyzes trade performance with:
- * - Win rate calculation
- * - Profit factor analysis
- * - Sharpe and Sortino ratios
- * - Maximum drawdown analysis
- * - Average holding time calculation
- * - Period-based metrics (TODAY, WEEK, MONTH, ALL)
- * - Top/worst trade identification
- *
- * Metrics Periods:
- * - ALL: All trades since bot start
- * - TODAY: Trades opened today (UTC)
- * - WEEK: Trades opened in last 7 days
- * - MONTH: Trades opened in last 30 days
- */
-
 import { LoggerService } from './logger.service';
 import { TradingJournalService } from './trading-journal.service';
 import { ErrorHandler, RecoveryStrategy, PerformanceCalculationError } from '../errors';
@@ -29,29 +10,11 @@ import {
 } from '../types/legacy';
 import { normalizeError } from '../utils/error.utils';
 
-/**
- * PerformanceAnalytics: Comprehensive trade performance analysis
- *
- * Responsibilities:
- * 1. Calculate win rate from historical trades
- * 2. Analyze profit factor (gross profit / gross loss)
- * 3. Calculate Sharpe and Sortino ratios
- * 4. Identify maximum drawdown
- * 5. Calculate average holding time
- * 6. Track period-based metrics
- * 7. Identify top and worst trades
- *
- * Architecture:
- * - Reads from TradingJournalService
- * - Caches calculations for performance
- * - Provides multi-period analysis
- * - Supports strategy-specific analytics
- */
 export class PerformanceAnalytics implements IPerformanceAnalytics {
   private config: PerformanceAnalyticsConfig;
   private journalService: TradingJournalService;
   private logger: LoggerService;
-  private errorHandler?: ErrorHandler; // Phase 8.9.36: Optional ErrorHandler
+  private errorHandler?: ErrorHandler;
   private metricsCache: Map<string, unknown> = new Map();
   private lastUpdateTime: number = 0;
 
@@ -59,7 +22,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     config: PerformanceAnalyticsConfig,
     journalService: TradingJournalService,
     logger: LoggerService,
-    errorHandler?: ErrorHandler, // Phase 8.9.36: Optional parameter for backward compatibility
+    errorHandler?: ErrorHandler,
   ) {
     this.config = config;
     this.journalService = journalService;
@@ -75,16 +38,10 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     this.errorHandler.handle(normalizeError(error), {
       strategy,
       context,
-    }).catch(() => { /* Silent */ });
+    }).catch(() => {});
   }
 
-  /**
-   * Calculate win rate from trades
-   * Win rate = (winning trades / total trades) * 100
-   * Phase 8.9.36: Added input validation with THROW strategy and calculation GRACEFUL_DEGRADE
-   */
   public calculateWinRate(trades: PerformanceAnalyticsTradeInput[], period: number = 10): number {
-    // Phase 8.9.36: THROW on invalid trades array
     if (!trades || !Array.isArray(trades)) {
       const error = new PerformanceCalculationError(
         'Invalid trades array for win rate calculation',
@@ -103,7 +60,6 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       throw error;
     }
 
-    // Phase 8.9.36: THROW on invalid period
     if (period <= 0 || !Number.isFinite(period)) {
       const error = new PerformanceCalculationError(
         'Invalid period for win rate calculation',
@@ -123,9 +79,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
     if (trades.length === 0) return 0;
 
-    // Phase 8.9.36: GRACEFUL_DEGRADE for calculation failures
     try {
-      // Filter to period
       const recentTrades = trades.slice(-period);
       const winningTrades = recentTrades.filter(
         (t) => (t.pnl ?? 0) > 0 || (t.pnlPercent ?? 0) > 0
@@ -134,18 +88,11 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       return (winningTrades / recentTrades.length) * 100;
     } catch (calcError) {
       this.handleRecoveryError(calcError, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateWinRate.calculation');
-      return 0; // Safe default
+      return 0;
     }
   }
 
-  /**
-   * Calculate profit factor
-   * Profit Factor = Gross Profit / Gross Loss
-   * Value > 1.0 indicates profitable trading
-   * Phase 8.9.36: Added input validation with THROW strategy and calculation GRACEFUL_DEGRADE
-   */
   public calculateProfitFactor(trades: PerformanceAnalyticsTradeInput[]): number {
-    // Phase 8.9.36: THROW on invalid trades array
     if (!trades || !Array.isArray(trades)) {
       const error = new PerformanceCalculationError(
         'Invalid trades array for profit factor calculation',
@@ -165,7 +112,6 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
     if (trades.length === 0) return 0;
 
-    // Phase 8.9.36: GRACEFUL_DEGRADE for calculation failures
     try {
       let grossProfit = 0;
       let grossLoss = 0;
@@ -180,7 +126,7 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       }
 
       if (grossLoss === 0) {
-        return grossProfit > 0 ? 100 : 0; // Avoid division by zero
+        return grossProfit > 0 ? 100 : 0;
       }
 
       const result = grossProfit / grossLoss;
@@ -188,17 +134,11 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       return result;
     } catch (calcError) {
       this.handleRecoveryError(calcError, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateProfitFactor.calculation');
-      return 0; // Safe default
+      return 0;
     }
   }
 
-  /**
-   * Calculate average holding time from trades
-   * Returns average in minutes
-   * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
-   */
   public calculateAverageHoldTime(trades: PerformanceAnalyticsTradeInput[]): number {
-    // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length === 0) return 0;
 
@@ -214,17 +154,11 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       return result;
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateAverageHoldTime.calculation');
-      return 0; // Safe default
+      return 0;
     }
   }
 
-  /**
-   * Get comprehensive statistics for a trade set
-   * PHASE 13.1a: Implemented period-based trade filtering
-   * Phase 8.9.36: Added input validation with THROW and calculation GRACEFUL_DEGRADE
-   */
   public async getMetrics(period: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH'): Promise<TradeStatistics> {
-    // Phase 8.9.36: THROW on invalid period
     const validPeriods = ['ALL', 'TODAY', 'WEEK', 'MONTH'];
     if (!validPeriods.includes(period)) {
       const error = new PerformanceCalculationError(
@@ -244,16 +178,13 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       throw error;
     }
 
-    // Phase 8.9.36: GRACEFUL_DEGRADE for calculation failures
     try {
-      // Get trades from journal, filtered by period
       const trades = this.getTradesForPeriod(period);
 
       if (trades.length === 0) {
         return this.getEmptyStatistics();
       }
 
-      // Calculate all metrics
       const totalTrades = trades.length;
       const winningTrades = trades.filter((t) => (t.pnl ?? 0) > 0).length;
       const losingTrades = trades.filter((t) => (t.pnl ?? 0) < 0).length;
@@ -276,11 +207,9 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       const totalPnL = trades.reduce((a, b) => a + (b.pnl || 0), 0);
       const totalPnLPercent = trades.reduce((a, b) => a + (b.pnlPercent || 0), 0) / totalTrades;
 
-      // Calculate Sharpe ratio
       const sharpeRatio = this.calculateSharpeRatio(trades);
       const sortinoRatio = this.calculateSortinoRatio(trades);
 
-      // Calculate max drawdown
       const maxDrawdown = this.calculateMaxDrawdown(trades);
 
       return {
@@ -301,17 +230,11 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       };
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getMetrics.calculation');
-      return this.getEmptyStatistics(); // Safe fallback
+      return this.getEmptyStatistics();
     }
   }
 
-  /**
-   * Get top (best) trades
-   * PHASE 13.1a: Implemented using getTradesForPeriod
-   * Phase 8.9.36: Added input validation with THROW strategy
-   */
   public async getTopTrades(limit: number = 10): Promise<TopTrade[]> {
-    // Phase 8.9.36: THROW on invalid limit
     if (limit <= 0 || !Number.isFinite(limit)) {
       const error = new PerformanceCalculationError(
         'Invalid limit for top trades query',
@@ -329,11 +252,9 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       throw error;
     }
 
-    // Phase 8.9.36: GRACEFUL_DEGRADE for retrieval failures
     try {
       const trades = this.getTradesForPeriod('ALL');
 
-      // Sort by PnL descending, take top N
       const topTrades = trades
         .sort((a, b) => (b.pnl || 0) - (a.pnl || 0))
         .slice(0, limit)
@@ -354,17 +275,11 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       return topTrades;
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getTopTrades.retrieval');
-      return []; // Safe fallback
+      return [];
     }
   }
 
-  /**
-   * Get worst (losing) trades
-   * PHASE 13.1a: Implemented using getTradesForPeriod
-   * Phase 8.9.36: Added input validation with THROW strategy
-   */
   public async getWorstTrades(limit: number = 10): Promise<TopTrade[]> {
-    // Phase 8.9.36: THROW on invalid limit
     if (limit <= 0 || !Number.isFinite(limit)) {
       const error = new PerformanceCalculationError(
         'Invalid limit for worst trades query',
@@ -382,11 +297,9 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       throw error;
     }
 
-    // Phase 8.9.36: GRACEFUL_DEGRADE for retrieval failures
     try {
       const trades = this.getTradesForPeriod('ALL');
 
-      // Sort by PnL ascending (most losses first), take top N
       const worstTrades = trades
         .sort((a, b) => (a.pnl || 0) - (b.pnl || 0))
         .slice(0, limit)
@@ -407,25 +320,17 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       return worstTrades;
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getWorstTrades.retrieval');
-      return []; // Safe fallback
+      return [];
     }
   }
 
-  /**
-   * Calculate Sharpe ratio
-   * Sharpe = (Avg Return - Risk-Free Rate) / Std Dev of Returns
-   * Simplified: Avg PnL / Std Dev of PnL
-   * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
-   */
   private calculateSharpeRatio(trades: PerformanceAnalyticsTradeInput[]): number {
-    // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length < 2) return 0;
 
       const pnls = trades.map((t) => t.pnl || 0);
       const avgPnL = pnls.reduce((a, b) => a + b, 0) / pnls.length;
 
-      // Calculate standard deviation
       const variance = pnls.reduce((a, b) => a + Math.pow(b - avgPnL, 2), 0) / pnls.length;
       const stdDev = Math.sqrt(variance);
 
@@ -437,24 +342,17 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       return ratio;
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateSharpeRatio.calculation');
-      return 0; // Safe default
+      return 0;
     }
   }
 
-  /**
-   * Calculate Sortino ratio
-   * Like Sharpe but only penalizes downside volatility
-   * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
-   */
   private calculateSortinoRatio(trades: PerformanceAnalyticsTradeInput[]): number {
-    // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length < 2) return 0;
 
       const pnls = trades.map((t) => t.pnl || 0);
       const avgPnL = pnls.reduce((a, b) => a + b, 0) / pnls.length;
 
-      // Calculate downside variance (only negative deviations)
       const downsideDeviations = pnls.map((p) => Math.min(p - avgPnL, 0));
       const downsideVariance = downsideDeviations.reduce((a, b) => a + Math.pow(b, 2), 0) / pnls.length;
       const downsideStdDev = Math.sqrt(downsideVariance);
@@ -467,17 +365,11 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       return ratio;
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateSortinoRatio.calculation');
-      return 0; // Safe default
+      return 0;
     }
   }
 
-  /**
-   * Calculate maximum drawdown
-   * Max drawdown = (Peak - Trough) / Peak
-   * Phase 8.9.36: Added GRACEFUL_DEGRADE for calculation failures
-   */
   private calculateMaxDrawdown(trades: PerformanceAnalyticsTradeInput[]): number {
-    // Phase 8.9.36: GRACEFUL_DEGRADE for calculation errors
     try {
       if (trades.length === 0) return 0;
 
@@ -489,31 +381,20 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
         runningProfit += trade.pnl || 0;
         peak = Math.max(peak, runningProfit);
 
-        const drawdown = (peak - runningProfit) / (peak || 1); // Avoid division by zero
+        const drawdown = (peak - runningProfit) / (peak || 1);
         maxDrawdown = Math.max(maxDrawdown, drawdown);
       }
 
-      const result = maxDrawdown * 100; // Return as percentage
+      const result = maxDrawdown * 100;
       if (!Number.isFinite(result)) return 0;
       return result;
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.calculateMaxDrawdown.calculation');
-      return 0; // Safe default
+      return 0;
     }
   }
 
-  /**
-   * PHASE 13.1a: Get trades filtered by time period
-   *
-   * Filters trades by:
-   * - ALL: All trades
-   * - TODAY: Trades opened today (UTC)
-   * - WEEK: Trades opened in last 7 days
-   * - MONTH: Trades opened in last 30 days
-   * Phase 8.9.36: Added GRACEFUL_DEGRADE for journal access failures
-   */
   private getTradesForPeriod(period: 'ALL' | 'TODAY' | 'WEEK' | 'MONTH'): PerformanceAnalyticsTradeInput[] {
-    // Phase 8.9.36: GRACEFUL_DEGRADE for journal access failure
     try {
       const allTrades = this.journalService.getAllTrades();
 
@@ -526,39 +407,31 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
 
       switch (period) {
         case 'TODAY': {
-          // Trades opened today (UTC)
           const today = new Date();
           today.setUTCHours(0, 0, 0, 0);
           cutoffTime = today.getTime();
           break;
         }
         case 'WEEK':
-          // Last 7 days
           cutoffTime = now - 7 * 24 * 60 * 60 * 1000;
           break;
         case 'MONTH':
-          // Last 30 days
           cutoffTime = now - 30 * 24 * 60 * 60 * 1000;
           break;
         default:
           return allTrades;
       }
 
-      // Filter trades by openedAt timestamp
       return allTrades.filter((trade: PerformanceAnalyticsTradeInput) => {
         const tradeOpenTime = trade.openedAt || trade.entryTime || 0;
         return tradeOpenTime >= cutoffTime;
       });
     } catch (error) {
-      // Phase 8.9.36: GRACEFUL_DEGRADE on journal access failure
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getTradesForPeriod.journalAccess');
-      return []; // Return empty array - safe fallback
+      return [];
     }
   }
 
-  /**
-   * Helper: Calculate holding time for a single trade
-   */
   private calculateTradeHoldingTime(trade: PerformanceAnalyticsTradeInput): number {
     const exitTime = trade.exitTime || Date.now();
     const entryTime = trade.entryTime || Date.now();
@@ -569,9 +442,6 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     return direction === 'SHORT' ? 'SHORT' : 'LONG';
   }
 
-  /**
-   * Get empty statistics (when no trades)
-   */
   private getEmptyStatistics(): TradeStatistics {
     return {
       totalTrades: 0,
@@ -591,16 +461,11 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     };
   }
 
-  /**
-   * Get analytics statistics
-   * Phase 8.9.36: Added GRACEFUL_DEGRADE for cache access failures
-   */
   public getStatistics(): {
     totalAnalyzed: number;
     cacheSize: number;
     lastUpdateTime: number;
   } {
-    // Phase 8.9.36: GRACEFUL_DEGRADE for cache retrieval
     try {
       return {
         totalAnalyzed: this.metricsCache.size,
@@ -609,7 +474,6 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
       };
     } catch (error) {
       this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE, 'PerformanceAnalyticsService.getStatistics.cacheAccess');
-      // Return safe defaults
       return {
         totalAnalyzed: 0,
         cacheSize: 0,
@@ -618,14 +482,9 @@ export class PerformanceAnalytics implements IPerformanceAnalytics {
     }
   }
 
-  /**
-   * Clear metrics cache
-   * Phase 8.9.36: Added SKIP strategy for logger errors (non-blocking)
-   */
   public clearCache(): void {
     this.metricsCache.clear();
 
-    // Phase 8.9.36: SKIP logger errors (non-blocking)
     try {
       this.logger.debug('[PerformanceAnalytics] Cleared metrics cache');
     } catch (logError) {
