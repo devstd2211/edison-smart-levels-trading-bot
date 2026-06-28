@@ -41,6 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
+- 2026-06-28: completed `packages/core/src/services/config-validator.service.ts config validator service boundary follow-up`.
+- 2026-06-28: completed `packages/core/src/services/strategy-config-merger.service.ts strategy config merger service boundary follow-up`.
+- 2026-06-28: completed `packages/core/src/services/index.ts services barrel boundary follow-up`.
+- `config-validator.service.ts`: removed `hasPath`/`getPath` JSDoc, all five `throwXxxError` Phase 8.9.31 docblocks, `// Logging is non-critical for config validation.` inline comment; cleaned Phase-marker docblocks from both test files; created `config-validator.functional.test.ts` (validateAtStartup pass/fail, validateAll CRUD errors, printEnabledAnalyzers no-throw, export boundary).
+- `strategy-config-merger.service.ts`: removed Phase 8.9.77 file docblock; removed JSDoc from safeLog/mergeConfigs/mergeIndicators/mergeFilters/mergeRiskManagement/getConfigValue/getChangeReport; removed all THROW/GRACEFUL_DEGRADE/numbered-step inline comments; kept `// Replace entire TP array` (WHY) and `// Skip arrays - we can't easily compare them` (WHY); cleaned Phase docblock from `error-handling.test.ts`; created `strategy-config-merger.functional.test.ts` (mergeConfigs preserve/override/TP-replace/null-throws, getChangeReport zero-changes/reports-changes, export boundary).
+- `services/index.ts`: removed file docblock, all inline comments, Phase 5 and Phase 14.2 section comments.
 - 2026-06-28: completed `packages/core/src/__tests__/services/performance-analytics.functional.test.ts performance analytics service guardrail follow-up`.
 - 2026-06-28: completed `packages/core/src/services/strategy-loader.service.ts strategy loader service boundary follow-up`.
 - 2026-06-28: completed `packages/core/src/__tests__/services/strategy-loader.functional.test.ts strategy loader service guardrail follow-up`.
@@ -101,6 +107,9 @@ Historical detail is archived elsewhere and should not be copied here.
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader types, while `packages/core/src/config/index.ts` stays focused on runtime-config entrypoints and re-exports those contracts type-only.
 
 ## Latest Verification
+- 2026-06-28: `npm test -- --runInBand config-validator.functional config-validator.service.test config-validator.error-handling strategy-config-merger.functional strategy-config-merger.error-handling` (5 suites, 80 tests)
+- 2026-06-28: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
+- 2026-06-28: `npm run build` — clean
 - 2026-06-28: `npm test -- --runInBand trading-lifecycle.functional trading-lifecycle.error-handling graceful-shutdown.functional graceful-shutdown.service.test` (4 suites, 71 tests)
 - 2026-06-28: `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - 2026-06-28: `npm run build` — clean
@@ -123,7 +132,7 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Next Step
 - Continue with the next active component batch from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `graceful-shutdown.functional.test.ts`, `real-time-risk-monitor.service.ts`, and `real-time-risk-monitor.functional.test.ts`.
+- Start with `position-exiting.service.ts`, `position-lifecycle.service.ts`, and `limit-order-executor.service.ts`.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

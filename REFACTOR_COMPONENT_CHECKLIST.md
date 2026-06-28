@@ -15,11 +15,27 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/services/config-validator.service.ts config validator service boundary follow-up`
-- [ ] `packages/core/src/services/strategy-config-merger.service.ts strategy config merger service boundary follow-up`
-- [ ] `packages/core/src/services/index.ts services barrel boundary follow-up`
+- [ ] `packages/core/src/services/position-exiting.service.ts position exiting service boundary follow-up`
+- [ ] `packages/core/src/services/position-lifecycle.service.ts position lifecycle service boundary follow-up`
+- [ ] `packages/core/src/services/limit-order-executor.service.ts limit order executor service boundary follow-up`
+- [ ] `packages/core/src/services/ladder-tp-manager.service.ts ladder tp manager service boundary follow-up`
+- [ ] `packages/core/src/services/ladder-exit-detector.service.ts ladder exit detector service boundary follow-up`
+- [ ] `packages/core/src/services/swing-point-detector.service.ts swing point detector service boundary follow-up`
+- [ ] `packages/core/src/services/anti-flip.service.ts anti flip service boundary follow-up`
+- [ ] `packages/core/src/services/bot-metrics.service.ts bot metrics service boundary follow-up`
+- [ ] `packages/core/src/services/session-stats.service.ts session stats service boundary follow-up`
+- [ ] `packages/core/src/services/anomaly-detection.service.ts anomaly detection service boundary follow-up`
+- [ ] `packages/core/src/services/analyzer-engine.service.ts analyzer engine service boundary follow-up`
+- [ ] `packages/core/src/services/position-pnl-calculator.service.ts position pnl calculator service boundary follow-up`
+- [ ] `packages/core/src/services/action-queue.service.ts action queue service boundary follow-up`
+- [ ] `packages/core/src/services/trading-journal.service.ts trading journal service boundary follow-up`
+- [ ] `packages/core/src/services/strategy-manager.service.ts strategy manager service boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/config-validator.service.ts config validator service boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/strategy-config-merger.service.ts strategy config merger service boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/index.ts services barrel boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/performance-analytics.service.ts performance analytics service boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/performance-analytics.functional.test.ts performance analytics service guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/strategy-loader.service.ts strategy loader service boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/strategy-loader.functional.test.ts strategy loader service guardrail follow-up` | prod: yes | tests: yes | func: yes

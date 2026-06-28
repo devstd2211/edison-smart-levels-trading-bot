@@ -1,8 +1,3 @@
-/**
- * StrategyConfigMergerService Error Handling Tests
- * Phase 8.9.77: THROW (input validation) + GRACEFUL_DEGRADE (merge failures) + SKIP (logging)
- */
-
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {

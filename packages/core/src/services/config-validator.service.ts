@@ -1,24 +1,3 @@
-/**
- * Config Validator Service
- *
- * Validates that all required configuration sections exist before bot starts.
- * Fails fast with clear error messages instead of silent fallbacks.
- *
- * Principle: EXPLICIT over IMPLICIT - require all config values in strategicWeights
- * No ?? true fallbacks allowed!
- *
- * Phase 3 additions:
- * - Required fields validation
- * - Confidence format validation (0-1 range)
- * - Deprecated keys rejection
- * - Range validation
- *
- * Phase 8.9.31: ErrorHandler Integration
- * - THROW strategy for all validation errors (critical, no recovery)
- * - SKIP strategy for logger failures (non-blocking)
- * - Backward compatible (works with or without ErrorHandler)
- */
-
 import { LoggerService } from './logger.service';
 import { ErrorHandler } from '../errors';
 import {
@@ -43,7 +22,6 @@ type RangeValidatorRule = {
 
 const STARTUP_ERROR_BANNER = '='.repeat(63);
 
-// Deprecated config paths that should trigger errors
 const DEPRECATED_KEYS = [
   'strategy.minConfidenceThreshold',
   'entryThresholds.minConfidenceOrchestrator',
@@ -161,10 +139,6 @@ export class ConfigValidatorService {
     private readonly errorHandler?: ErrorHandler,
   ) {}
 
-  /**
-   * Static validation for use at startup (before logger is available)
-   * Throws on failure with detailed error message
-   */
   static validateAtStartup(config: unknown): void {
     const errors: string[] = [];
     const getPath = ConfigValidatorService.getPathStatic;
@@ -186,11 +160,6 @@ export class ConfigValidatorService {
     console.log('Config validation passed');
   }
 
-  /**
-   * Validate analyzer configuration
-   * Ensures all required analyzer enable/disable flags are present
-   * Phase 8.9.31: Uses ConfigAnalyzerValidationError with ErrorHandler support
-   */
   validateAnalyzerConfig(config: unknown): void {
     const errors: string[] = [];
     const configObj = this.asRecord(config);
@@ -234,10 +203,6 @@ export class ConfigValidatorService {
     });
   }
 
-  /**
-   * Validate strategy configuration
-   * Phase 8.9.31: Uses ConfigStrategyValidationError with ErrorHandler support
-   */
   validateStrategyConfig(config: unknown): void {
     const errors: string[] = [];
     const missingFields: string[] = [];
@@ -293,9 +258,6 @@ export class ConfigValidatorService {
     });
   }
 
-  /**
-   * Print all enabled analyzers for debugging
-   */
   printEnabledAnalyzers(config: unknown): void {
     const enabled: string[] = [];
     const disabled: string[] = [];
@@ -329,11 +291,6 @@ export class ConfigValidatorService {
     });
   }
 
-  /**
-   * Validate all required configuration (Phase 3)
-   * Call this at startup for fast-fail validation
-   * Phase 8.9.31: Uses typed domain errors with ErrorHandler support
-   */
   validateAll(config: unknown): void {
     const deprecationErrors: string[] = [];
     this.checkDeprecatedKeys(config, deprecationErrors);
@@ -375,9 +332,6 @@ export class ConfigValidatorService {
     return candidate.enabled === true;
   }
 
-  /**
-   * Check for deprecated config keys that should no longer be used
-   */
   private checkDeprecatedKeys(config: unknown, errors: string[]): void {
     ConfigValidatorService.collectDeprecatedKeyErrors(
       config,
@@ -387,9 +341,6 @@ export class ConfigValidatorService {
     );
   }
 
-  /**
-   * Validate required fields exist
-   */
   private validateRequiredFields(config: unknown, errors: string[]): void {
     ConfigValidatorService.collectRequiredFieldErrors(
       config,
@@ -399,9 +350,6 @@ export class ConfigValidatorService {
     );
   }
 
-  /**
-   * Validate confidence values are in 0-1 range (not 0-100)
-   */
   private validateConfidenceFormat(config: unknown, errors: string[]): void {
     ConfigValidatorService.collectConfidenceFormatErrors(
       config,
@@ -411,9 +359,6 @@ export class ConfigValidatorService {
     );
   }
 
-  /**
-   * Validate numeric ranges
-   */
   private validateRanges(config: unknown, errors: string[]): void {
     ConfigValidatorService.collectRangeErrors(
       config,
@@ -423,16 +368,10 @@ export class ConfigValidatorService {
     );
   }
 
-  /**
-   * Check if a nested path exists in object
-   */
   private hasPath(obj: unknown, path: string): boolean {
     return this.getPath(obj, path) !== undefined;
   }
 
-  /**
-   * Get value at nested path
-   */
   private getPath(obj: unknown, path: string): unknown {
     const parts = path.split('.');
     let current: unknown = obj;
@@ -463,7 +402,6 @@ export class ConfigValidatorService {
     try {
       this.logger.info(message, context);
     } catch {
-      // Logging is non-critical for config validation.
     }
   }
 
@@ -558,10 +496,6 @@ export class ConfigValidatorService {
     ].join('\n');
   }
 
-  /**
-   * Throw validation error with ErrorHandler support (Phase 8.9.31)
-   * Uses THROW strategy - no recovery possible for config errors
-   */
   private throwValidationError(errors: string[]): void {
     const message = `Configuration validation failed: ${errors.length} required field(s) missing`;
     const error = new ConfigValidationError(message, {
@@ -573,10 +507,6 @@ export class ConfigValidatorService {
     throw error;
   }
 
-  /**
-   * Throw deprecation error with ErrorHandler support (Phase 8.9.31)
-   * Uses THROW strategy - no recovery possible for config errors
-   */
   private throwDeprecationError(errors: string[]): void {
     const message = `Configuration deprecation error: ${errors.length} deprecated key(s) found`;
     const error = new ConfigDeprecationError(message, {
@@ -588,10 +518,6 @@ export class ConfigValidatorService {
     throw error;
   }
 
-  /**
-   * Throw format error with ErrorHandler support (Phase 8.9.31)
-   * Uses THROW strategy - no recovery possible for config errors
-   */
   private throwFormatError(errors: string[]): void {
     const message = `Configuration format error: ${errors.length} format/range violation(s)`;
     const error = new ConfigFormatError(message, {
@@ -605,10 +531,6 @@ export class ConfigValidatorService {
     throw error;
   }
 
-  /**
-   * Throw analyzer validation error with ErrorHandler support (Phase 8.9.31)
-   * Uses THROW strategy - no recovery possible for config errors
-   */
   private throwAnalyzerValidationError(errors: string[], section: string, analyzers: string[]): void {
     const message = `Analyzer configuration validation failed for section: ${section}`;
     const error = new ConfigAnalyzerValidationError(message, {
@@ -621,10 +543,6 @@ export class ConfigValidatorService {
     throw error;
   }
 
-  /**
-   * Throw strategy validation error with ErrorHandler support (Phase 8.9.31)
-   * Uses THROW strategy - no recovery possible for config errors
-   */
   private throwStrategyValidationError(errors: string[], strategyName: string, missingFields: string[]): void {
     const message = `Strategy configuration validation failed for: ${strategyName}`;
     const error = new ConfigStrategyValidationError(message, {

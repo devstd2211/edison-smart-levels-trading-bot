@@ -1,17 +1,12 @@
-/**
- * Services barrel export
- * Centralizes all service exports for cleaner imports
- */
-
 export * from './bybit';
-export * from './position-lifecycle.service'; // Consolidated position management service
-export * from './position-exiting.service'; // Handles partial TP, breakeven, trailing
+export * from './position-lifecycle.service';
+export * from './position-exiting.service';
 export * from './websocket-manager.service';
 export * from './position-monitor.service';
-export * from './exit-type-detector.service'; // Determines position exit type from order history
-export * from './ladder-exit-detector.service'; // Phase 8.9.27: Detects ladder TP level hits
-export * from './position-pnl-calculator.service'; // Calculates unrealized P&L
-export * from './position-sync.service'; // Syncs position state with exchange
+export * from './exit-type-detector.service';
+export * from './ladder-exit-detector.service';
+export * from './position-pnl-calculator.service';
+export * from './position-sync.service';
 export * from './trading-journal.service';
 export * from './logger.service';
 export * from './time.service';
@@ -24,18 +19,14 @@ export * from './swing-point-detector.service';
 export * from './multi-timeframe-trend.service';
 export * from './timeframe-weighting.service';
 export * from './console-dashboard.service';
-export * from './market-condition-analyzer.service'; // Adjusts take profits based on market conditions
-export * from './reality-check.service'; // Tracks when bot logic was right but market gave opposite result
-
-// Phase 5: Dependency Injection Enhancement
-export * from './bot-factory.service'; // DI container for creating the narrowed bot runtime source
-export * from './runtime-service-adapters'; // Maps the bot runtime source to narrow runtime bundles
+export * from './market-condition-analyzer.service';
+export * from './reality-check.service';
+export * from './bot-factory.service';
+export * from './runtime-service-adapters';
 export * from './lifecycle-manager.service';
-export * from './bot-initializer'; // Manages bot lifecycle
-
-// Phase 14.2: Resilience Patterns (Production Hardening)
-export * from './resilience/circuit-breaker.service'; // Circuit breaker pattern for cascading failure prevention
-export * from './resilience/rate-limiter.service'; // Adaptive rate limiting for API calls
-export * from './resilience/retry-policy.service'; // Advanced retry strategies with backoff and budgets
-export * from './resilience/bulkhead.service'; // Resource isolation to prevent thread pool exhaustion
-export * from './resilience/resilience-coordinator.service'; // Unified resilience layer combining all patterns
+export * from './bot-initializer';
+export * from './resilience/circuit-breaker.service';
+export * from './resilience/rate-limiter.service';
+export * from './resilience/retry-policy.service';
+export * from './resilience/bulkhead.service';
+export * from './resilience/resilience-coordinator.service';

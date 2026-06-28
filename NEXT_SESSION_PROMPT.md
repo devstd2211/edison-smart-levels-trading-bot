@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/services/config-validator.service.ts config validator service boundary follow-up`
-2. `packages/core/src/services/strategy-config-merger.service.ts strategy config merger service boundary follow-up`
-3. `packages/core/src/services/index.ts services barrel boundary follow-up`
+1. `packages/core/src/services/position-exiting.service.ts position exiting service boundary follow-up`
+2. `packages/core/src/services/position-lifecycle.service.ts position lifecycle service boundary follow-up`
+3. `packages/core/src/services/limit-order-executor.service.ts limit order executor service boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,9 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-06-28: completed `config-validator.service.ts` — removed hasPath/getPath JSDoc, all five throwXxxError Phase 8.9.31 docblocks, inline logging comment; test docblocks cleaned; functional test created (validateAtStartup pass/fail, validateAll errors, printEnabledAnalyzers, export boundary).
+- 2026-06-28: completed `strategy-config-merger.service.ts` — removed Phase 8.9.77 file docblock, JSDoc from all 7 methods, all THROW/GRACEFUL_DEGRADE/numbered-step comments; kept WHY comments; cleaned error-handling.test.ts; functional test created (mergeConfigs, getChangeReport, export boundary).
+- 2026-06-28: completed `services/index.ts` — removed file docblock, all inline service comments, Phase 5 and Phase 14.2 section comments.
 - 2026-06-28: completed `performance-analytics.functional.test.ts` — created; calculateWinRate, calculateProfitFactor, getMetrics empty-journal, getStatistics initial state, clearCache no-throw, export boundary.
 - 2026-06-28: completed `strategy-loader.service.ts` — removed file docblock, AVAILABLE_ANALYZERS group comments, field comment, all method JSDoc and WHAT-comments; fixed pre-existing bug — added positionSizing + trailingStop to validateRiskManagementOverrides valid fields.
 - 2026-06-28: completed `strategy-loader.functional.test.ts` — created; getAvailableAnalyzers sorted, loadStrategy file-not-found/valid-file, loadAllStrategies empty-dir/skip-invalid, export boundary.
@@ -93,6 +96,6 @@ After all three slices are complete:
 - `packages/core/src/config/config-loader-contracts.ts` now owns the public config loader contracts, while `packages/core/src/config/index.ts` stays focused on the runtime-config entrypoint surface.
 
 ## Last Verification
-- `npm test -- --runInBand performance-analytics.functional strategy-loader.functional strategy-loader.test` (3 suites, 38 tests)
+- `npm test -- --runInBand config-validator.functional config-validator.service.test config-validator.error-handling strategy-config-merger.functional strategy-config-merger.error-handling` (5 suites, 80 tests)
 - `npm test -- --runInBand position-monitor` (6 suites, 59 tests)
 - `npm run build` — clean

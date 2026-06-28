@@ -1,8 +1,3 @@
-/**
- * ConfigValidatorService Tests
- * Tests for Phase 3 config validation
- */
-
 import {
   asConfigValidatorInput,
   createConfigValidatorConfig,

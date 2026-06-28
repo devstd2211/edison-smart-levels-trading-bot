@@ -1,20 +1,3 @@
-/**
- * ConfigValidatorService - Error Handling Tests
- *
- * Phase 8.9.31: ErrorHandler Integration
- * Tests for THROW strategy on validation errors and SKIP on logger failures
- *
- * Scenarios:
- * - Deprecated key detection (ConfigDeprecationError + THROW)
- * - Required field validation (ConfigValidationError + THROW)
- * - Confidence format validation (ConfigFormatError + THROW)
- * - Range validation (ConfigFormatError + THROW)
- * - Analyzer configuration (ConfigAnalyzerValidationError + THROW)
- * - Strategy configuration (ConfigStrategyValidationError + THROW)
- * - ErrorHandler integration with SKIP for logging
- * - Backward compatibility (works without ErrorHandler)
- */
-
 import {
   ConfigValidationError,
   ConfigDeprecationError,

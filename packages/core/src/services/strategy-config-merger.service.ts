@@ -1,20 +1,3 @@
-/**
- * STRATEGY CONFIG MERGER SERVICE
- * Merges main config with strategy overrides
- *
- * Priority: Strategy Overrides > config.json > Defaults
- *
- * Example:
- * - config.json has: emaFilter.rsiThreshold = 50
- * - strategy.json has: filters.emaFilter.rsiThreshold = 55
- * - Result: emaFilter.rsiThreshold = 55 (strategy wins)
- *
- * Phase 8.9.77: ErrorHandler Integration
- * - THROW: Null/undefined config or strategy validation
- * - GRACEFUL_DEGRADE: Merge operation failures → return safe defaults
- * - SKIP: Logging failures via safeLog() wrapper
- */
-
 import { ConfigNew, StrategyConfigV2 as StrategyConfig } from '../types/legacy';
 import { Config } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
@@ -39,9 +22,6 @@ export class StrategyConfigMergerService {
     this.errorHandler = errorHandler;
   }
 
-  /**
-   * Safely log messages, catching any logger errors
-   */
   private safeLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void {
     if (!this.logger) return;
     try {
@@ -54,19 +34,7 @@ export class StrategyConfigMergerService {
       }
     }
   }
-  /**
-   * Merge strategy overrides into main config
-   * Strategy values override config values
-   *
-   * Supports both ConfigNew and Config types
-   *
-   * @param mainConfig - Main configuration from config.json
-   * @param strategy - Strategy with optional overrides
-   * @returns Merged configuration (same type as input)
-   * @throws Error if mainConfig or strategy is null/undefined (THROW)
-   */
   mergeConfigs(mainConfig: ConfigNew | Config, strategy: StrategyConfig): ConfigNew | Config {
-    // THROW: Validate inputs (this validation must be OUTSIDE try-catch to propagate)
     if (!mainConfig || typeof mainConfig !== 'object') {
       throw new Error('mainConfig must be a non-null object');
     }
@@ -77,7 +45,6 @@ export class StrategyConfigMergerService {
     try {
       const merged = { ...mainConfig } as MergeableConfig;
 
-      // 1. Merge indicator overrides
       if (strategy.indicators && merged.indicators) {
         merged.indicators = this.mergeIndicators(
           merged.indicators,
@@ -85,12 +52,10 @@ export class StrategyConfigMergerService {
         ) as unknown as MergeableConfig['indicators'];
       }
 
-      // 2. Merge filter overrides (only if filters exist in config)
       if (strategy.filters && merged.filters) {
         merged.filters = this.mergeFilters(merged.filters, strategy.filters);
       }
 
-      // 3. Merge risk management overrides
       if (strategy.riskManagement) {
         merged.riskManagement = this.mergeRiskManagement(
           merged.riskManagement,
@@ -98,12 +63,10 @@ export class StrategyConfigMergerService {
         ) as unknown as MergeableConfig['riskManagement'];
       }
 
-      // 4. Add analyzers from strategy
       if (strategy.analyzers) {
         merged.analyzers = strategy.analyzers;
       }
 
-      // 5. Merge analyzer defaults from strategy (strategy defaults override main config defaults)
       const strategyAnalyzerDefaults = this.getAnalyzerDefaults(strategy);
       if (strategyAnalyzerDefaults) {
         const mainDefaults = this.asMergeObject(merged.analyzerDefaults);
@@ -122,7 +85,6 @@ export class StrategyConfigMergerService {
 
       return merged;
     } catch (error) {
-      // GRACEFUL_DEGRADE: On merge failure, return a safe copy of mainConfig
       this.safeLog('warn', 'Config merge failed, returning mainConfig copy', { error: (error as Error).message });
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
@@ -131,9 +93,6 @@ export class StrategyConfigMergerService {
     }
   }
 
-  /**
-   * Merge indicator overrides
-   */
   private mergeIndicators(original: unknown, overrides: unknown): MergeObject {
     const merged = { ...this.asMergeObject(original) };
     const overrideValues = this.asMergeObject(overrides);
@@ -160,14 +119,6 @@ export class StrategyConfigMergerService {
     return merged;
   }
 
-  /**
-   * Merge filter overrides
-   *
-   * Example:
-   * - config: { blindZone: { minSignalsForLong: 5, minSignalsForShort: 4 } }
-   * - override: { blindZone: { minSignalsForLong: 2 } }
-   * - result: { blindZone: { minSignalsForLong: 2, minSignalsForShort: 4 } }
-   */
   private mergeFilters(original: unknown, overrides: unknown): MergeObject {
     const merged = { ...this.asMergeObject(original) };
     const overrideValues = this.asMergeObject(overrides);
@@ -197,9 +148,6 @@ export class StrategyConfigMergerService {
     return merged;
   }
 
-  /**
-   * Merge risk management overrides
-   */
   private mergeRiskManagement(original: unknown, overrides: unknown): MergeObject {
     const merged = { ...this.asMergeObject(original) };
     const overrideValues = this.asMergeObject(overrides);
@@ -224,18 +172,8 @@ export class StrategyConfigMergerService {
     return merged;
   }
 
-  /**
-   * Get a specific config value with strategy override support
-   *
-   * @param mainConfig - Main configuration
-   * @param strategy - Strategy with overrides
-   * @param path - Path like "filters.blindZone.minSignalsForLong"
-   * @returns Value from strategy override or main config, or undefined on failure (GRACEFUL_DEGRADE)
-   * @throws Error if mainConfig or strategy is null/undefined (THROW)
-   */
   getConfigValue(mainConfig: ConfigNew, strategy: StrategyConfig, path: string): unknown {
     try {
-      // THROW: Validate inputs
       if (!mainConfig || typeof mainConfig !== 'object') {
         throw new Error('mainConfig must be a non-null object');
       }
@@ -260,7 +198,6 @@ export class StrategyConfigMergerService {
 
       return value;
     } catch (error) {
-      // GRACEFUL_DEGRADE: On path lookup failure, return undefined
       this.safeLog('warn', 'Config value lookup failed', { path, error: (error as Error).message });
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
@@ -269,17 +206,8 @@ export class StrategyConfigMergerService {
     }
   }
 
-  /**
-   * Compare original and merged values (useful for debugging)
-   *
-   * @param mainConfig - Main configuration
-   * @param strategy - Strategy with overrides
-   * @returns Change report, or empty report on failure (GRACEFUL_DEGRADE)
-   * @throws Error if mainConfig or strategy is null/undefined (THROW)
-   */
   getChangeReport(mainConfig: ConfigNew | Config, strategy: StrategyConfig): ChangeReport {
     try {
-      // THROW: Validate inputs
       if (!mainConfig || typeof mainConfig !== 'object') {
         throw new Error('mainConfig must be a non-null object');
       }
@@ -293,19 +221,16 @@ export class StrategyConfigMergerService {
       const merged = this.mergeConfigs(mainConfig, strategy);
       const changes: ConfigChange[] = [];
 
-      // Check indicators
       if (strategy.indicators) {
         this.findChanges(mainConfig.indicators, merged.indicators, 'indicators', changes);
       }
 
-      // Check filters (only if they exist in config)
       const mainConfigWithFilters = mainConfig as MergeableConfig;
       const mergedWithFilters = merged as MergeableConfig;
       if (strategy.filters && mainConfigWithFilters.filters && mergedWithFilters.filters) {
         this.findChanges(mainConfigWithFilters.filters, mergedWithFilters.filters, 'filters', changes);
       }
 
-      // Check risk management
       if (strategy.riskManagement) {
         this.findChanges(
           mainConfig.riskManagement,
@@ -321,7 +246,6 @@ export class StrategyConfigMergerService {
         changes,
       };
     } catch (error) {
-      // GRACEFUL_DEGRADE: On change report failure, return empty report
       this.safeLog('warn', 'Change report generation failed', { error: (error as Error).message });
       if (this.errorHandler) {
         this.errorHandler.handle(error as Error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
@@ -335,7 +259,6 @@ export class StrategyConfigMergerService {
   }
 
   private findChanges(original: unknown, merged: unknown, prefix: string, changes: ConfigChange[]): void {
-    // Skip if original or merged is undefined/null
     if (!original || !merged) return;
 
     // Skip arrays - we can't easily compare them
@@ -345,10 +268,8 @@ export class StrategyConfigMergerService {
     const mergedValues = this.asMergeObject(merged);
     for (const key in mergedValues) {
       if (typeof mergedValues[key] === 'object' && mergedValues[key] !== null && !Array.isArray(mergedValues[key])) {
-        // Recursively check nested objects
         this.findChanges(originalValues[key], mergedValues[key], `${prefix}.${key}`, changes);
       } else {
-        // Compare primitive values
         if (originalValues[key] !== mergedValues[key]) {
           changes.push({
             path: `${prefix}.${key}`,
