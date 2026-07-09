@@ -1,15 +1,3 @@
-/**
- * Phase 8: PositionExitingService - ErrorHandler Integration Tests
- *
- * Tests ErrorHandler integration in PositionExitingService with:
- * - RETRY strategy for exchange operations
- * - FALLBACK strategy for journal operations
- * - SKIP strategy for notifications
- * - Atomic lock pattern for concurrent close prevention
- *
- * Total: 18 comprehensive tests
- */
-
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { Position, ExitType, PositionSide, TradingConfig, RiskManagementConfig, Config } from '../../types/legacy';
@@ -25,7 +13,7 @@ import {
   type PositionExitingErrorHandlingRuntime,
 } from '../helpers/position-exiting-test.utils';
 
-describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
+describe('PositionExitingService - Error Handling Integration', () => {
   let mockExchange: PositionExitingErrorHandlingRuntime['mockExchange'];
   let mockTelegram: PositionExitingErrorHandlingRuntime['mockTelegram'];
   let mockLogger: PositionExitingErrorHandlingRuntime['mockLogger'];

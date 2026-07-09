@@ -1,9 +1,3 @@
-/**
- * INTEGRATION TEST: PositionExitingService + TakeProfitManager
- *
- * REPRODUCES: TP1 Hit + Breakeven SL Bug
- */
-
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { Position, TakeProfit } from '../../types/legacy';
 import {

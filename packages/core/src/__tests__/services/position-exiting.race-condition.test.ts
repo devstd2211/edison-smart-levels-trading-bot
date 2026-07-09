@@ -1,13 +1,3 @@
-/**
- * Phase 9.P3: Position Close Race Condition Tests
- *
- * Tests for WebSocket + Local close race conditions that were triggering:
- * "Failed to close position | Position XRPUSDT_Buy not found"
- *
- * Ensures atomic lock prevents concurrent close attempts from causing
- * "Position not found" errors when WebSocket closes externally.
- */
-
 import { ExitType } from '../../types/legacy';
 import {
   createRaceConditionCloseRequest,
@@ -18,11 +8,7 @@ import {
   type RaceConditionPositionExitingRuntime,
 } from '../helpers/position-exiting-test.utils';
 
-// ============================================================================
-// TEST SUITE
-// ============================================================================
-
-describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
+describe('PositionExiting race condition tests', () => {
   let positionExitingService: RaceConditionPositionExitingRuntime['service'];
   let mockLogger: RaceConditionPositionExitingRuntime['mockLogger'];
   let mockBybitService: RaceConditionPositionExitingRuntime['mockBybit'];

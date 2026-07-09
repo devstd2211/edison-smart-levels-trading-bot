@@ -1,10 +1,3 @@
-/**
- * Phase 9.P1: Transactional Close with Rollback Tests
- *
- * Tests for position-exiting.service.ts transactional error handling
- * Ensures journal stays consistent even if session stats fails
- */
-
 import {
   createCloseStatusGuard,
   createBalanceTrackingHarness,
@@ -18,7 +11,7 @@ import {
   writeTransactionalRollbackLog,
 } from '../helpers/position-exiting-test.utils';
 
-describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
+describe('PositionExiting transactional tests', () => {
   let harness: TransactionalCloseManagedRuntime['harness'];
   let cleanup: TransactionalCloseManagedRuntime['cleanup'];
 

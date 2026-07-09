@@ -1,14 +1,3 @@
-/**
- * Phase 8.9.40: BotMetricsService - ErrorHandler Integration Tests
- *
- * Tests ErrorHandler integration with:
- * - RETRY strategy for logger failures (recordTrade, recordEvent)
- * - GRACEFUL_DEGRADE strategy for report generation (printReport - never blocks trading)
- * - SKIP strategy for event metrics collection (recordEvent, reset)
- *
- * Total: 24 comprehensive tests
- */
-
 import { BotMetricsService } from '../../services/bot-metrics.service';
 import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import {

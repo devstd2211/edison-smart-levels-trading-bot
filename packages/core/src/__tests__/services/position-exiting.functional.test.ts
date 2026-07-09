@@ -1,15 +1,3 @@
-/**
- * FUNCTIONAL TESTS for PositionExitingService
- *
- * GOAL: Reproduce TP1 hit + breakeven SL bug
- *
- * SCENARIO:
- * 1. Open position at entry price 1.892
- * 2. TP1 hits at 1.9203 (partial close 33%)
- * 3. Move SL to breakeven should use entry price
- * 4. BUG: entryPrice becomes NaN, breakeven = NaN
- */
-
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { Position } from '../../types/legacy';
 import {

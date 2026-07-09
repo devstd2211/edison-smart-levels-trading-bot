@@ -1,16 +1,3 @@
-/**
- * Tests for PositionExitingService
- *
- * Covers:
- * - executeExitAction() routing
- * - closePartialPosition()
- * - closeFullPosition()
- * - updateStopLoss()
- * - activateTrailingStop()
- * - recordPositionCloseInJournal()
- * - Error handling and edge cases
- */
-
 import { PositionExitingService } from '../../services/position-exiting.service';
 import { ExitActionDTO } from '../../types/legacy';
 import {
@@ -716,10 +703,7 @@ describe('PositionExitingService', () => {
         action: { action: ExitAction.CLOSE_ALL },
       });
 
-      expect(result).toBe(true); // Close still succeeds
-      // With Phase 8 ErrorHandler integration using FALLBACK strategy,
-      // journal errors are logged with logger.warn (graceful degradation)
-      // instead of logger.error, so the close operation continues
+      expect(result).toBe(true);
       expect(mockLogger.warn || mockLogger.error).toBeTruthy();
     });
   });

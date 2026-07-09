@@ -1,17 +1,3 @@
-/**
- * AntiFlipService - Error Handling Tests
- *
- * Phase 8.9.20: ErrorHandler Integration
- * Tests for SKIP strategy on logger failures
- *
- * Scenarios:
- * - Logger failures on all 5 operations
- * - Integration with complex signal flows
- * - Backward compatibility (works without ErrorHandler)
- * - Performance with error handling
- * - Edge cases (null logger, non-Error throws)
- */
-
 import { AntiFlipService } from '../../services/anti-flip.service';
 import { ErrorHandler } from '../../errors';
 import { LoggerService, SignalDirection } from '../../types/legacy';

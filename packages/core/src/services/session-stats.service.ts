@@ -1,16 +1,5 @@
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { TIME_MULTIPLIERS, INTEGER_MULTIPLIERS } from '../constants/technical.constants';
-/**
- * Session Statistics Service
- *
- * Manages persistent session-based trading statistics for performance analysis.
- * Tracks all trades with full entry context (indicators, patterns, levels, context)
- * and generates comparative analysis across different configurations.
- *
- * Phase 6.2: Integrated with IJournalRepository for persistent storage
- * Version: v3.4.0
- */
-
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -29,10 +18,6 @@ import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { SessionRecordValidationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
 import { ICONS } from '../cli/cli-runtime';
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
 
 const DEFAULT_DATA_DIR = './data';
 const SESSION_STATS_FILE = 'session-stats.json';
@@ -61,10 +46,6 @@ type SessionTradeExitUpdate = {
 
 type SessionOverallStats = Omit<SessionSummary, 'byStrategy' | 'byDirection'>;
 
-// ============================================================================
-// SESSION STATS SERVICE
-// ============================================================================
-
 export class SessionStatsService {
   private readonly logger: LoggerService;
   private readonly dataDir: string;
@@ -77,16 +58,13 @@ export class SessionStatsService {
   constructor(
     logger: LoggerService,
     dataDir: string = DEFAULT_DATA_DIR,
-    private readonly errorHandler?: ErrorHandler, // Phase 8.9.10: ErrorHandler integration
+    private readonly errorHandler?: ErrorHandler,
   ) {
     this.logger = logger;
     this.dataDir = dataDir;
     this.filePath = path.join(dataDir, SESSION_STATS_FILE);
   }
 
-  /**
-   * Start service initialization (explicit lifecycle)
-   */
   start(): void {
     if (this.initialized) {
       return;
@@ -101,16 +79,6 @@ export class SessionStatsService {
     }
   }
 
-  // ==========================================================================
-  // SESSION LIFECYCLE
-  // ==========================================================================
-
-  /**
-   * Start a new trading session
-   * @param config - Full bot configuration snapshot
-   * @param symbol - Trading symbol (e.g., "APEXUSDT")
-   * @returns Session ID
-   */
   startSession(config: Config, symbol: string): string {
     this.assertStarted();
     this.closeActiveSessionIfNeeded();
@@ -129,9 +97,6 @@ export class SessionStatsService {
     return this.currentSession.sessionId;
   }
 
-  /**
-   * End current trading session
-   */
   endSession(): void {
     if (!this.initialized) {
       return;
@@ -156,23 +121,11 @@ export class SessionStatsService {
     this.currentSession = null;
   }
 
-  /**
-   * Get current active session
-   */
   getCurrentSession(): Session | null {
     this.assertStarted();
     return this.currentSession;
   }
 
-  // ==========================================================================
-  // TRADE RECORDING
-  // ==========================================================================
-
-  /**
-   * Record trade entry
-   * Strategy: THROW for validation errors (fail fast on duplicates)
-   * @param trade - Trade record with entry condition
-   */
   recordTradeEntry(trade: SessionTradeRecord): void {
     this.assertStarted();
     const session = this.currentSession;
@@ -210,11 +163,6 @@ export class SessionStatsService {
     this.save();
   }
 
-  /**
-   * Update trade exit
-   * @param tradeId - Trade ID to update
-   * @param exitData - Exit data (price, PnL, exitType, etc.)
-   */
   updateTradeExit(tradeId: string, exitData: SessionTradeExitUpdate): void {
     this.assertStarted();
     const session = this.currentSession;
@@ -245,24 +193,11 @@ export class SessionStatsService {
     this.save();
   }
 
-  // ==========================================================================
-  // ANALYSIS
-  // ==========================================================================
-
-  /**
-   * Get session by ID
-   * @param sessionId - Session ID
-   * @returns Session or null if not found
-   */
   getSession(sessionId: string): Session | null {
     this.assertStarted();
     return this.database.sessions.find((session) => session.sessionId === sessionId) || null;
   }
 
-  /**
-   * Get all sessions
-   * @returns All sessions sorted by start time (newest first)
-   */
   getAllSessions(): Session[] {
     this.assertStarted();
     return [...this.database.sessions].sort(
@@ -270,24 +205,12 @@ export class SessionStatsService {
     );
   }
 
-  /**
-   * Get session summary
-   * @param sessionId - Session ID
-   * @returns Session summary or null if not found
-   */
   getSessionSummary(sessionId: string): SessionSummary | null {
     this.assertStarted();
     const session = this.getSession(sessionId);
     return session ? session.summary : null;
   }
 
-  // ==========================================================================
-  // SUMMARY CALCULATION
-  // ==========================================================================
-
-  /**
-   * Calculate summary statistics from trades
-   */
   private calculateSummary(trades: SessionTradeRecord[]): SessionSummary {
     if (trades.length === 0) {
       return this.createEmptySummary();
@@ -302,9 +225,6 @@ export class SessionStatsService {
     };
   }
 
-  /**
-   * Create empty summary for new session
-   */
   private createEmptySummary(): SessionSummary {
     return {
       totalTrades: 0,
@@ -322,9 +242,6 @@ export class SessionStatsService {
     };
   }
 
-  /**
-   * Calculate duration between two timestamps
-   */
   private calculateDuration(startTime: string, endTime: string | null): string {
     if (endTime === null) {
       return 'ACTIVE';
@@ -348,14 +265,6 @@ export class SessionStatsService {
     return `${hours}h ${minutes}m`;
   }
 
-  // ==========================================================================
-  // PERSISTENCE
-  // ==========================================================================
-
-  /**
-   * Save database to file with ErrorHandler integration
-   * Strategy: RETRY for transient file I/O errors, then GRACEFUL_DEGRADE
-   */
   private save(): void {
     const data = this.serializeDatabase();
 
@@ -397,10 +306,6 @@ export class SessionStatsService {
     }
   }
 
-  /**
-   * Load database from file with ErrorHandler integration
-   * Strategy: GRACEFUL_DEGRADE for file read/parse errors with backup
-   */
   private load(): void {
     try {
       if (!fs.existsSync(this.filePath)) {

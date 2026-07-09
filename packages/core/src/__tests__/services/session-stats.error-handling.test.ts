@@ -1,16 +1,3 @@
-/**
- * Phase 8.9.10: SessionStatsService - ErrorHandler Integration Tests
- *
- * Tests ErrorHandler integration with:
- * - GRACEFUL_DEGRADE strategy for file I/O failures (load with corrupted file backup)
- * - RETRY strategy for transient save errors
- * - THROW strategy for validation errors (duplicate trade IDs)
- * - SKIP strategy for missing trades (updateTradeExit)
- * - Backward compatibility (works without ErrorHandler)
- *
- * Total: 20 comprehensive tests
- */
-
 import * as fs from 'fs';
 import * as path from 'path';
 import { SessionStatsService } from '../../services/session-stats.service';

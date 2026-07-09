@@ -1,17 +1,15 @@
-import type { Config } from '../types/legacy';
+import type { RiskManagementConfig } from '../types/legacy';
 import { ICONS } from '../cli/cli-runtime';
 
-/**
- * Validate RiskManagementConfig has all required fields with valid values
- * Prevents NaN errors at runtime from missing config fields
- *
- * Session 29.4c: Prevents breakevenOffsetPercent undefined → NaN crash
- */
-export function validateRiskManagementConfig(config: Config): void {
-  const rm = config.riskManagement;
+const BOUNDS = {
+  breakevenOffsetPercent: { min: 0.01, max: 10, description: 'Offset % for breakeven SL' },
+  stopLossPercent: { min: 0.1, max: 50, description: 'Stop loss %' },
+  trailingStopPercent: { min: 0.01, max: 10, description: 'Trailing stop %' },
+  positionSizeUsdt: { min: 1, max: 10000, description: 'Position size in USDT' },
+} as const;
 
-  // Check for required fields
-  const requiredFields: (keyof typeof rm)[] = [
+export function validateRiskManagementConfig(rm: RiskManagementConfig): void {
+  const requiredFields: (keyof RiskManagementConfig)[] = [
     'stopLossPercent',
     'minStopLossPercent',
     'breakevenOffsetPercent',
@@ -38,37 +36,15 @@ export function validateRiskManagementConfig(config: Config): void {
     );
   }
 
-  // Validate numeric ranges
-  const numericValidations = [
-    {
-      field: 'breakevenOffsetPercent',
-      value: rm.breakevenOffsetPercent,
-      min: 0.01,
-      max: 10,
-      description: 'Offset % for breakeven SL',
-    },
-    {
-      field: 'stopLossPercent',
-      value: rm.stopLossPercent,
-      min: 0.1,
-      max: 50,
-      description: 'Stop loss %',
-    },
-    {
-      field: 'trailingStopPercent',
-      value: rm.trailingStopPercent,
-      min: 0.01,
-      max: 10,
-      description: 'Trailing stop %',
-    },
-    {
-      field: 'positionSizeUsdt',
-      value: rm.positionSizeUsdt,
-      min: 1,
-      max: 10000,
-      description: 'Position size in USDT',
-    },
-  ];
+  const numericValidations = (
+    Object.entries(BOUNDS) as [keyof typeof BOUNDS, (typeof BOUNDS)[keyof typeof BOUNDS]][]
+  ).map(([field, { min, max, description }]) => ({
+    field,
+    value: rm[field] as number,
+    min,
+    max,
+    description,
+  }));
 
   for (const validation of numericValidations) {
     if (typeof validation.value !== 'number' || isNaN(validation.value)) {
@@ -85,7 +61,6 @@ export function validateRiskManagementConfig(config: Config): void {
     }
   }
 
-  // Validate takeProfits array
   if (!Array.isArray(rm.takeProfits) || rm.takeProfits.length === 0) {
     throw new Error(`${ICONS.error} CRITICAL: takeProfits must be a non-empty array`);
   }

@@ -1,30 +1,9 @@
-/**
- * BotMetrics Service - Comprehensive Performance Monitoring
- *
- * Tracks and reports:
- * - Trade statistics (wins, losses, ratios)
- * - Performance metrics (PnL, ROI, Sharpe ratio)
- * - Operation timings (event processing, API calls)
- * - Error rates and recovery
- * - Market conditions during trading
- *
- * Provides structured metrics for debugging, performance analysis, and reporting.
- *
- * Phase 8.9.40: ErrorHandler Integration
- * - RETRY strategy for logger failures (transient network issues)
- * - GRACEFUL_DEGRADE for report generation (never blocks trading)
- * - SKIP for event metrics collection (can afford to lose a few metrics)
- */
-
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { getErrorMessage } from '../utils/error.utils';
 
 const REPORT_SEPARATOR = '='.repeat(63);
 
-/**
- * Trade result snapshot
- */
 export interface TradeMetrics {
   id: string;
   direction: 'LONG' | 'SHORT';
@@ -38,9 +17,6 @@ export interface TradeMetrics {
   timestamp: number;
 }
 
-/**
- * Performance metrics summary
- */
 export interface PerformanceMetrics {
   totalTrades: number;
   winningTrades: number;
@@ -57,9 +33,6 @@ export interface PerformanceMetrics {
   avgDuration: number;
 }
 
-/**
- * Event processing metrics
- */
 export interface EventMetrics {
   eventType: string;
   count: number;
@@ -81,9 +54,6 @@ type TradeTotals = {
   totalLossPnL: number;
 };
 
-/**
- * Comprehensive bot metrics collection
- */
 export class BotMetricsService {
   private trades: TradeMetrics[] = [];
   private eventMetrics: Map<string, EventMetrics> = new Map();
@@ -100,9 +70,6 @@ export class BotMetricsService {
     private readonly errorHandler?: ErrorHandler,
   ) {}
 
-  /**
-   * Start service initialization (explicit lifecycle)
-   */
   start(): void {
     if (this.started) {
       return;
@@ -120,11 +87,6 @@ export class BotMetricsService {
     );
   }
 
-  /**
-   * Record a completed trade
-   *
-   * @param trade - Trade metrics to record
-   */
   recordTrade(trade: TradeMetrics): void {
     this.ensureStarted();
 
@@ -150,14 +112,6 @@ export class BotMetricsService {
     }
   }
 
-  /**
-   * Record event processing metrics
-   *
-   * @param eventType - Type of event
-   * @param duration - Processing duration in milliseconds
-   * @param success - Whether event was processed successfully
-   * @param error - Optional error message
-   */
   recordEvent(eventType: string, duration: number, success: boolean = true, error?: string): void {
     this.ensureStarted();
 
@@ -188,11 +142,6 @@ export class BotMetricsService {
     }
   }
 
-  /**
-   * Get comprehensive performance metrics
-   *
-   * @returns Performance metrics summary
-   */
   getPerformanceMetrics(): PerformanceMetrics {
     this.ensureStarted();
 
@@ -222,29 +171,16 @@ export class BotMetricsService {
     };
   }
 
-  /**
-   * Get event processing metrics
-   *
-   * @returns Map of event metrics by type
-   */
   getEventMetrics(): Map<string, EventMetrics> {
     this.ensureStarted();
     return this.eventMetrics;
   }
 
-  /**
-   * Get session duration in seconds
-   *
-   * @returns Duration in seconds
-   */
   getSessionDuration(): number {
     this.ensureStarted();
     return (Date.now() - this.sessionStartTime) / 1000;
   }
 
-  /**
-   * Print comprehensive metrics report (GRACEFUL_DEGRADE: never blocks trading)
-   */
   printReport(): void {
     this.ensureStarted();
 
@@ -266,9 +202,6 @@ export class BotMetricsService {
     }
   }
 
-  /**
-   * Reset all metrics for a new session
-   */
   reset(): void {
     this.ensureStarted();
 
@@ -283,22 +216,11 @@ export class BotMetricsService {
     );
   }
 
-  /**
-   * Get all recorded trades
-   *
-   * @returns Array of trade metrics
-   */
   getTrades(): TradeMetrics[] {
     this.ensureStarted();
     return [...this.trades];
   }
 
-  /**
-   * Get trade by ID
-   *
-   * @param tradeId - ID of trade to find
-   * @returns Trade metrics or undefined
-   */
   getTradeById(tradeId: string): TradeMetrics | undefined {
     this.ensureStarted();
     return this.trades.find((trade) => trade.id === tradeId);

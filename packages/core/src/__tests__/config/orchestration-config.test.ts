@@ -1,8 +1,3 @@
-/**
- * Phase 4.10: Config-Driven Constants Tests
- * Validates orchestration config and analyzer parameter loading
- */
-
 import type {
   OrchestrationConfig,
   EntryOrchestrationConfig,
@@ -16,11 +11,7 @@ import type {
   WickAnalyzerParams,
 } from '../../types/config/config.types';
 
-// ============================================================================
-// ORCHESTRATION CONFIG TESTS
-// ============================================================================
-
-describe('Phase 4.10: OrchestrationConfig', () => {
+describe('OrchestrationConfig', () => {
   describe('EntryOrchestrationConfig', () => {
     it('should have all required entry parameters', () => {
       const config: EntryOrchestrationConfig = {
@@ -167,11 +158,7 @@ describe('Phase 4.10: OrchestrationConfig', () => {
   });
 });
 
-// ============================================================================
-// TREND ANALYSIS CONFIG TESTS
-// ============================================================================
-
-describe('Phase 4.10: TrendAnalysisConfig', () => {
+describe('TrendAnalysisConfig', () => {
   it('should have all required trend parameters', () => {
     const config: TrendAnalysisConfig = {
       minCandlesRequired: 20,
@@ -234,11 +221,7 @@ describe('Phase 4.10: TrendAnalysisConfig', () => {
   });
 });
 
-// ============================================================================
-// ANALYZER PARAMETERS CONFIG TESTS
-// ============================================================================
-
-describe('Phase 4.10: AnalyzerParametersConfig', () => {
+describe('AnalyzerParametersConfig', () => {
   describe('AtrAnalyzerParams', () => {
     it('should have ATR analyzer thresholds', () => {
       const params: AtrAnalyzerParams = {
@@ -291,7 +274,7 @@ describe('Phase 4.10: AnalyzerParametersConfig', () => {
       expect(params.squeezeThreshold).toBe(5);
     });
 
-    it('should have overboughtThreshold > overboughtThreshold', () => {
+    it('should have overboughtThreshold > oversoldThreshold', () => {
       const params: BollingerBandsAnalyzerParams = {
         minCandlesRequired: 25,
         oversoldThreshold: 20,
@@ -434,11 +417,7 @@ describe('Phase 4.10: AnalyzerParametersConfig', () => {
   });
 });
 
-// ============================================================================
-// CONFIG DEFAULTS VALIDATION
-// ============================================================================
-
-describe('Phase 4.10: Config Defaults', () => {
+describe('Config Defaults', () => {
   it('should provide sensible entry orchestration defaults', () => {
     const defaults: EntryOrchestrationConfig = {
       minConfidenceThreshold: 60,
@@ -496,11 +475,7 @@ describe('Phase 4.10: Config Defaults', () => {
   });
 });
 
-// ============================================================================
-// CONFIG COMPATIBILITY TESTS
-// ============================================================================
-
-describe('Phase 4.10: Config Compatibility', () => {
+describe('Config Compatibility', () => {
   it('should allow partial config overrides', () => {
     const defaults: OrchestrationConfig = {
       entry: {
@@ -576,6 +551,31 @@ describe('Phase 4.10: Config Compatibility', () => {
     expect(oldConfig).toBeDefined();
     expect(newConfig).toBeDefined();
     expect(newConfig.orchestration?.entry.minConfidenceThreshold).toBe(60);
+  });
+});
+
+describe('Config type export boundary', () => {
+  it('OrchestrationConfig is assignable from config.types module', () => {
+    const shape: OrchestrationConfig = {
+      entry: {
+        minConfidenceThreshold: 60,
+        signalConflictThreshold: 0.4,
+        flatMarketConfidenceThreshold: 70,
+        minCandlesRequired: 20,
+        minEntryConfidenceCandlesRequired: 5,
+        maxPrimaryCandles: 100,
+      },
+      exit: {
+        breakeven: { marginPercent: 0.1 },
+        trailingStop: { minDistancePercent: 0.1, maxDistancePercent: 5.0, atrMultiplier: 1.0 },
+      },
+    };
+    expect(shape).toBeDefined();
+  });
+
+  it('AnalyzerParametersConfig allows all fields to be optional', () => {
+    const empty: AnalyzerParametersConfig = {};
+    expect(empty).toBeDefined();
   });
 });
 
