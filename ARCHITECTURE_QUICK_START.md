@@ -121,7 +121,6 @@ Boundary rule:
 Supporting docs:
 
 - [docs/architecture/dependency-map.md](./docs/architecture/dependency-map.md)
-- [docs/architecture/web-api-boundaries.md](./docs/architecture/web-api-boundaries.md)
 
 ## Phase 9 Live Trading Engine
 
@@ -136,25 +135,3 @@ Key services include:
 - `graceful-shutdown.service.ts`
 
 The old architecture doc treated Phase 9 as a milestone log. The current view treats it as an existing subsystem inside core.
-
-## Current Refactor Context
-
-The active work is not a package migration anymore. It is mostly lifecycle/testability cleanup in large service test suites.
-
-Use these files instead of adding more progress logs here:
-
-- `ACTIVE_REFACTOR_PLAN.md`
-- `NEXT_SESSION_PROMPT.md`
-- `REFACTOR_TASKS.md`
-- `REFACTOR_PLAN.md` for archived historical notes
-
-## Keep / Delete Rule
-
-Keep architecture docs that describe current boundaries, entrypoints, or operational behavior.
-
-Delete documents that are only:
-
-- phase-by-phase historical transcripts,
-- one-off optimization reports,
-- stale release snapshots,
-- or references to files that no longer exist.

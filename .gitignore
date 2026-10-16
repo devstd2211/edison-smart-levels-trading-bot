@@ -155,7 +155,6 @@ backtest-results/
 !README
 !SPEC.md
 !SPEC
-!REFACTOR_COMPONENT_CHECKLIST.md
 !DISCLAIMER.md
 !DISCLAIMER
 !LICENSE
@@ -170,7 +169,6 @@ backtest-results/
 !ARCHITECTURE_*.md
 !MIGRATION_PLAN.md
 !packages/web-client/GETTING_STARTED.md
-!SESSION_*.md
 
 # =============================================================================
 # TEST & COVERAGE
@@ -199,3 +197,6 @@ coverage/
 desktop.ini
 $RECYCLE.BIN/
 CONTINUE_HERE.md
+
+# Local release notes
+RELEASE_SUMMARY.txt

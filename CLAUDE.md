@@ -12,9 +12,6 @@ Lightweight project context for future coding sessions.
 
 - `README.md`: current developer-facing overview and commands.
 - `ARCHITECTURE_QUICK_START.md`: current package and runtime architecture.
-- `ACTIVE_REFACTOR_PLAN.md`: active refactor status.
-- `NEXT_SESSION_PROMPT.md`: short handoff for the next session.
-- `REFACTOR_TASKS.md`: task catalog for decomposing refactor work.
 
 ## Package Map
 
@@ -70,11 +67,10 @@ Keep:
 
 - current architecture docs,
 - operational docs,
-- package usage docs,
-- active refactor tracking files.
+- package usage docs.
+
 
 Delete:
-
 - phase progress logs,
 - stale migration snapshots,
 - one-off optimization reports,
