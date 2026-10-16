@@ -491,7 +491,6 @@ Use when:
 - **USAGE.md** - Detailed usage guide and examples
 - **API Reference** - Complete type definitions
 - **.vector-db/index.json** - Generated project index
-- **CLAUDE.md** - Integration with session guide
 
 ---
 

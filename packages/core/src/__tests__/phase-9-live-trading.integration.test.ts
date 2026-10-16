@@ -264,14 +264,6 @@ describe('Phase 9: Live Trading Engine - Integration Tests', () => {
       const docPath = path.join(__dirname, '../../../../ARCHITECTURE_QUICK_START.md');
       expect(fs.existsSync(docPath)).toBe(true);
     });
-
-    test('should have comprehensive CLAUDE.md', () => {
-      const fs = require('fs');
-      const path = require('path');
-
-      const docPath = path.join(__dirname, '../../../../CLAUDE.md');
-      expect(fs.existsSync(docPath)).toBe(true);
-    });
   });
 
   describe('Integration Points', () => {
@@ -334,17 +326,6 @@ describe('Phase 9: Documentation Status', () => {
 
     expect(content).toContain('Phase 9');
     expect(content).toContain('Live Trading Engine');
-  });
-
-  test('should have updated CLAUDE.md with Phase 9 status', () => {
-    const fs = require('fs');
-    const path = require('path');
-
-    const docPath = path.join(__dirname, '../../../../CLAUDE.md');
-    const content = fs.readFileSync(docPath, 'utf8');
-
-    expect(content).toContain('Phase 9');
-    expect(content).toContain('Live Trading');
   });
 });
 
