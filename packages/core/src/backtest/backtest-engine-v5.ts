@@ -23,6 +23,7 @@ import { ExitOrchestrator } from '../orchestrators/exit.orchestrator';
 import { RiskManager } from '../services/risk-manager.service';
 import { IDataProvider, TimeframeData } from './data-providers/base.provider';
 import { JsonDataProvider } from './data-providers/json.provider';
+import { buildBacktestEntrySignals } from './backtest-entry-signal';
 import { SqliteDataProvider } from './data-providers/sqlite.provider';
 import { SqliteOptimizedDataProvider } from './data-providers/sqlite-optimized.provider';  // Phase 7.1
 import { Candle } from '../types/core';
@@ -181,6 +182,8 @@ export class BacktestEngineV5 {
         threshold: entryThreshold,
       });
     }
+    // Same aggregation confidence gate as live TradingOrchestrator: the entry threshold, not a fixed 0.75
+    this.aggregationConfig.minConfidence = this.entryOrchestrator.getMinConfidenceThreshold() / 100;
 
     // Initialize data provider (Phase 7.1: with optimization support)
     if (this.config.dataProvider === 'json') {
@@ -395,22 +398,13 @@ export class BacktestEngineV5 {
           });
         }
 
-        // Convert to Signal format expected by EntryOrchestrator
-        // Use aggregated signal if direction is determined
-        const convertedSignals: Signal[] = aggregationResult.direction
-          ? [
-              {
-                type: SignalType.LEVEL_BASED,
-                direction: aggregationResult.direction === SignalDirection.LONG ? SignalDirection.LONG : SignalDirection.SHORT,
-                confidence: Math.round(aggregationResult.confidence * 100), // Convert 0-1 to 0-100
-                price: candle5m.close,
-                stopLoss: 0,
-                takeProfits: [],
-                reason: 'Aggregated backtest signal',
-                timestamp: candle5m.timestamp,
-              },
-            ]
-          : [];
+        // Convert to the aggregated Signal expected by EntryOrchestrator (same shape as live)
+        const convertedSignals: Signal[] = buildBacktestEntrySignals(
+          aggregationResult,
+          analyzerSignals,
+          candle5m.close,
+          candle5m.timestamp,
+        );
 
         // Convert TrendAnalysisBacktest
         // NOTE: Use NEUTRAL to avoid trend alignment blocks during backtest
