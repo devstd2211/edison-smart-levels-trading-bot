@@ -2,6 +2,7 @@ import { FairValueGapAnalyzerNew } from '../../analyzers/fair-value-gap.analyzer
 import type { Candle } from '../../types/core';
 import type { BreakoutAnalyzerConfigNew } from '../../types/config/config-new.types';
 import { AnalyzerType } from '../../types/analyzer';
+import { SignalDirection } from '../../types/enums';
 
 type CandlesInput = Parameters<FairValueGapAnalyzerNew['analyze']>[0];
 const asCandles = (value: unknown): CandlesInput => value as CandlesInput;
@@ -152,3 +153,45 @@ describe('FairValueGapAnalyzerNew - IAnalyzer Interface Tests', () => {
   });
 });
 
+
+describe('FairValueGapAnalyzerNew - Three-candle gap definition', () => {
+  // Gap is between candle 1 and candle 3; candle 2 is the impulse candle.
+  function flatBase(count: number): Candle[] {
+    return Array.from({ length: count }, (_, i) => ({
+      timestamp: i * 60000, open: 100, high: 100.5, low: 99.5, close: 100, volume: 1000,
+    }));
+  }
+
+  test('detects bullish FVG when candle1.high < candle3.low', () => {
+    const candles = [
+      ...flatBase(25),
+      { timestamp: 25 * 60000, open: 100, high: 101, low: 99, close: 100.5, volume: 1000 },
+      { timestamp: 26 * 60000, open: 100.5, high: 104, low: 100.5, close: 103.5, volume: 1000 },
+      { timestamp: 27 * 60000, open: 103.5, high: 105, low: 102, close: 104.5, volume: 1000 },
+    ];
+    const signal = new FairValueGapAnalyzerNew(createConfig()).analyze(candles);
+    expect(signal.direction).toBe(SignalDirection.LONG);
+  });
+
+  test('detects bearish FVG when candle1.low > candle3.high', () => {
+    const candles = [
+      ...flatBase(25),
+      { timestamp: 25 * 60000, open: 100, high: 101, low: 99, close: 99.5, volume: 1000 },
+      { timestamp: 26 * 60000, open: 99.5, high: 99.5, low: 96, close: 96.5, volume: 1000 },
+      { timestamp: 27 * 60000, open: 96.5, high: 98, low: 95, close: 95.5, volume: 1000 },
+    ];
+    const signal = new FairValueGapAnalyzerNew(createConfig()).analyze(candles);
+    expect(signal.direction).toBe(SignalDirection.SHORT);
+  });
+
+  test('no FVG when candle3 overlaps candle1 even if candle2 gapped', () => {
+    const candles = [
+      ...flatBase(25),
+      { timestamp: 25 * 60000, open: 100, high: 101, low: 99, close: 100.5, volume: 1000 },
+      { timestamp: 26 * 60000, open: 101.5, high: 103, low: 101.5, close: 102, volume: 1000 },
+      { timestamp: 27 * 60000, open: 102, high: 102.5, low: 100.5, close: 101, volume: 1000 },
+    ];
+    const signal = new FairValueGapAnalyzerNew(createConfig()).analyze(candles);
+    expect(signal.direction).toBe(SignalDirection.HOLD);
+  });
+});

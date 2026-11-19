@@ -1,6 +1,7 @@
 import { ChochBosAnalyzerNew } from '../../analyzers/choch-bos.analyzer-new';
 import type { Candle } from '../../types/core';
 import type { ChochBosAnalyzerConfigNew } from '../../types/config/config-new.types';
+import { SignalDirection } from '../../types/enums';
 
 type ConfigInput = ConstructorParameters<typeof ChochBosAnalyzerNew>[0];
 type CandlesInput = Parameters<ChochBosAnalyzerNew['analyze']>[0];
@@ -142,3 +143,19 @@ describe('ChochBosAnalyzerNew - Edge Cases Tests', () => {
   });
 });
 
+
+describe('ChochBosAnalyzerNew - Break direction', () => {
+  const base = Array.from({ length: 30 }, () => 100);
+
+  test('break above recent highs is a bullish BOS (LONG)', () => {
+    const closes = [...base, 103];
+    const signal = new ChochBosAnalyzerNew(createConfig()).analyze(createCandles(closes));
+    expect(signal.direction).toBe(SignalDirection.LONG);
+  });
+
+  test('break below recent lows is a bearish BOS (SHORT)', () => {
+    const closes = [...base, 97];
+    const signal = new ChochBosAnalyzerNew(createConfig()).analyze(createCandles(closes));
+    expect(signal.direction).toBe(SignalDirection.SHORT);
+  });
+});

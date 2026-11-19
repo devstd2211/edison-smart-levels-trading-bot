@@ -55,11 +55,11 @@ export class FairValueGapAnalyzerNew implements IAnalyzer {
   private detectFVG(candles: Candle[]): { type: 'BULLISH' | 'BEARISH' | 'NONE'; strength: number } {
     if (candles.length < 3) return { type: 'NONE', strength: 0 };
     const c1 = candles[candles.length - 3];
-    const c2 = candles[candles.length - 2];
     const c3 = candles[candles.length - 1];
 
-    if (c1.high < c2.low) return { type: 'BULLISH', strength: Math.min(1, (c2.low - c1.high) / c1.high * 100) };
-    if (c1.low > c2.high) return { type: 'BEARISH', strength: Math.min(1, (c1.low - c2.high) / c1.high * 100) };
+    // Three-candle FVG: the gap lies between candle 1 and candle 3; candle 2 is the impulse.
+    if (c1.high < c3.low) return { type: 'BULLISH', strength: Math.min(1, (c3.low - c1.high) / c1.high * 100) };
+    if (c1.low > c3.high) return { type: 'BEARISH', strength: Math.min(1, (c1.low - c3.high) / c1.low * 100) };
     return { type: 'NONE', strength: 0 };
   }
 

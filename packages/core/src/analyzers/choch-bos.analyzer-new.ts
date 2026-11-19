@@ -93,11 +93,12 @@ export class ChochBosAnalyzerNew implements IAnalyzer {
 
     const current = candles[candles.length - 1];
 
+    // Break below recent lows = bearish BOS; break above recent highs = bullish BOS.
     if (current.low < lowestLow) {
-      return { type: 'BULLISH_BOS', strength: Math.min(1, Math.abs(current.low - lowestLow) / lowestLow * this.strengthMultiplier) };
+      return { type: 'BEARISH_BOS', strength: Math.min(1, Math.abs(current.low - lowestLow) / lowestLow * this.strengthMultiplier) };
     }
     if (current.high > highestHigh) {
-      return { type: 'BEARISH_BOS', strength: Math.min(1, Math.abs(current.high - highestHigh) / highestHigh * this.strengthMultiplier) };
+      return { type: 'BULLISH_BOS', strength: Math.min(1, Math.abs(current.high - highestHigh) / highestHigh * this.strengthMultiplier) };
     }
 
     return { type: 'NONE', strength: 0 };

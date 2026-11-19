@@ -21,8 +21,8 @@ function createCandlesWithLevels(
   }));
 }
 
-describe('ChochBosAnalyzerNew - Functional: Bullish BOS (Lower Low Break)', () => {
-  it('should detect bullish BOS when price breaks below previous lows', () => {
+describe('ChochBosAnalyzerNew - Functional: Bearish BOS (Lower Low Break)', () => {
+  it('should detect bearish BOS when price breaks below previous lows', () => {
     const analyzer = new ChochBosAnalyzerNew(createConfig());
     const pre = Array.from({ length: 15 }, () => 100);
     const down = Array.from({ length: 10 }, (_, i) => 100 - i * 0.8);
