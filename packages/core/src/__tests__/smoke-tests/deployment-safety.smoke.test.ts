@@ -1,3 +1,4 @@
+import { resolveTestConfigPath } from '../helpers/test-config-path.utils';
 /**
  * SMOKE TESTS - Deployment Safety Checks
  *
@@ -54,7 +55,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify config.json exists and is valid JSON', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../../../../', 'config.json');
+      const configPath = resolveTestConfigPath();
 
       expect(fs.existsSync(configPath)).toBe(true);
 
@@ -68,7 +69,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify essential exchange configuration exists', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../../../../', 'config.json');
+      const configPath = resolveTestConfigPath();
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
       expect(config.exchange).toBeDefined();
@@ -78,7 +79,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify trading configuration exists', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../../../../', 'config.json');
+      const configPath = resolveTestConfigPath();
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
       expect(config.trading).toBeDefined();
@@ -88,7 +89,7 @@ describe('SMOKE TESTS: Deployment Safety Checks', () => {
     it('should verify risk management configuration exists', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../../../../', 'config.json');
+      const configPath = resolveTestConfigPath();
       const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
       expect(config.riskManagement).toBeDefined();

@@ -22,7 +22,7 @@ function readJsonFile<T>(relativePath: string): T {
 }
 
 function readTextFile(relativePath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
+  return fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8').replace(/\r\n/g, '\n');
 }
 
 function collectFiles(relativePath: string, extensions: string[]): string[] {
@@ -339,8 +339,10 @@ describe('package script boundary', () => {
     expect(configEntrypointSource).toContain(
       'export type { ConfigPipelineBaseConfigLoader, ConfigPipelineConfigValidator, ConfigPipelineLoader };',
     );
-    expect(configPipelineSource).toContain('export type ConfigPipelineBaseConfigLoader = () => Config;');
-    expect(configPipelineSource).toContain('export type ConfigPipelineConfigValidator = (config: Config) => void;');
+    const configLoaderContractsSource = readTextFile('packages/core/src/config/config-loader-contracts.ts');
+    expect(configLoaderContractsSource).toContain('export type ConfigPipelineBaseConfigLoader = () => Config;');
+    expect(configLoaderContractsSource).toContain('export type ConfigPipelineConfigValidator = (config: Config) => void;');
+    expect(configPipelineSource).toContain("} from './config-loader-contracts';");
     expect(coreEntrypointSource).not.toContain('export type { ConfigPipelineBaseConfigLoader');
     expect(coreEntrypointSource).not.toContain('export type { ConfigPipelineConfigValidator');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');

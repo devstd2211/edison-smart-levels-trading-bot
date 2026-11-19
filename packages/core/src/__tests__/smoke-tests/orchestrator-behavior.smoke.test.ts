@@ -2,6 +2,7 @@
  * SMOKE TESTS - Orchestrator Runtime Behavior
  */
 
+import { resolveTestConfigPath } from '../helpers/test-config-path.utils';
 import { SignalDirection, SignalType, TrendBias, LoggerService } from '../../types/legacy';
 
 type LoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
@@ -142,14 +143,14 @@ describe('SMOKE TESTS: Orchestrator Runtime Behavior', () => {
     it('should verify config.json is accessible', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../../../../', 'config.json');
+      const configPath = resolveTestConfigPath();
       expect(fs.existsSync(configPath)).toBe(true);
     });
 
     it('should verify all required config sections exist', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../../../../', 'config.json');
+      const configPath = resolveTestConfigPath();
       const configContent = fs.readFileSync(configPath, 'utf-8');
       const config = JSON.parse(configContent);
 

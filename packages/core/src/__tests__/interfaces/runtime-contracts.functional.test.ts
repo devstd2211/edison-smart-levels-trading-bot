@@ -5,7 +5,7 @@ function readInterfaceSource(fileName: string): string {
   return fs.readFileSync(
     path.resolve(__dirname, '..', '..', 'interfaces', fileName),
     'utf8',
-  );
+  ).replace(/\r\n/g, '\n');
 }
 
 describe('runtime contract interface guardrails', () => {

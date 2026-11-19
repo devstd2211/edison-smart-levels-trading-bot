@@ -5,6 +5,7 @@
  * Prevents production issues caused by missing dependencies
  */
 
+import { resolveTestConfigPath } from '../helpers/test-config-path.utils';
 import { LoggerService } from '../../types/legacy';
 
 type LoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
@@ -85,7 +86,7 @@ describe('SMOKE TESTS: Service Initialization', () => {
     it('should load and validate main config.json', () => {
       const fs = require('fs');
       const path = require('path');
-      const configPath = path.join(__dirname, '../../../../../', 'config.json');
+      const configPath = resolveTestConfigPath();
 
       expect(fs.existsSync(configPath)).toBe(true);
 

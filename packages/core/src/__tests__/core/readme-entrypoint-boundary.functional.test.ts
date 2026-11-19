@@ -27,7 +27,7 @@ describe('README entrypoint boundary', () => {
   }
 
   function readWorkspaceFile(relativePath: string): string {
-    return fs.readFileSync(path.resolve(workspaceRoot, relativePath), 'utf8');
+    return fs.readFileSync(path.resolve(workspaceRoot, relativePath), 'utf8').replace(/\r\n/g, '\n');
   }
 
   test('documents the dedicated CLI entrypoint and treats src/index.ts as a legacy wrapper only', () => {
@@ -122,7 +122,7 @@ describe('README entrypoint boundary', () => {
     expect(cliEntrypoint).toContain('RunCliMainDependencies keeps CLI composition injectable');
     expect(cliEntrypoint).toContain('Shared standalone if-main guard');
     expect(legacyEntrypoint).toContain('Legacy compatibility wrapper');
-    expect(legacyEntrypoint).toContain('shared standalone if-main helper');
+    expect(legacyEntrypoint).toContain('shared standalone if-main behavior');
     expect(webEntrypoint).toContain('Explicit web entrypoint boundary');
     expect(webEntrypoint).toContain('runtime pair');
   });

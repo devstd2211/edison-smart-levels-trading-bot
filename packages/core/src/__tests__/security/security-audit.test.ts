@@ -12,6 +12,12 @@
 
 import { getConfig } from '../../config';
 import * as fs from 'fs';
+
+jest.mock('../../config-loader', () => {
+  const actual = jest.requireActual('../../config-loader');
+  const { resolveTestConfigPath } = jest.requireActual('../helpers/test-config-path.utils');
+  return { ...actual, resolveRootConfigPath: () => resolveTestConfigPath() };
+});
 import * as path from 'path';
 
 describe('Phase 16.2.1: Security Audit', () => {

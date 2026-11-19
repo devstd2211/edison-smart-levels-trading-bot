@@ -409,6 +409,7 @@ describe('Phase 16.1.1: Core Trading Engine Integration', () => {
     it('should handle rapid position updates efficiently', () => {
       const startTime = Date.now();
       const iterations = 1000;
+      let allFinite = true;
 
       for (let i = 0; i < iterations; i++) {
         const entry = 50000;
@@ -420,10 +421,11 @@ describe('Phase 16.1.1: Core Trading Engine Integration', () => {
         const percentChange = priceDiff / entry;
         const unrealizedPnl = percentChange * (quantity * entry);
 
-        expect(unrealizedPnl).toBeDefined();
+        allFinite = allFinite && Number.isFinite(unrealizedPnl);
       }
 
       const duration = Date.now() - startTime;
+      expect(allFinite).toBe(true);
 
       // Should complete 1000 iterations in less than 100ms
       expect(duration).toBeLessThan(100);
